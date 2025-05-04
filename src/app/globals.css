@@ -14,8 +14,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #ffffff; /* Keep white background even in dark mode */
+    --foreground: #171717; /* Keep dark text even in dark mode */
   }
 }
 
@@ -23,4 +23,77 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Components */
+@layer components {
+  .title {
+    @apply text-6xl text-[#222432] font-semibold;
+    font-family: "fraunces", sans-serif;
+  }
+
+  .sub-title {
+    @apply text-2xl text-[#222432] font-semibold;
+    font-family: "Varela Round", sans-serif;
+  }
+}
+
+/* Reusable Buttons */
+.buttonA {
+  @apply flex justify-center items-center;
+  @apply px-[20px] h-[50px] rounded-4xl bg-white shadow-md;
+  @apply transition-transform transform duration-200 ease-in-out;
+  @apply text-[#222432] text-base no-underline font-semibold;
+  @apply cursor-pointer;
+  font-family: "fraunces", sans-serif;
+}
+
+.buttonA:hover {
+  transform: scale(1.1);
+}
+
+.buttonB {
+  @apply flex justify-center items-center;
+  @apply px-[20px] h-[50px] rounded-4xl bg-[#222432] shadow-md;
+  @apply transition-transform transform duration-200 ease-in-out;
+  @apply text-white text-base no-underline font-semibold;
+  @apply cursor-pointer;
+  font-family: "fraunces", sans-serif;
+}
+
+.buttonB:hover {
+  transform: scale(1.1);
+}
+
+.buttonC {
+  @apply flex justify-center items-center;
+  @apply px-[20px] h-[50px] rounded-4xl bg-[#6096B4] shadow-md;
+  @apply transition-transform transform duration-200 ease-in-out;
+  @apply text-white text-base no-underline font-semibold;
+  @apply cursor-pointer text-2xl;
+  font-family: "fraunces", sans-serif;
+}
+
+.buttonC:hover {
+  transform: scale(1.1);
+}
+
+.button-close {
+  @apply absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-4xl;
+}
+
+/* Hero Section*/
+.content {
+  @apply flex flex-col h-screen bg-[#FAF0D7] gap-[20px];
+  @apply items-center justify-center text-center px-4 md:px-10 lg:px-40;
+}
+
+/* Reusable Events Section */
+.content-events {
+  @apply flex flex-col;
+  @apply h-[650px] bg-[#FFD9C0] gap-[50px] py-[30px];
+}
+
+.discover-events {
+  @apply flex px-[50px] mx-[50px] justify-between items-center;
 }
