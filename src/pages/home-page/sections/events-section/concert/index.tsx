@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import EventCard from "@/app/components/cards/eventCard";
 import { Event } from "@/app/types/event";
+import axios from "axios";
 // import Button from "@/app/components/buttons";
 
 type SectionProps = {
@@ -15,11 +16,17 @@ export default function ConcertSection({ category }: SectionProps) {
     "https://res.cloudinary.com/dnb5cxo2m/image/upload/";
 
   useEffect(() => {
-    fetch(`http://localhost:8000/admin/sections?category=${category}`)
-      .then((res) => res.json())
-      .then((res) => setEvents(res.data[0]?.events || []))
-      .catch((err) => console.error("Failed to fetch events:", err))
-      .finally(() => setLoading(false));
+    axios
+      .get(`http://localhost:8000/admin/sections?category=${category}`)
+      .then((response) => {
+        setEvents(response.data.data[0]?.events || []);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch events:", err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [category]);
 
   return (
