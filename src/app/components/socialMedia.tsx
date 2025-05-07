@@ -7,20 +7,24 @@ export default function SocialMedia() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          <img className="social-links" src="logo-fb.png" alt="logo-fb"></img>
+          <img className="social-links" src="/logo-fb.png" alt="Facebook"></img>
         </a>
         <a
           href="https://www.instagram.com/"
           target="_blank"
           rel="noopener noreferrer"
         >
-          <img className="social-links" src="logo-ig.png" alt="logo-ig"></img>
+          <img
+            className="social-links"
+            src="/logo-ig.png"
+            alt="Instagram"
+          ></img>
         </a>
         <a href="https://x.com/" target="_blank" rel="noopener noreferrer">
           <img
             className="social-links"
-            src="logo-twitter.png"
-            alt="logo-twitter"
+            src="/logo-twitter.png"
+            alt="Twitter"
           ></img>
         </a>
         <a
@@ -30,8 +34,8 @@ export default function SocialMedia() {
         >
           <img
             className="social-links"
-            src="logo-linkedin.png"
-            alt="logo-linkedin"
+            src="/logo-linkedin.png"
+            alt="LinkedIn"
           ></img>
         </a>
         <a
@@ -41,8 +45,8 @@ export default function SocialMedia() {
         >
           <img
             className="social-links"
-            src="logo-youtube.png"
-            alt="logo-youtube"
+            src="/logo-youtube.png"
+            alt="YouTube"
           ></img>
         </a>
       </div>

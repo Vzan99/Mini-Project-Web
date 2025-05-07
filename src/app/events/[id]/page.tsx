@@ -1,4 +1,4 @@
-import EventDetails from "@/pages/event-page/eventDetails-page";
+import EventDetailsPage from "@/pages/event-page/eventDetails-page";
 import { notFound } from "next/navigation";
 
 async function getEvent(id: string) {
@@ -61,7 +61,7 @@ async function getEvent(id: string) {
   }
 }
 
-export default async function EventDetailsPage({
+export default async function EventDetails({
   params,
 }: {
   params: { id: string };
@@ -76,9 +76,9 @@ export default async function EventDetailsPage({
       notFound();
     }
 
-    return <EventDetails event={event} />;
+    return <EventDetailsPage event={event} />;
   } catch (error) {
-    console.error("Error in EventDetailsPage:", error);
+    console.error("Error in EventDetails:", error);
     notFound();
   }
 }

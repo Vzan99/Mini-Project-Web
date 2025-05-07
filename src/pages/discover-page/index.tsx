@@ -52,7 +52,7 @@ const sortOptions = [
   { value: "desc", label: "Descending" },
 ];
 
-export default function Discover() {
+export default function DiscoverPage() {
   // Search and suggestions
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<EventSuggestion[]>([]);

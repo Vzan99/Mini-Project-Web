@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function NavBar() {
   const router = useRouter();
@@ -58,13 +59,15 @@ export default function NavBar() {
     <div>
       <div className="navbar px-4 sm:px-[50px]">
         <div className="nav-buttons-group items-center">
-          <img
+          <Image
             className="small-logo"
-            src="logo-quick-ticket.png"
+            src="/logo-quick-ticket.png" // Path relative to the public folder
             alt="logo-quick-ticket"
             onClick={navigateToHome}
-            style={{ cursor: "pointer" }}
-          ></img>
+            style={{ cursor: "pointer", width: "50px", height: "50px" }}
+            width={50}
+            height={50}
+          />
           <div
             className="nav-logo-text hidden sm:block"
             onClick={navigateToHome}
@@ -82,7 +85,7 @@ export default function NavBar() {
           <Link href="/discover" className="links">
             Discover
           </Link>
-          <Link href="/create-event" className="links">
+          <Link href="/events/create" className="links">
             Create Events
           </Link>
           <Link href="/about" className="links">
@@ -141,7 +144,7 @@ export default function NavBar() {
             Discover
           </Link>
           <Link
-            href="/create-event"
+            href="/events/create"
             className="text-[#222432] text-lg font-medium hover:text-[#6096B4]"
           >
             Create Events

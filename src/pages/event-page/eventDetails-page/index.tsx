@@ -1,7 +1,9 @@
 "use client"; // Add this to make it a client component if you're using interactive features
 
+import { useState } from "react";
 import Image from "next/image";
 import BuyTicketButton from "@/app/components/buttons/BuyTicketButton";
+import Link from "next/link";
 
 // Define the Event type based on your backend API response
 type Organizer = {
@@ -47,7 +49,18 @@ type Event = {
   updated_at?: string;
 };
 
-export default function EventDetails({ event }: { event: Event }) {
+export default function EventDetailsPage({ event }: { event: Event }) {
+  // Add state for ticket quantity
+  const [ticketQuantity, setTicketQuantity] = useState(1);
+
+  // Function to handle quantity changes
+  const handleQuantityChange = (newQuantity: number) => {
+    // Ensure quantity is between 1 and 3 (the backend limit)
+    if (newQuantity >= 1 && newQuantity <= 3) {
+      setTicketQuantity(newQuantity);
+    }
+  };
+
   // Add some validation to prevent runtime errors
   if (!event) {
     return <div>Loading event details...</div>;
@@ -215,7 +228,12 @@ export default function EventDetails({ event }: { event: Event }) {
 
               <div className="mb-6">
                 <p className="text-sm text-gray-500 mb-1">Organized by</p>
-                <p className="font-medium">{organizerName}</p>
+                <Link
+                  href={`/eoDetails/${event.organizer_id}?id=${event.organizer_id}`}
+                  className="font-medium hover:text-blue-600 hover:underline"
+                >
+                  {organizerName}
+                </Link>
               </div>
             </div>
 
@@ -262,7 +280,71 @@ export default function EventDetails({ event }: { event: Event }) {
 
               {event.remaining_seats > 0 ? (
                 <>
-                  <BuyTicketButton eventId={event.id} eventName={event.name} />
+                  {/* Ticket quantity selector */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Number of Tickets (Max 3)
+                    </label>
+                    <div className="flex items-center">
+                      <button
+                        onClick={() => handleQuantityChange(ticketQuantity - 1)}
+                        disabled={ticketQuantity <= 1}
+                        className="px-3 py-1 bg-[#222432] rounded-l-md disabled:opacity-50 text-white"
+                        aria-label="Decrease quantity"
+                      >
+                        -
+                      </button>
+                      <span className="px-4 py-1 bg-white border-t border-b text-center w-12">
+                        {ticketQuantity}
+                      </span>
+                      <button
+                        onClick={() => handleQuantityChange(ticketQuantity + 1)}
+                        disabled={
+                          ticketQuantity >= 3 ||
+                          ticketQuantity >= event.remaining_seats
+                        }
+                        className="px-3 py-1 bg-[#222432] rounded-r-md disabled:opacity-50 text-white"
+                        aria-label="Increase quantity"
+                      >
+                        +
+                      </button>
+                    </div>
+                    {event.remaining_seats < 3 && (
+                      <p className="text-xs text-orange-600 mt-1">
+                        Only {event.remaining_seats} seats remaining
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Total price calculation */}
+                  <div className="mb-4 pt-3 border-t border-gray-200">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-gray-600">
+                        Price per ticket:
+                      </span>
+                      <span className="text-sm font-medium">
+                        {formatPrice(event.price)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-gray-600">Quantity:</span>
+                      <span className="text-sm font-medium">
+                        {ticketQuantity}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                      <span className="text-base font-semibold">Total:</span>
+                      <span className="text-base font-bold">
+                        {formatPrice(event.price * ticketQuantity)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <BuyTicketButton
+                    eventId={event.id}
+                    eventName={event.name}
+                    quantity={ticketQuantity}
+                  />
 
                   {event.voucher && event.voucher.length > 0 && (
                     <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">

@@ -1,7 +1,6 @@
 import SearchBar from "@/app/components/searchbar";
 import { Event } from "@/app/types/event";
 import Link from "next/link";
-import { Suspense } from "react";
 
 export default async function SearchPage({
   searchParams,

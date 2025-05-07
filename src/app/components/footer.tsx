@@ -1,4 +1,5 @@
 import SocialMedia from "./socialMedia";
+import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -8,10 +9,12 @@ export default function Footer() {
           {/* Logo and Tagline Section */}
           <div className="flex flex-col items-center md:items-start mb-8 lg:mb-0 lg:max-w-[40%]">
             <div className="flex flex-col md:flex-row items-center gap-4 md:gap-10 mb-6">
-              <img
+              <Image
                 className="h-[80px] w-[100px] md:h-[100px] md:w-[120px]"
-                src="logo-quick-ticket.png"
+                src="/logo-quick-ticket.png" // Path relative to the public folder
                 alt="Quick Ticket Logo"
+                width={120}
+                height={100}
               />
               <div className="flex flex-col gap-2 text-center md:text-left">
                 <p className="text-2xl md:text-3xl lg:text-4xl">

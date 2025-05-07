@@ -1,5 +1,5 @@
-import Discover from "@/pages/discover-page";
+import DiscoverPage from "@/pages/discover-page";
 
-export default function DiscoverPage() {
-  return <Discover />;
+export default function Discover() {
+  return <DiscoverPage />;
 }
