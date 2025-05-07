@@ -30,7 +30,11 @@ export default function ConcertSection({ category }: SectionProps) {
   }, [category]);
 
   return (
-    <section className="py-10 px-4 md:px-10 lg:px-40 bg-[#FFD9C0] text-black">
+    <section
+      className="py-10 px-4 md:px-10 lg:px-40 bg-[#FFD9C0] text-black"
+      data-section="concert"
+      id="concert"
+    >
       {/* Title + Button layout */}
       <div className="mb-8">
         {/* Tablet and desktop layout */}

@@ -2,8 +2,12 @@
 
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import SearchBar from "@/app/components/searchbar";
 import { format } from "date-fns";
+import Link from "next/link";
+import { cloudinaryBaseUrl } from "@/app/components/config/cloudinary";
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
+import { debounce } from "lodash";
 
 type Event = {
   id: string;
@@ -15,6 +19,12 @@ type Event = {
   start_date: string;
   end_date: string;
   event_image?: string | null;
+  remaining_seats: number;
+};
+
+type EventSuggestion = {
+  id: string;
+  name: string;
 };
 
 const categories = [
@@ -26,62 +36,198 @@ const categories = [
   "Others",
 ];
 
-export default function DiscoverPage() {
-  const [events, setEvents] = useState<Event[]>([]);
+// Common locations - these would ideally come from your database
+const locations = [
+  "Jakarta",
+  "Bandung",
+  "Surabaya",
+  "Bali",
+  "Yogyakarta",
+  "Medan",
+  "Makassar",
+];
+
+const sortOptions = [
+  { value: "asc", label: "Ascending" },
+  { value: "desc", label: "Descending" },
+];
+
+export default function Discover() {
+  // Search and suggestions
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<EventSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Filters
   const [activeFilter, setActiveFilter] = useState("All Events");
+  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+  const [showLocationFilter, setShowLocationFilter] = useState(false);
+  const [showPriceFilter, setShowPriceFilter] = useState(false);
+  const [showDateFilter, setShowDateFilter] = useState(false);
+  const [freeOnly, setFreeOnly] = useState(false);
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [sortOrder, setSortOrder] = useState("asc");
+
+  // Events and pagination
+  const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [locations, setLocations] = useState<string[]>([]);
-  const [selectedLocation, setSelectedLocation] = useState("");
-  const [locationQuery, setLocationQuery] = useState("");
-  const [filteredLocations, setFilteredLocations] = useState<string[]>([]);
-  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
-  const [selectedDate, setSelectedDate] = useState("");
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalEvents, setTotalEvents] = useState(0);
+  const eventsPerPage = 6;
 
+  // Refs for dropdown menus
   const locationRef = useRef<HTMLDivElement>(null);
+  const priceRef = useRef<HTMLDivElement>(null);
   const dateRef = useRef<HTMLDivElement>(null);
 
-  // Add the Cloudinary base URL
-  const cloudinaryBaseUrl =
-    "https://res.cloudinary.com/dnb5cxo2m/image/upload/";
+  // Debounced search function
+  const debouncedSearch = useRef(
+    debounce(async (query) => {
+      if (query.length < 2) {
+        setSuggestions([]);
+        return;
+      }
 
-  // Fetch all available locations for the dropdown
-  const fetchLocations = async () => {
-    try {
-      const res = await axios.get("http://localhost:8000/events/locations");
-      setLocations(res.data.locations || []);
-      setFilteredLocations(res.data.locations || []);
-    } catch (err) {
-      console.error("Failed to fetch locations:", err);
+      try {
+        const response = await axios.get(
+          `http://localhost:8000/events/search?query=${encodeURIComponent(
+            query
+          )}&limit=5`
+        );
+
+        if (response.data && response.data.data) {
+          setSuggestions(response.data.data);
+        }
+      } catch (err) {
+        console.error("Error fetching suggestions:", err);
+      }
+    }, 500)
+  ).current;
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    if (query.length >= 2) {
+      setShowSuggestions(true);
+      debouncedSearch(query);
+    } else {
+      setShowSuggestions(false);
+      setSuggestions([]);
     }
   };
 
-  const fetchEvents = async () => {
+  // Handle suggestion click
+  const handleSuggestionClick = (suggestion: EventSuggestion) => {
+    setSearchQuery(suggestion.name);
+    setShowSuggestions(false);
+    fetchEvents(suggestion.name);
+  };
+
+  // Handle location checkbox change
+  const handleLocationChange = (location: string) => {
+    setSelectedLocations((prev) => {
+      if (prev.includes(location)) {
+        return prev.filter((loc) => loc !== location);
+      } else {
+        return [...prev, location];
+      }
+    });
+  };
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        locationRef.current &&
+        !locationRef.current.contains(event.target as Node)
+      ) {
+        setShowLocationFilter(false);
+      }
+      if (
+        priceRef.current &&
+        !priceRef.current.contains(event.target as Node)
+      ) {
+        setShowPriceFilter(false);
+      }
+      if (dateRef.current && !dateRef.current.contains(event.target as Node)) {
+        setShowDateFilter(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Fetch events based on current filters
+  const fetchEvents = async (keyword?: string) => {
     setLoading(true);
     setError("");
+
     try {
-      let url = `http://localhost:8000/events/filter?limit=20`;
+      let url = `http://localhost:8000/events/filter?limit=${eventsPerPage}&page=${currentPage}`;
+
+      // Add keyword search if provided
+      if (keyword || searchQuery) {
+        url += `&keyword=${encodeURIComponent(keyword || searchQuery)}`;
+      }
 
       // Add category filter if not "All Events"
       if (activeFilter !== "All Events") {
         url += `&category=${activeFilter}`;
       }
 
-      // Add location filter if selected
-      if (selectedLocation) {
-        url += `&location=${encodeURIComponent(selectedLocation)}`;
+      // Add location filter if any locations are selected
+      if (selectedLocations.length > 0) {
+        // Join multiple locations with comma
+        url += `&location=${encodeURIComponent(selectedLocations.join(","))}`;
       }
 
       // Add date filter if selected
       if (selectedDate) {
-        url += `&date=${selectedDate}`;
+        const formattedDate = format(selectedDate, "yyyy-MM-dd");
+        url += `&specificDate=${formattedDate}`;
       }
+
+      // Add price filters
+      if (freeOnly) {
+        url += "&freeOnly=true";
+      } else if (minPrice || maxPrice) {
+        if (minPrice) {
+          url += `&minPrice=${minPrice}`;
+        }
+        if (maxPrice) {
+          url += `&maxPrice=${maxPrice}`;
+        }
+      }
+
+      // Add sort order
+      url += `&sortOrder=${sortOrder}`;
 
       console.log("Fetching events with URL:", url);
 
       const res = await axios.get(url);
-      setEvents(res.data.events || []);
+
+      if (res.data && res.data.events) {
+        setEvents(Array.isArray(res.data.events) ? res.data.events : []);
+
+        // Calculate total pages based on total count from API
+        const total =
+          res.data.total ||
+          (Array.isArray(res.data.events) ? res.data.events.length : 0);
+        setTotalEvents(total);
+        setTotalPages(Math.ceil(total / eventsPerPage));
+      } else {
+        setEvents([]);
+        setTotalPages(1);
+      }
     } catch (err) {
       console.error("Error fetching events:", err);
       if (axios.isAxiosError(err) && err.response) {
@@ -98,56 +244,82 @@ export default function DiscoverPage() {
     }
   };
 
+  // Fetch events when filters change
   useEffect(() => {
     fetchEvents();
-  }, [activeFilter, selectedLocation, selectedDate]);
+  }, [
+    activeFilter,
+    selectedLocations,
+    selectedDate,
+    freeOnly,
+    minPrice,
+    maxPrice,
+    sortOrder,
+    currentPage,
+  ]);
 
-  useEffect(() => {
-    fetchLocations();
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo(0, 0);
+  };
 
-    // Close dropdowns when clicking outside
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        locationRef.current &&
-        !locationRef.current.contains(event.target as Node)
-      ) {
-        setShowLocationDropdown(false);
-      }
-      if (dateRef.current && !dateRef.current.contains(event.target as Node)) {
-        setShowDatePicker(false);
-      }
-    };
+  // Generate pagination buttons
+  const renderPaginationButtons = () => {
+    const buttons = [];
+    const maxVisibleButtons = 5;
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+    // Previous button
+    buttons.push(
+      <button
+        key="prev"
+        onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+        disabled={currentPage === 1}
+        className="px-3 py-1 rounded border disabled:opacity-50"
+      >
+        &lt;
+      </button>
+    );
 
-  // Filter locations based on search query
-  useEffect(() => {
-    if (locationQuery) {
-      const filtered = locations.filter((location) =>
-        location.toLowerCase().includes(locationQuery.toLowerCase())
-      );
-      setFilteredLocations(filtered);
-    } else {
-      setFilteredLocations(locations);
+    // Calculate range of page numbers to show
+    let startPage = Math.max(
+      1,
+      currentPage - Math.floor(maxVisibleButtons / 2)
+    );
+    let endPage = Math.min(totalPages, startPage + maxVisibleButtons - 1);
+
+    if (endPage - startPage + 1 < maxVisibleButtons) {
+      startPage = Math.max(1, endPage - maxVisibleButtons + 1);
     }
-  }, [locationQuery, locations]);
 
-  const handleLocationSelect = (location: string) => {
-    setSelectedLocation(location);
-    setShowLocationDropdown(false);
-    setLocationQuery("");
-  };
+    // Page number buttons
+    for (let i = startPage; i <= endPage; i++) {
+      buttons.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`px-3 py-1 rounded border mx-1 ${
+            currentPage === i ? "bg-black text-white" : ""
+          }`}
+        >
+          {i}
+        </button>
+      );
+    }
 
-  const clearLocationFilter = () => {
-    setSelectedLocation("");
-  };
+    // Next button
+    buttons.push(
+      <button
+        key="next"
+        onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+        disabled={currentPage === totalPages}
+        className="px-3 py-1 rounded border disabled:opacity-50"
+      >
+        &gt;
+      </button>
+    );
 
-  const clearDateFilter = () => {
-    setSelectedDate("");
+    return buttons;
   };
 
   return (
@@ -156,9 +328,38 @@ export default function DiscoverPage() {
         Discover Events
       </h1>
 
-      {/* Search Bar */}
-      <div className="mb-8 max-w-xl mx-auto">
-        <SearchBar />
+      {/* Search Section */}
+      <div className="mb-8 max-w-xl mx-auto relative">
+        <div className="relative">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            placeholder="Search for events..."
+            className="w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-black"
+          />
+          <button
+            onClick={() => fetchEvents()}
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black text-white px-4 py-1 rounded-full"
+          >
+            Search
+          </button>
+        </div>
+
+        {/* Search Suggestions */}
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="absolute z-10 w-full bg-white mt-1 rounded-lg shadow-lg">
+            {suggestions.map((suggestion) => (
+              <div
+                key={suggestion.id}
+                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                onClick={() => handleSuggestionClick(suggestion)}
+              >
+                {suggestion.name}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Filter Section */}
@@ -168,7 +369,10 @@ export default function DiscoverPage() {
           {categories.map((category) => (
             <button
               key={category}
-              onClick={() => setActiveFilter(category)}
+              onClick={() => {
+                setActiveFilter(category);
+                setCurrentPage(1);
+              }}
               className={`px-4 py-2 rounded-full text-sm font-medium transition ${
                 activeFilter === category
                   ? "bg-black text-white"
@@ -180,59 +384,169 @@ export default function DiscoverPage() {
           ))}
         </div>
 
-        {/* Location and Date Filters */}
+        {/* Additional Filters */}
         <div className="flex flex-wrap gap-3 justify-center mb-6">
           {/* Location Filter */}
           <div className="relative" ref={locationRef}>
             <button
-              onClick={() => setShowLocationDropdown(!showLocationDropdown)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition flex items-center gap-2 ${
-                selectedLocation
+              onClick={() => {
+                setShowLocationFilter(!showLocationFilter);
+                setShowPriceFilter(false);
+                setShowDateFilter(false);
+              }}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                selectedLocations.length > 0
                   ? "bg-black text-white"
                   : "bg-gray-100 text-gray-800 hover:bg-gray-200"
               }`}
             >
-              <span>{selectedLocation || "Location"}</span>
-              {selectedLocation && (
-                <span
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    clearLocationFilter();
-                  }}
-                  className="ml-1 text-xs bg-gray-700 rounded-full w-4 h-4 flex items-center justify-center"
-                >
-                  ×
-                </span>
-              )}
+              Location{" "}
+              {selectedLocations.length > 0 && `(${selectedLocations.length})`}
             </button>
 
-            {showLocationDropdown && (
-              <div className="absolute z-10 mt-2 w-64 bg-white rounded-lg shadow-lg overflow-hidden">
-                <div className="p-2 border-b">
-                  <input
-                    type="text"
-                    value={locationQuery}
-                    onChange={(e) => setLocationQuery(e.target.value)}
-                    placeholder="Search locations..."
-                    className="w-full p-2 border rounded text-sm"
-                  />
+            {showLocationFilter && (
+              <div className="absolute z-10 mt-2 bg-white rounded-lg shadow-lg p-4 w-64">
+                <div className="mb-3 max-h-60 overflow-y-auto">
+                  {locations.map((location) => (
+                    <label
+                      key={location}
+                      className="flex items-center text-sm font-medium text-gray-700 mb-2"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedLocations.includes(location)}
+                        onChange={() => handleLocationChange(location)}
+                        className="mr-2"
+                      />
+                      {location}
+                    </label>
+                  ))}
                 </div>
-                <div className="max-h-60 overflow-y-auto">
-                  {filteredLocations.length === 0 ? (
-                    <p className="p-3 text-sm text-gray-500">
-                      No locations found
-                    </p>
-                  ) : (
-                    filteredLocations.map((location) => (
-                      <div
-                        key={location}
-                        onClick={() => handleLocationSelect(location)}
-                        className="p-3 hover:bg-gray-100 cursor-pointer text-sm"
-                      >
-                        {location}
-                      </div>
-                    ))
-                  )}
+                <div className="flex justify-between">
+                  <button
+                    onClick={() => setSelectedLocations([])}
+                    className="text-sm text-gray-600"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    onClick={() => setShowLocationFilter(false)}
+                    className="text-sm bg-black text-white px-3 py-1 rounded"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Price Filter */}
+          <div className="relative" ref={priceRef}>
+            <button
+              onClick={() => {
+                setShowPriceFilter(!showPriceFilter);
+                setShowLocationFilter(false);
+                setShowDateFilter(false);
+              }}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                freeOnly || minPrice || maxPrice
+                  ? "bg-black text-white"
+                  : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+              }`}
+            >
+              Price
+            </button>
+
+            {showPriceFilter && (
+              <div className="absolute z-10 mt-2 bg-white rounded-lg shadow-lg p-4 w-64">
+                <div className="mb-3">
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-3">
+                    <input
+                      type="checkbox"
+                      checked={freeOnly}
+                      onChange={(e) => {
+                        setFreeOnly(e.target.checked);
+                        if (e.target.checked) {
+                          setMinPrice("");
+                          setMaxPrice("");
+                        }
+                      }}
+                      className="mr-2"
+                    />
+                    Free events only
+                  </label>
+
+                  <div
+                    className={`space-y-2 ${
+                      freeOnly ? "opacity-50 pointer-events-none" : ""
+                    }`}
+                  >
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Min Price (Rp)
+                      </label>
+                      <input
+                        type="number"
+                        value={minPrice}
+                        onChange={(e) => setMinPrice(e.target.value)}
+                        className="w-full p-2 border rounded text-sm"
+                        placeholder="0"
+                        min="0"
+                        disabled={freeOnly}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Max Price (Rp)
+                      </label>
+                      <input
+                        type="number"
+                        value={maxPrice}
+                        onChange={(e) => setMaxPrice(e.target.value)}
+                        className="w-full p-2 border rounded text-sm"
+                        placeholder="1000000"
+                        min="0"
+                        disabled={freeOnly}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sort options */}
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Sort by Price
+                  </label>
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                    className="w-full p-2 border rounded text-sm"
+                  >
+                    {sortOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex justify-between">
+                  <button
+                    onClick={() => {
+                      setFreeOnly(false);
+                      setMinPrice("");
+                      setMaxPrice("");
+                    }}
+                    className="text-sm text-gray-600"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    onClick={() => setShowPriceFilter(false)}
+                    className="text-sm bg-black text-white px-3 py-1 rounded"
+                  >
+                    Apply
+                  </button>
                 </div>
               </div>
             )}
@@ -241,53 +555,56 @@ export default function DiscoverPage() {
           {/* Date Filter */}
           <div className="relative" ref={dateRef}>
             <button
-              onClick={() => setShowDatePicker(!showDatePicker)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition flex items-center gap-2 ${
+              onClick={() => {
+                setShowDateFilter(!showDateFilter);
+                setShowLocationFilter(false);
+                setShowPriceFilter(false);
+              }}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
                 selectedDate
                   ? "bg-black text-white"
                   : "bg-gray-100 text-gray-800 hover:bg-gray-200"
               }`}
             >
-              <span>
-                {selectedDate
-                  ? format(new Date(selectedDate), "dd MMM yyyy")
-                  : "Date"}
-              </span>
-              {selectedDate && (
-                <span
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    clearDateFilter();
-                  }}
-                  className="ml-1 text-xs bg-gray-700 rounded-full w-4 h-4 flex items-center justify-center"
-                >
-                  ×
-                </span>
-              )}
+              Date
             </button>
 
-            {showDatePicker && (
-              <div className="absolute z-10 mt-2 bg-white rounded-lg shadow-lg p-4 w-64">
-                <div className="mb-3">
+            {showDateFilter && (
+              <div className="absolute z-10 mt-2 bg-white rounded-lg shadow-lg p-4">
+                <Calendar
+                  onChange={(date) => setSelectedDate(date as Date)}
+                  value={selectedDate}
+                  minDate={new Date()}
+                  className="border-0"
+                />
+
+                {/* Sort options */}
+                <div className="mt-3 mb-3">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Select Date
+                    Sort by Date
                   </label>
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
                     className="w-full p-2 border rounded text-sm"
-                  />
+                  >
+                    {sortOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+
                 <div className="flex justify-between">
                   <button
-                    onClick={clearDateFilter}
-                    className="text-sm text-gray-600 hover:text-gray-800"
+                    onClick={() => setSelectedDate(null)}
+                    className="text-sm text-gray-600"
                   >
                     Clear
                   </button>
                   <button
-                    onClick={() => setShowDatePicker(false)}
+                    onClick={() => setShowDateFilter(false)}
                     className="text-sm bg-black text-white px-3 py-1 rounded"
                   >
                     Apply
@@ -299,26 +616,46 @@ export default function DiscoverPage() {
         </div>
 
         {/* Active Filters Display */}
-        {(selectedLocation || selectedDate) && (
+        {(searchQuery ||
+          activeFilter !== "All Events" ||
+          selectedLocations.length > 0 ||
+          selectedDate ||
+          freeOnly ||
+          minPrice ||
+          maxPrice) && (
           <div className="flex justify-center mb-4">
             <div className="text-sm text-gray-600">
               Filtering:
+              {searchQuery && <span className="ml-1">"{searchQuery}"</span>}
               {activeFilter !== "All Events" && (
                 <span className="ml-1">{activeFilter}</span>
               )}
-              {selectedLocation && (
-                <span className="ml-1">in {selectedLocation}</span>
+              {selectedLocations.length > 0 && (
+                <span className="ml-1">in {selectedLocations.join(", ")}</span>
               )}
               {selectedDate && (
                 <span className="ml-1">
-                  on {format(new Date(selectedDate), "dd MMM yyyy")}
+                  on {format(selectedDate, "dd MMM yyyy")}
                 </span>
+              )}
+              {freeOnly && <span className="ml-1">Free events only</span>}
+              {!freeOnly && minPrice && maxPrice && (
+                <span className="ml-1">
+                  Price: Rp {minPrice} - Rp {maxPrice}
+                </span>
+              )}
+              {!freeOnly && minPrice && !maxPrice && (
+                <span className="ml-1">Price: Min Rp {minPrice}</span>
+              )}
+              {!freeOnly && !minPrice && maxPrice && (
+                <span className="ml-1">Price: Max Rp {maxPrice}</span>
               )}
             </div>
           </div>
         )}
       </div>
 
+      {/* Events Display */}
       {loading && (
         <p className="text-center text-gray-500">Loading events...</p>
       )}
@@ -327,33 +664,39 @@ export default function DiscoverPage() {
         <p className="text-center text-gray-400">No events found.</p>
       )}
 
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-8">
         {events.map((event) => (
           <div
             key={event.id}
             className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition"
           >
-            {event.event_image && (
-              <img
-                src={`${cloudinaryBaseUrl}${event.event_image}`}
-                alt={event.name}
-                className="w-full h-48 object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    "https://via.placeholder.com/400x200";
-                }}
-              />
-            )}
-            {!event.event_image && (
-              <img
-                src="https://via.placeholder.com/400x200"
-                alt="No image available"
-                className="w-full h-48 object-cover"
-              />
-            )}
+            <Link href={`/events/${event.id}`}>
+              {event.event_image && (
+                <img
+                  src={`${cloudinaryBaseUrl}${event.event_image}`}
+                  alt={event.name}
+                  className="w-full h-48 object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src =
+                      "https://via.placeholder.com/400x200";
+                  }}
+                />
+              )}
+              {!event.event_image && (
+                <img
+                  src="https://via.placeholder.com/400x200"
+                  alt="No image available"
+                  className="w-full h-48 object-cover"
+                />
+              )}
+            </Link>
 
             <div className="p-4 flex flex-col gap-2">
-              <h2 className="text-lg font-semibold">{event.name}</h2>
+              <Link href={`/events/${event.id}`}>
+                <h2 className="text-lg font-semibold hover:text-blue-600">
+                  {event.name}
+                </h2>
+              </Link>
               <p className="text-sm text-gray-600 line-clamp-2">
                 {event.description}
               </p>
@@ -367,10 +710,25 @@ export default function DiscoverPage() {
                   ? "Free"
                   : `Rp ${event.price.toLocaleString()}`}
               </p>
+              {event.remaining_seats <= 10 && event.remaining_seats > 0 && (
+                <p className="text-xs text-orange-600">
+                  Only {event.remaining_seats} seats left!
+                </p>
+              )}
+              {event.remaining_seats === 0 && (
+                <p className="text-xs text-red-600 font-bold">Sold Out</p>
+              )}
             </div>
           </div>
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-8">
+          <div className="flex space-x-1">{renderPaginationButtons()}</div>
+        </div>
+      )}
     </div>
   );
 }
