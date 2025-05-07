@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, ChangeEvent } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function NavBar() {
   const router = useRouter();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const scrollToEvents = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -20,15 +21,42 @@ export default function NavBar() {
       // If on another page, navigate to homepage and then scroll
       router.push("/#concert");
     }
+
+    // Close mobile menu if open
+    setIsMenuOpen(false);
   };
 
   const navigateToHome = () => {
     router.push("/");
+    setIsMenuOpen(false);
   };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const mobileMenu = document.getElementById("mobile-menu");
+      const hamburgerButton = document.getElementById("hamburger-button");
+
+      if (
+        isMenuOpen &&
+        mobileMenu &&
+        hamburgerButton &&
+        !mobileMenu.contains(event.target as Node) &&
+        !hamburgerButton.contains(event.target as Node)
+      ) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isMenuOpen]);
 
   return (
     <div>
-      <div className="navbar">
+      <div className="navbar px-4 sm:px-[50px]">
         <div className="nav-buttons-group items-center">
           <img
             className="small-logo"
@@ -38,30 +66,96 @@ export default function NavBar() {
             style={{ cursor: "pointer" }}
           ></img>
           <div
-            className="nav-logo-text"
+            className="nav-logo-text hidden sm:block"
             onClick={navigateToHome}
             style={{ cursor: "pointer" }}
           >
             Quick Ticket
           </div>
         </div>
-        <div className="nav-links-group">
+
+        {/* Desktop Navigation */}
+        <div className="nav-links-group hidden lg:flex">
           <a href="#" onClick={scrollToEvents} className="links">
             Events
           </a>
-          <Link href="/" className="links">
-            Locations
+          <Link href="/discover" className="links">
+            Discover
           </Link>
-          <Link href="/" className="links">
-            Category
+          <Link href="/create-event" className="links">
+            Create Events
           </Link>
-          <Link href="/" className="links">
+          <Link href="/about" className="links">
             About
           </Link>
         </div>
-        <div className="nav-buttons-group">
+
+        <div className="nav-buttons-group hidden lg:flex">
           <button className="buttonA">Sign In</button>
           <button className="buttonB">Get Started</button>
+        </div>
+
+        {/* Mobile & Tablet Hamburger Menu */}
+        <button
+          id="hamburger-button"
+          className="lg:hidden flex flex-col justify-center items-center w-10 h-10 cursor-pointer"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+        >
+          <span
+            className={`bg-black block h-1 w-6 rounded-sm transition-all duration-300 ease-out ${
+              isMenuOpen ? "rotate-45 translate-y-1.5" : "-translate-y-1"
+            }`}
+          ></span>
+          <span
+            className={`bg-black block h-1 w-6 rounded-sm my-0.5 ${
+              isMenuOpen ? "opacity-0" : "opacity-100"
+            } transition-opacity duration-300 ease-out`}
+          ></span>
+          <span
+            className={`bg-black block h-1 w-6 rounded-sm transition-all duration-300 ease-out ${
+              isMenuOpen ? "-rotate-45 -translate-y-1.5" : "translate-y-1"
+            }`}
+          ></span>
+        </button>
+      </div>
+
+      {/* Mobile & Tablet Menu */}
+      <div
+        id="mobile-menu"
+        className={`fixed top-[80px] left-0 w-full bg-[#F4BFBF] z-40 shadow-lg transition-transform duration-300 ease-in-out ${
+          isMenuOpen ? "translate-y-0" : "-translate-y-full"
+        } lg:hidden`}
+      >
+        <div className="flex flex-col p-5 space-y-4 overflow-x-hidden max-w-screen">
+          <a
+            href="#"
+            onClick={scrollToEvents}
+            className="text-[#222432] text-lg font-medium hover:text-[#6096B4]"
+          >
+            Events
+          </a>
+          <Link
+            href="/discover"
+            className="text-[#222432] text-lg font-medium hover:text-[#6096B4]"
+          >
+            Discover
+          </Link>
+          <Link
+            href="/create-event"
+            className="text-[#222432] text-lg font-medium hover:text-[#6096B4]"
+          >
+            Create Events
+          </Link>
+          <Link
+            href="/about"
+            className="text-[#222432] text-lg font-medium hover:text-[#6096B4]"
+          >
+            About
+          </Link>
+          <div className="flex flex-col space-y-3 pt-3">
+            <button className="buttonA w-full">Sign In</button>
+            <button className="buttonB w-full">Get Started</button>
+          </div>
         </div>
       </div>
     </div>

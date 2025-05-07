@@ -2,56 +2,97 @@ import SocialMedia from "./socialMedia";
 
 export default function Footer() {
   return (
-    <div>
-      <div className="footer">
-        <div className="footer-content">
-          <div className="footer-group">
-            <img
-              className="big-logo"
-              src="logo-quick-ticket.png"
-              alt="logo-quick-ticket-img"
-            ></img>
-            <h3 className="title pb-10">
-              Ticketing made simple. Events made epic.
-            </h3>
-            <SocialMedia />
+    <footer className="bg-[#FFD9C0] py-8 md:py-12">
+      <div className="container mx-auto px-6 md:px-10">
+        <div className="flex flex-col lg:flex-row lg:justify-between">
+          {/* Logo and Tagline Section */}
+          <div className="flex flex-col items-center md:items-start mb-8 lg:mb-0 lg:max-w-[40%]">
+            <div className="flex flex-col md:flex-row items-center gap-4 md:gap-10 mb-6">
+              <img
+                className="h-[80px] w-[100px] md:h-[100px] md:w-[120px]"
+                src="logo-quick-ticket.png"
+                alt="Quick Ticket Logo"
+              />
+              <div className="flex flex-col gap-2 text-center md:text-left">
+                <p className="text-2xl md:text-3xl lg:text-4xl">
+                  Ticketing made simple.
+                </p>
+                <p className="text-2xl md:text-3xl lg:text-4xl">
+                  Events make epic.
+                </p>
+              </div>
+            </div>
+
+            {/* Social Media Links */}
+            <div className="mt-4">
+              <SocialMedia />
+            </div>
           </div>
-          <div className="footer-group">
-            <div className="flex gap-10 px-10">
-              <div className="text-group">
-                <a className="medium-text">Company & legal</a>
-                <a className="small-text">Our story</a>
-                <a className="small-text">Careers</a>
-                <a className="small-text">Terms of use</a>
-                <a className="small-text">Terms and conditions</a>
-                <a className="small-text">Acceptable use policy</a>
-                <a className="small-text">Cookie policy</a>
-                <a className="small-text">Privacy policy</a>
+
+          {/* Links Section - Hidden on mobile only */}
+          <div className="hidden md:block lg:max-w-[55%]">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-10 lg:gap-16">
+              {/* Company & Legal */}
+              <div className="flex flex-col">
+                <h3 className="text-lg font-bold mb-4">Company & legal</h3>
+                <a className="text-sm mb-2 hover:underline cursor-pointer">
+                  Our story
+                </a>
+                <a className="text-sm mb-2 hover:underline cursor-pointer">
+                  Careers
+                </a>
+                <a className="text-sm mb-2 hover:underline cursor-pointer">
+                  Terms of use
+                </a>
+                <a className="text-sm mb-2 hover:underline cursor-pointer">
+                  Privacy policy
+                </a>
               </div>
-              <div className="text-group">
-                <a className="medium-text">Support</a>
-                <a className="small-text">Contact Us</a>
-                <a className="small-text">Book a demo</a>
-                <a className="small-text">Pricing</a>
-                <a className="small-text">Help centre</a>
-                <a className="small-text">Partner programs</a>
-                <a className="small-text">Accesibility</a>
-                <a className="small-text">Developers</a>
+
+              {/* Support */}
+              <div className="flex flex-col">
+                <h3 className="text-lg font-bold mb-4">Support</h3>
+                <a className="text-sm mb-2 hover:underline cursor-pointer">
+                  Contact Us
+                </a>
+                <a className="text-sm mb-2 hover:underline cursor-pointer">
+                  Book a demo
+                </a>
+                <a className="text-sm mb-2 hover:underline cursor-pointer">
+                  Pricing
+                </a>
+                <a className="text-sm mb-2 hover:underline cursor-pointer">
+                  Help centre
+                </a>
               </div>
-              <div className="text-group">
-                <a className="medium-text">Quicklinks</a>
-                <a className="small-text">Ticketing and Event News</a>
-                <a className="small-text">Discover live events</a>
-                <a className="small-text">Eventbritte alternative</a>
-                <a className="small-text">Ticket spice alternative</a>
-                <a className="small-text">Ticket source alternative</a>
-                <a className="small-text">Venue ticketing</a>
-                <a className="small-text">Workshop ticketing</a>
+
+              {/* Quicklinks */}
+              <div className="flex flex-col">
+                <h3 className="text-lg font-bold mb-4">Quicklinks</h3>
+                <a className="text-sm mb-2 hover:underline cursor-pointer">
+                  Ticketing News
+                </a>
+                <a className="text-sm mb-2 hover:underline cursor-pointer">
+                  Discover events
+                </a>
+                <a className="text-sm mb-2 hover:underline cursor-pointer">
+                  Venue ticketing
+                </a>
+                <a className="text-sm mb-2 hover:underline cursor-pointer">
+                  Workshop ticketing
+                </a>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Copyright - Visible on all screens */}
+        <div className="mt-8 pt-6 border-t border-black text-center md:text-left">
+          <p className="text-sm text-gray-600">
+            © {new Date().getFullYear()} Quick Ticket. All rights reserved.
+          </p>
+        </div>
       </div>
-    </div>
+    </footer>
   );
 }
