@@ -275,15 +275,25 @@ export default function Discover() {
 
       const res = await axios.get(url);
 
-      if (res.data && res.data.events) {
-        setEvents(Array.isArray(res.data.events) ? res.data.events : []);
+      console.log("API Response:", res.data);
 
-        // Calculate total pages based on total count from API
-        const total =
-          res.data.total ||
-          (Array.isArray(res.data.events) ? res.data.events.length : 0);
-        setTotalEvents(total);
-        setTotalPages(Math.ceil(total / eventsPerPage));
+      if (res.data && res.data.events) {
+        // Update to use the new response structure
+        setEvents(
+          Array.isArray(res.data.events.events) ? res.data.events.events : []
+        );
+
+        // Use the pagination information from the API
+        if (res.data.events.pagination) {
+          setTotalEvents(res.data.events.pagination.total);
+          setTotalPages(res.data.events.pagination.totalPages);
+          // Make sure currentPage matches what the server returned
+          setCurrentPage(res.data.events.pagination.currentPage);
+        } else {
+          // Fallback if pagination info is not provided
+          setTotalEvents(res.data.events.events.length);
+          setTotalPages(1);
+        }
       } else {
         setEvents([]);
         setTotalPages(1);
@@ -335,7 +345,7 @@ export default function Discover() {
         key="prev"
         onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
         disabled={currentPage === 1}
-        className="px-3 py-1 rounded border disabled:opacity-50"
+        className="px-3 py-1 rounded border disabled:opacity-50 cursor-pointer"
       >
         &lt;
       </button>
@@ -358,8 +368,8 @@ export default function Discover() {
         <button
           key={i}
           onClick={() => handlePageChange(i)}
-          className={`px-3 py-1 rounded border mx-1 ${
-            currentPage === i ? "bg-black text-white" : ""
+          className={`px-3 py-1 rounded border mx-1 cursor-pointer ${
+            currentPage === i ? "bg-[#222432] text-white" : ""
           }`}
         >
           {i}
@@ -373,7 +383,7 @@ export default function Discover() {
         key="next"
         onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
         disabled={currentPage === totalPages}
-        className="px-3 py-1 rounded border disabled:opacity-50"
+        className="px-3 py-1 rounded border disabled:opacity-50 cursor-pointer"
       >
         &gt;
       </button>

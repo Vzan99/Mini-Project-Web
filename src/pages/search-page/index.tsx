@@ -96,7 +96,7 @@ export default async function SearchPage({
     <main>
       {/* Hero Section */}
       <section className="flex flex-col bg-[#FAF0D7] gap-[20px] items-center justify-center text-center px-4 py-12 md:px-10 lg:px-40">
-        <h1 className="text-3xl md:text-4xl font-bold">Search QQ Ticket</h1>
+        <h1 className="text-3xl md:text-4xl font-bold">Search Quick Ticket</h1>
         <div className="w-full max-w-xl">
           <SearchBar />
         </div>
@@ -104,7 +104,7 @@ export default async function SearchPage({
       </section>
 
       {/* Content Section */}
-      <section className="container mx-auto px-10 py-8">
+      <section className="container mx-auto px-40 py-8 bg-[#FAF0D7]">
         {error ? (
           <p className="text-red-500">{error}</p>
         ) : events.length === 0 ? (
