@@ -70,6 +70,10 @@ export default function Discover() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [sortOrder, setSortOrder] = useState("asc");
 
+  // Debounced price state
+  const [debouncedMinPrice, setDebouncedMinPrice] = useState("");
+  const [debouncedMaxPrice, setDebouncedMaxPrice] = useState("");
+
   // Events and pagination
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
@@ -108,6 +112,14 @@ export default function Discover() {
     }, 500)
   ).current;
 
+  // Debounced price update function
+  const debouncedPriceUpdate = useRef(
+    debounce((min: string, max: string) => {
+      setDebouncedMinPrice(min);
+      setDebouncedMaxPrice(max);
+    }, 800)
+  ).current;
+
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
@@ -131,13 +143,11 @@ export default function Discover() {
 
   // Handle location checkbox change
   const handleLocationChange = (location: string) => {
-    setSelectedLocations((prev) => {
-      if (prev.includes(location)) {
-        return prev.filter((loc) => loc !== location);
-      } else {
-        return [...prev, location];
-      }
-    });
+    // If the location is already selected, clear the selection
+    // Otherwise, set only this location as selected
+    setSelectedLocations(
+      selectedLocations.includes(location) ? [] : [location]
+    );
   };
 
   // Close dropdowns when clicking outside
@@ -158,6 +168,24 @@ export default function Discover() {
       if (dateRef.current && !dateRef.current.contains(event.target as Node)) {
         setShowDateFilter(false);
       }
+
+      // Add this to hide suggestions when clicking outside
+      const target = event.target as Node;
+      const searchInput = document.querySelector(
+        'input[type="text"][placeholder="Search for events..."]'
+      );
+      const suggestionsContainer = document.querySelector(
+        ".absolute.z-10.w-full.bg-white.mt-1"
+      );
+
+      if (
+        searchInput &&
+        suggestionsContainer &&
+        !searchInput.contains(target) &&
+        !suggestionsContainer.contains(target)
+      ) {
+        setShowSuggestions(false);
+      }
     }
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -165,6 +193,26 @@ export default function Discover() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  // Handle price input change
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (name === "minPrice") {
+      setMinPrice(value);
+    } else if (name === "maxPrice") {
+      setMaxPrice(value);
+    }
+  };
+
+  // Effect to handle price input debouncing
+  useEffect(() => {
+    debouncedPriceUpdate(minPrice, maxPrice);
+
+    // Cleanup function
+    return () => {
+      debouncedPriceUpdate.cancel();
+    };
+  }, [minPrice, maxPrice]);
 
   // Fetch events based on current filters
   const fetchEvents = async (keyword?: string) => {
@@ -196,15 +244,16 @@ export default function Discover() {
         url += `&specificDate=${formattedDate}`;
       }
 
-      // Add price filters
+      // Add price filters - use debounced values
       if (freeOnly) {
-        url += "&freeOnly=true";
-      } else if (minPrice || maxPrice) {
-        if (minPrice) {
-          url += `&minPrice=${minPrice}`;
+        // For free events, set both minPrice and maxPrice to 0
+        url += "&minPrice=0&maxPrice=0";
+      } else if (debouncedMinPrice || debouncedMaxPrice) {
+        if (debouncedMinPrice) {
+          url += `&minPrice=${debouncedMinPrice}`;
         }
-        if (maxPrice) {
-          url += `&maxPrice=${maxPrice}`;
+        if (debouncedMaxPrice) {
+          url += `&maxPrice=${debouncedMaxPrice}`;
         }
       }
 
@@ -252,8 +301,8 @@ export default function Discover() {
     selectedLocations,
     selectedDate,
     freeOnly,
-    minPrice,
-    maxPrice,
+    debouncedMinPrice, // Changed from minPrice
+    debouncedMaxPrice, // Changed from maxPrice
     sortOrder,
     currentPage,
   ]);
@@ -340,7 +389,7 @@ export default function Discover() {
           />
           <button
             onClick={() => fetchEvents()}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black text-white px-4 py-1 rounded-full"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-[#222432] text-white px-4 py-1 rounded-full transition-transform duration-200 ease-in-out hover:scale-110 cursor-pointer"
           >
             Search
           </button>
@@ -373,9 +422,9 @@ export default function Discover() {
                 setActiveFilter(category);
                 setCurrentPage(1);
               }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+              className={`px-4 py-2 rounded-full text-sm font-medium transition cursor-pointer ${
                 activeFilter === category
-                  ? "bg-black text-white"
+                  ? "bg-[#222432] text-white"
                   : "bg-gray-100 text-gray-800 hover:bg-gray-200"
               }`}
             >
@@ -394,7 +443,7 @@ export default function Discover() {
                 setShowPriceFilter(false);
                 setShowDateFilter(false);
               }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+              className={`px-4 py-2 rounded-full text-sm font-medium transition cursor-pointer ${
                 selectedLocations.length > 0
                   ? "bg-black text-white"
                   : "bg-gray-100 text-gray-800 hover:bg-gray-200"
@@ -448,7 +497,7 @@ export default function Discover() {
                 setShowLocationFilter(false);
                 setShowDateFilter(false);
               }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+              className={`px-4 py-2 rounded-full text-sm font-medium transition cursor-pointer ${
                 freeOnly || minPrice || maxPrice
                   ? "bg-black text-white"
                   : "bg-gray-100 text-gray-800 hover:bg-gray-200"
@@ -488,7 +537,8 @@ export default function Discover() {
                       <input
                         type="number"
                         value={minPrice}
-                        onChange={(e) => setMinPrice(e.target.value)}
+                        onChange={handlePriceChange}
+                        name="minPrice"
                         className="w-full p-2 border rounded text-sm"
                         placeholder="0"
                         min="0"
@@ -502,7 +552,8 @@ export default function Discover() {
                       <input
                         type="number"
                         value={maxPrice}
-                        onChange={(e) => setMaxPrice(e.target.value)}
+                        onChange={handlePriceChange}
+                        name="maxPrice"
                         className="w-full p-2 border rounded text-sm"
                         placeholder="1000000"
                         min="0"
@@ -560,7 +611,7 @@ export default function Discover() {
                 setShowLocationFilter(false);
                 setShowPriceFilter(false);
               }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+              className={`px-4 py-2 rounded-full text-sm font-medium transition cursor-pointer ${
                 selectedDate
                   ? "bg-black text-white"
                   : "bg-gray-100 text-gray-800 hover:bg-gray-200"
