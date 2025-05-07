@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import EventCard from "@/app/components/cards/eventCard";
 import { Event } from "@/app/types/event";
 import axios from "axios";
+import Link from "next/link";
 // import Button from "@/app/components/buttons";
 
 type SectionProps = {
@@ -36,7 +37,9 @@ export default function ComedySection({ category }: SectionProps) {
         {/* Tablet and desktop layout */}
         <div className="hidden md:flex justify-between items-center">
           <h2 className="text-2xl font-bold">Comedies</h2>
-          <button className="buttonA">View More</button>
+          <Link href="/discover?category=Comedy">
+            <button className="buttonA">View More</button>
+          </Link>
         </div>
 
         {/* Mobile layout: title only */}
@@ -73,7 +76,9 @@ export default function ComedySection({ category }: SectionProps) {
 
           {/* Mobile button below carousel */}
           <div className="md:hidden text-center mb-6 flex justify-center">
-            <button className="buttonA">View More</button>
+            <Link href="/discover?category=Comedy">
+              <button className="buttonA">View More</button>
+            </Link>
           </div>
 
           {/* Desktop/tablet view: grid layout */}

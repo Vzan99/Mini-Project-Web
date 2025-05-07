@@ -392,6 +392,19 @@ export default function Discover() {
     return buttons;
   };
 
+  // Add this near the top of your component, after your state declarations
+  // This will read the URL parameters when the component mounts
+  useEffect(() => {
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryParam = urlParams.get("category");
+
+    // If a category is specified in the URL, set it as the active filter
+    if (categoryParam && categories.includes(categoryParam)) {
+      setActiveFilter(categoryParam);
+    }
+  }, []);
+
   return (
     <div className="bg-[#FAF0D7]">
       <div className="w-full px-6 py-10 max-w-screen-xl mx-auto">

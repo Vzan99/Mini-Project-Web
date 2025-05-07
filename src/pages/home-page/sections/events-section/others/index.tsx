@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import EventCard from "@/app/components/cards/eventCard";
 import { Event } from "@/app/types/event";
 import axios from "axios";
-// import Button from "@/app/components/buttons";
+import Link from "next/link";
 
 type SectionProps = {
   category: string;
@@ -36,7 +36,9 @@ export default function OtherSection({ category }: SectionProps) {
         {/* Tablet and desktop layout */}
         <div className="hidden md:flex justify-between items-center">
           <h2 className="text-2xl font-bold">{category}</h2>
-          <button className="buttonA">View More</button>
+          <Link href="/discover?category=Others">
+            <button className="buttonA">View More</button>
+          </Link>
         </div>
 
         {/* Mobile layout: title only */}
@@ -73,7 +75,9 @@ export default function OtherSection({ category }: SectionProps) {
 
           {/* Mobile button below carousel */}
           <div className="md:hidden text-center mb-6 flex justify-center">
-            <button className="buttonA">View More</button>
+            <Link href="/discover?category=Others">
+              <button className="buttonA">View More</button>
+            </Link>
           </div>
 
           {/* Desktop/tablet view: grid layout */}
