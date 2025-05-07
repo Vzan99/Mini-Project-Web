@@ -88,6 +88,17 @@ export default function Discover() {
   const priceRef = useRef<HTMLDivElement>(null);
   const dateRef = useRef<HTMLDivElement>(null);
 
+  // Add a ref for the search input
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Add this useEffect to focus the search input when the component mounts
+  useEffect(() => {
+    // Focus the search input when the component mounts
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, []);
+
   // Debounced search function
   const debouncedSearch = useRef(
     debounce(async (query) => {
@@ -372,414 +383,449 @@ export default function Discover() {
   };
 
   return (
-    <div className="w-full px-6 py-10 max-w-screen-xl mx-auto">
-      <h1 className="text-4xl font-semibold text-center mb-8">
-        Discover Events
-      </h1>
+    <div className="bg-[#FAF0D7]">
+      <div className="w-full px-6 py-10 max-w-screen-xl mx-auto">
+        <h1 className="text-4xl font-semibold text-center mb-8">
+          Discover Events
+        </h1>
 
-      {/* Search Section */}
-      <div className="mb-8 max-w-xl mx-auto relative">
-        <div className="relative">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={handleSearchChange}
-            placeholder="Search for events..."
-            className="w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-black"
-          />
-          <button
-            onClick={() => fetchEvents()}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-[#222432] text-white px-4 py-1 rounded-full transition-transform duration-200 ease-in-out hover:scale-110 cursor-pointer"
-          >
-            Search
-          </button>
+        {/* Search Section */}
+        <div className="mb-8 max-w-xl mx-auto relative">
+          <div className="relative">
+            <input
+              type="text"
+              ref={searchInputRef}
+              value={searchQuery}
+              onChange={handleSearchChange}
+              placeholder="Search for events..."
+              className="w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-black bg-white"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setSuggestions([]);
+                  setShowSuggestions(false);
+                  if (searchInputRef.current) {
+                    searchInputRef.current.focus();
+                  }
+                }}
+                className="absolute right-[100px] top-1/2 transform -translate-y-1/2 bg-gray-200 hover:bg-gray-300 rounded-full p-1"
+                aria-label="Clear search"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-gray-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
+            <button
+              onClick={() => fetchEvents()}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-[#222432] text-white px-4 py-1 rounded-full transition-transform duration-200 ease-in-out hover:scale-110 cursor-pointer"
+            >
+              Search
+            </button>
+          </div>
+
+          {/* Search Suggestions */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute z-10 w-full bg-white mt-1 rounded-lg shadow-lg">
+              {suggestions.map((suggestion) => (
+                <div
+                  key={suggestion.id}
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => handleSuggestionClick(suggestion)}
+                >
+                  {suggestion.name}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Search Suggestions */}
-        {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute z-10 w-full bg-white mt-1 rounded-lg shadow-lg">
-            {suggestions.map((suggestion) => (
-              <div
-                key={suggestion.id}
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                onClick={() => handleSuggestionClick(suggestion)}
+        {/* Filter Section */}
+        <div className="mb-8">
+          {/* Category Filters */}
+          <div className="flex flex-wrap gap-3 justify-center mb-6">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => {
+                  setActiveFilter(category);
+                  setCurrentPage(1);
+                }}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition cursor-pointer ${
+                  activeFilter === category
+                    ? "bg-[#222432] text-white"
+                    : "bg-white text-gray-800 hover:bg-gray-200"
+                }`}
               >
-                {suggestion.name}
-              </div>
+                {category}
+              </button>
             ))}
           </div>
-        )}
-      </div>
 
-      {/* Filter Section */}
-      <div className="mb-8">
-        {/* Category Filters */}
-        <div className="flex flex-wrap gap-3 justify-center mb-6">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => {
-                setActiveFilter(category);
-                setCurrentPage(1);
-              }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition cursor-pointer ${
-                activeFilter === category
-                  ? "bg-[#222432] text-white"
-                  : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-              }`}
+          {/* Additional Filters */}
+          <div className="flex flex-wrap gap-3 justify-center mb-6">
+            {/* Location Filter */}
+            <div className="relative" ref={locationRef}>
+              <button
+                onClick={() => {
+                  setShowLocationFilter(!showLocationFilter);
+                  setShowPriceFilter(false);
+                  setShowDateFilter(false);
+                }}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition cursor-pointer ${
+                  selectedLocations.length > 0
+                    ? "bg-[#222432] text-white"
+                    : "bg-white text-gray-800 hover:bg-gray-200"
+                }`}
+              >
+                Location{" "}
+                {selectedLocations.length > 0 &&
+                  `(${selectedLocations.length})`}
+              </button>
+
+              {showLocationFilter && (
+                <div className="absolute z-10 mt-2 bg-white rounded-lg shadow-lg p-4 w-64">
+                  <div className="mb-3 max-h-60 overflow-y-auto">
+                    {locations.map((location) => (
+                      <label
+                        key={location}
+                        className="flex items-center text-sm font-medium text-gray-700 mb-2"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedLocations.includes(location)}
+                          onChange={() => handleLocationChange(location)}
+                          className="mr-2"
+                        />
+                        {location}
+                      </label>
+                    ))}
+                  </div>
+                  <div className="flex justify-between">
+                    <button
+                      onClick={() => setSelectedLocations([])}
+                      className="text-sm text-gray-600"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      onClick={() => setShowLocationFilter(false)}
+                      className="text-sm bg-black text-white px-3 py-1 rounded"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Price Filter */}
+            <div className="relative" ref={priceRef}>
+              <button
+                onClick={() => {
+                  setShowPriceFilter(!showPriceFilter);
+                  setShowLocationFilter(false);
+                  setShowDateFilter(false);
+                }}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition cursor-pointer ${
+                  freeOnly || minPrice || maxPrice
+                    ? "bg-black text-white"
+                    : "bg-white text-gray-800 hover:bg-gray-200"
+                }`}
+              >
+                Price
+              </button>
+
+              {showPriceFilter && (
+                <div className="absolute z-10 mt-2 bg-white rounded-lg shadow-lg p-4 w-64">
+                  <div className="mb-3">
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-3">
+                      <input
+                        type="checkbox"
+                        checked={freeOnly}
+                        onChange={(e) => {
+                          setFreeOnly(e.target.checked);
+                          if (e.target.checked) {
+                            setMinPrice("");
+                            setMaxPrice("");
+                          }
+                        }}
+                        className="mr-2"
+                      />
+                      Free events only
+                    </label>
+
+                    <div
+                      className={`space-y-2 ${
+                        freeOnly ? "opacity-50 pointer-events-none" : ""
+                      }`}
+                    >
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Min Price (Rp)
+                        </label>
+                        <input
+                          type="number"
+                          value={minPrice}
+                          onChange={handlePriceChange}
+                          name="minPrice"
+                          className="w-full p-2 border rounded text-sm"
+                          placeholder="0"
+                          min="0"
+                          disabled={freeOnly}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Max Price (Rp)
+                        </label>
+                        <input
+                          type="number"
+                          value={maxPrice}
+                          onChange={handlePriceChange}
+                          name="maxPrice"
+                          className="w-full p-2 border rounded text-sm"
+                          placeholder="1000000"
+                          min="0"
+                          disabled={freeOnly}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sort options */}
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Sort by Price
+                    </label>
+                    <select
+                      value={sortOrder}
+                      onChange={(e) => setSortOrder(e.target.value)}
+                      className="w-full p-2 border rounded text-sm"
+                    >
+                      {sortOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <button
+                      onClick={() => {
+                        setFreeOnly(false);
+                        setMinPrice("");
+                        setMaxPrice("");
+                      }}
+                      className="text-sm text-gray-600"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      onClick={() => setShowPriceFilter(false)}
+                      className="text-sm bg-black text-white px-3 py-1 rounded"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Date Filter */}
+            <div className="relative" ref={dateRef}>
+              <button
+                onClick={() => {
+                  setShowDateFilter(!showDateFilter);
+                  setShowLocationFilter(false);
+                  setShowPriceFilter(false);
+                }}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition cursor-pointer ${
+                  selectedDate
+                    ? "bg-black text-white"
+                    : "bg-white text-gray-800 hover:bg-gray-200"
+                }`}
+              >
+                Date
+              </button>
+
+              {showDateFilter && (
+                <div className="absolute z-10 mt-2 bg-white rounded-lg shadow-lg p-4">
+                  <Calendar
+                    onChange={(date) => setSelectedDate(date as Date)}
+                    value={selectedDate}
+                    minDate={new Date()}
+                    className="border-0"
+                  />
+
+                  {/* Sort options */}
+                  <div className="mt-3 mb-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Sort by Date
+                    </label>
+                    <select
+                      value={sortOrder}
+                      onChange={(e) => setSortOrder(e.target.value)}
+                      className="w-full p-2 border rounded text-sm"
+                    >
+                      {sortOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <button
+                      onClick={() => setSelectedDate(null)}
+                      className="text-sm text-gray-600"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      onClick={() => setShowDateFilter(false)}
+                      className="text-sm bg-black text-white px-3 py-1 rounded"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Active Filters Display */}
+          {(searchQuery ||
+            activeFilter !== "All Events" ||
+            selectedLocations.length > 0 ||
+            selectedDate ||
+            freeOnly ||
+            minPrice ||
+            maxPrice) && (
+            <div className="flex justify-center mb-4">
+              <div className="text-sm text-gray-600">
+                Filtering:
+                {searchQuery && <span className="ml-1">"{searchQuery}"</span>}
+                {activeFilter !== "All Events" && (
+                  <span className="ml-1">{activeFilter}</span>
+                )}
+                {selectedLocations.length > 0 && (
+                  <span className="ml-1">
+                    in {selectedLocations.join(", ")}
+                  </span>
+                )}
+                {selectedDate && (
+                  <span className="ml-1">
+                    on {format(selectedDate, "dd MMM yyyy")}
+                  </span>
+                )}
+                {freeOnly && <span className="ml-1">Free events only</span>}
+                {!freeOnly && minPrice && maxPrice && (
+                  <span className="ml-1">
+                    Price: Rp {minPrice} - Rp {maxPrice}
+                  </span>
+                )}
+                {!freeOnly && minPrice && !maxPrice && (
+                  <span className="ml-1">Price: Min Rp {minPrice}</span>
+                )}
+                {!freeOnly && !minPrice && maxPrice && (
+                  <span className="ml-1">Price: Max Rp {maxPrice}</span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Events Display */}
+        {loading && (
+          <p className="text-center text-gray-500">Loading events...</p>
+        )}
+        {error && <p className="text-center text-red-500">{error}</p>}
+        {!loading && events.length === 0 && (
+          <p className="text-center text-gray-400">No events found.</p>
+        )}
+
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+          {events.map((event) => (
+            <div
+              key={event.id}
+              className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition"
             >
-              {category}
-            </button>
+              <Link href={`/events/${event.id}`}>
+                {event.event_image && (
+                  <img
+                    src={`${cloudinaryBaseUrl}${event.event_image}`}
+                    alt={event.name}
+                    className="w-full h-48 object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "https://via.placeholder.com/400x200";
+                    }}
+                  />
+                )}
+                {!event.event_image && (
+                  <img
+                    src="https://via.placeholder.com/400x200"
+                    alt="No image available"
+                    className="w-full h-48 object-cover"
+                  />
+                )}
+              </Link>
+
+              <div className="p-4 flex flex-col gap-2">
+                <Link href={`/events/${event.id}`}>
+                  <h2 className="text-lg font-semibold hover:text-blue-600">
+                    {event.name}
+                  </h2>
+                </Link>
+                <p className="text-sm text-gray-600 line-clamp-2">
+                  {event.description}
+                </p>
+                <p className="text-sm text-gray-500">{event.location}</p>
+                <p className="text-sm text-gray-500">
+                  {new Date(event.start_date).toLocaleDateString()} –{" "}
+                  {new Date(event.end_date).toLocaleDateString()}
+                </p>
+                <p className="mt-2 text-sm font-bold text-green-700">
+                  {event.price === 0
+                    ? "Free"
+                    : `Rp ${event.price.toLocaleString()}`}
+                </p>
+                {event.remaining_seats <= 10 && event.remaining_seats > 0 && (
+                  <p className="text-xs text-orange-600">
+                    Only {event.remaining_seats} seats left!
+                  </p>
+                )}
+                {event.remaining_seats === 0 && (
+                  <p className="text-xs text-red-600 font-bold">Sold Out</p>
+                )}
+              </div>
+            </div>
           ))}
         </div>
 
-        {/* Additional Filters */}
-        <div className="flex flex-wrap gap-3 justify-center mb-6">
-          {/* Location Filter */}
-          <div className="relative" ref={locationRef}>
-            <button
-              onClick={() => {
-                setShowLocationFilter(!showLocationFilter);
-                setShowPriceFilter(false);
-                setShowDateFilter(false);
-              }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition cursor-pointer ${
-                selectedLocations.length > 0
-                  ? "bg-black text-white"
-                  : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-              }`}
-            >
-              Location{" "}
-              {selectedLocations.length > 0 && `(${selectedLocations.length})`}
-            </button>
-
-            {showLocationFilter && (
-              <div className="absolute z-10 mt-2 bg-white rounded-lg shadow-lg p-4 w-64">
-                <div className="mb-3 max-h-60 overflow-y-auto">
-                  {locations.map((location) => (
-                    <label
-                      key={location}
-                      className="flex items-center text-sm font-medium text-gray-700 mb-2"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedLocations.includes(location)}
-                        onChange={() => handleLocationChange(location)}
-                        className="mr-2"
-                      />
-                      {location}
-                    </label>
-                  ))}
-                </div>
-                <div className="flex justify-between">
-                  <button
-                    onClick={() => setSelectedLocations([])}
-                    className="text-sm text-gray-600"
-                  >
-                    Clear
-                  </button>
-                  <button
-                    onClick={() => setShowLocationFilter(false)}
-                    className="text-sm bg-black text-white px-3 py-1 rounded"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Price Filter */}
-          <div className="relative" ref={priceRef}>
-            <button
-              onClick={() => {
-                setShowPriceFilter(!showPriceFilter);
-                setShowLocationFilter(false);
-                setShowDateFilter(false);
-              }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition cursor-pointer ${
-                freeOnly || minPrice || maxPrice
-                  ? "bg-black text-white"
-                  : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-              }`}
-            >
-              Price
-            </button>
-
-            {showPriceFilter && (
-              <div className="absolute z-10 mt-2 bg-white rounded-lg shadow-lg p-4 w-64">
-                <div className="mb-3">
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-3">
-                    <input
-                      type="checkbox"
-                      checked={freeOnly}
-                      onChange={(e) => {
-                        setFreeOnly(e.target.checked);
-                        if (e.target.checked) {
-                          setMinPrice("");
-                          setMaxPrice("");
-                        }
-                      }}
-                      className="mr-2"
-                    />
-                    Free events only
-                  </label>
-
-                  <div
-                    className={`space-y-2 ${
-                      freeOnly ? "opacity-50 pointer-events-none" : ""
-                    }`}
-                  >
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Min Price (Rp)
-                      </label>
-                      <input
-                        type="number"
-                        value={minPrice}
-                        onChange={handlePriceChange}
-                        name="minPrice"
-                        className="w-full p-2 border rounded text-sm"
-                        placeholder="0"
-                        min="0"
-                        disabled={freeOnly}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Max Price (Rp)
-                      </label>
-                      <input
-                        type="number"
-                        value={maxPrice}
-                        onChange={handlePriceChange}
-                        name="maxPrice"
-                        className="w-full p-2 border rounded text-sm"
-                        placeholder="1000000"
-                        min="0"
-                        disabled={freeOnly}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Sort options */}
-                <div className="mb-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Sort by Price
-                  </label>
-                  <select
-                    value={sortOrder}
-                    onChange={(e) => setSortOrder(e.target.value)}
-                    className="w-full p-2 border rounded text-sm"
-                  >
-                    {sortOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex justify-between">
-                  <button
-                    onClick={() => {
-                      setFreeOnly(false);
-                      setMinPrice("");
-                      setMaxPrice("");
-                    }}
-                    className="text-sm text-gray-600"
-                  >
-                    Clear
-                  </button>
-                  <button
-                    onClick={() => setShowPriceFilter(false)}
-                    className="text-sm bg-black text-white px-3 py-1 rounded"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Date Filter */}
-          <div className="relative" ref={dateRef}>
-            <button
-              onClick={() => {
-                setShowDateFilter(!showDateFilter);
-                setShowLocationFilter(false);
-                setShowPriceFilter(false);
-              }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition cursor-pointer ${
-                selectedDate
-                  ? "bg-black text-white"
-                  : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-              }`}
-            >
-              Date
-            </button>
-
-            {showDateFilter && (
-              <div className="absolute z-10 mt-2 bg-white rounded-lg shadow-lg p-4">
-                <Calendar
-                  onChange={(date) => setSelectedDate(date as Date)}
-                  value={selectedDate}
-                  minDate={new Date()}
-                  className="border-0"
-                />
-
-                {/* Sort options */}
-                <div className="mt-3 mb-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Sort by Date
-                  </label>
-                  <select
-                    value={sortOrder}
-                    onChange={(e) => setSortOrder(e.target.value)}
-                    className="w-full p-2 border rounded text-sm"
-                  >
-                    {sortOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex justify-between">
-                  <button
-                    onClick={() => setSelectedDate(null)}
-                    className="text-sm text-gray-600"
-                  >
-                    Clear
-                  </button>
-                  <button
-                    onClick={() => setShowDateFilter(false)}
-                    className="text-sm bg-black text-white px-3 py-1 rounded"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Active Filters Display */}
-        {(searchQuery ||
-          activeFilter !== "All Events" ||
-          selectedLocations.length > 0 ||
-          selectedDate ||
-          freeOnly ||
-          minPrice ||
-          maxPrice) && (
-          <div className="flex justify-center mb-4">
-            <div className="text-sm text-gray-600">
-              Filtering:
-              {searchQuery && <span className="ml-1">"{searchQuery}"</span>}
-              {activeFilter !== "All Events" && (
-                <span className="ml-1">{activeFilter}</span>
-              )}
-              {selectedLocations.length > 0 && (
-                <span className="ml-1">in {selectedLocations.join(", ")}</span>
-              )}
-              {selectedDate && (
-                <span className="ml-1">
-                  on {format(selectedDate, "dd MMM yyyy")}
-                </span>
-              )}
-              {freeOnly && <span className="ml-1">Free events only</span>}
-              {!freeOnly && minPrice && maxPrice && (
-                <span className="ml-1">
-                  Price: Rp {minPrice} - Rp {maxPrice}
-                </span>
-              )}
-              {!freeOnly && minPrice && !maxPrice && (
-                <span className="ml-1">Price: Min Rp {minPrice}</span>
-              )}
-              {!freeOnly && !minPrice && maxPrice && (
-                <span className="ml-1">Price: Max Rp {maxPrice}</span>
-              )}
-            </div>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-8">
+            <div className="flex space-x-1">{renderPaginationButtons()}</div>
           </div>
         )}
       </div>
-
-      {/* Events Display */}
-      {loading && (
-        <p className="text-center text-gray-500">Loading events...</p>
-      )}
-      {error && <p className="text-center text-red-500">{error}</p>}
-      {!loading && events.length === 0 && (
-        <p className="text-center text-gray-400">No events found.</p>
-      )}
-
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-        {events.map((event) => (
-          <div
-            key={event.id}
-            className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition"
-          >
-            <Link href={`/events/${event.id}`}>
-              {event.event_image && (
-                <img
-                  src={`${cloudinaryBaseUrl}${event.event_image}`}
-                  alt={event.name}
-                  className="w-full h-48 object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      "https://via.placeholder.com/400x200";
-                  }}
-                />
-              )}
-              {!event.event_image && (
-                <img
-                  src="https://via.placeholder.com/400x200"
-                  alt="No image available"
-                  className="w-full h-48 object-cover"
-                />
-              )}
-            </Link>
-
-            <div className="p-4 flex flex-col gap-2">
-              <Link href={`/events/${event.id}`}>
-                <h2 className="text-lg font-semibold hover:text-blue-600">
-                  {event.name}
-                </h2>
-              </Link>
-              <p className="text-sm text-gray-600 line-clamp-2">
-                {event.description}
-              </p>
-              <p className="text-sm text-gray-500">{event.location}</p>
-              <p className="text-sm text-gray-500">
-                {new Date(event.start_date).toLocaleDateString()} –{" "}
-                {new Date(event.end_date).toLocaleDateString()}
-              </p>
-              <p className="mt-2 text-sm font-bold text-green-700">
-                {event.price === 0
-                  ? "Free"
-                  : `Rp ${event.price.toLocaleString()}`}
-              </p>
-              {event.remaining_seats <= 10 && event.remaining_seats > 0 && (
-                <p className="text-xs text-orange-600">
-                  Only {event.remaining_seats} seats left!
-                </p>
-              )}
-              {event.remaining_seats === 0 && (
-                <p className="text-xs text-red-600 font-bold">Sold Out</p>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-8">
-          <div className="flex space-x-1">{renderPaginationButtons()}</div>
-        </div>
-      )}
     </div>
   );
 }
