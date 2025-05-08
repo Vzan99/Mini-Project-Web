@@ -1,19 +1,17 @@
 import { useEffect, useState } from "react";
 import EventCard from "@/components/cards/eventCard";
-import { Event } from "@/types/event";
+import { IEventCard } from "@/interfaces/eventCard";
 import axios from "axios";
 import Link from "next/link";
+import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 
 type SectionProps = {
   category: string;
 };
 
 export default function FestivalSection({ category }: SectionProps) {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<IEventCard[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const cloudinaryBaseUrl =
-    "https://res.cloudinary.com/dnb5cxo2m/image/upload/";
 
   useEffect(() => {
     // Replace fetch with axios

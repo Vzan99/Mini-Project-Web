@@ -4,52 +4,10 @@ import { useState } from "react";
 import Image from "next/image";
 import BuyTicketButton from "@/components/buttons/BuyTicketButton";
 import Link from "next/link";
+import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
+import { IEventDetails } from "@/interfaces/eventDetails";
 
-// Define the Event type based on your backend API response
-type Organizer = {
-  id: string;
-  username: string;
-  first_name: string;
-  last_name: string;
-};
-
-type Transaction = {
-  id: string;
-  // Add other transaction fields as needed
-};
-
-type Voucher = {
-  id: string;
-  // Add other voucher fields as needed
-};
-
-type Review = {
-  id: string;
-  // Add other review fields as needed
-};
-
-type Event = {
-  id: string;
-  name: string;
-  start_date: string;
-  end_date: string;
-  description: string;
-  event_image: string;
-  location: string;
-  price: number;
-  total_seats: number;
-  remaining_seats: number;
-  category: string;
-  organizer_id: string;
-  organizer: Organizer;
-  transactions: Transaction[];
-  voucher: Voucher[];
-  review: Review[];
-  created_at?: string;
-  updated_at?: string;
-};
-
-export default function EventDetailsPage({ event }: { event: Event }) {
+export default function EventDetailsPage({ event }: { event: IEventDetails }) {
   // Add state for ticket quantity
   const [ticketQuantity, setTicketQuantity] = useState(1);
 
@@ -65,10 +23,6 @@ export default function EventDetailsPage({ event }: { event: Event }) {
   if (!event) {
     return <div>Loading event details...</div>;
   }
-
-  // Improved image URL handling
-  const cloudinaryBaseUrl =
-    "https://res.cloudinary.com/dnb5cxo2m/image/upload/";
 
   // More robust image URL construction
   // Improved image URL handling

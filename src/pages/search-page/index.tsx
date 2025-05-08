@@ -1,5 +1,5 @@
 import SearchBar from "@/components/searchbar";
-import { Event } from "@/types/event";
+import { IEventCard } from "@/interfaces/eventCard";
 import Link from "next/link";
 
 export default async function SearchPage({
@@ -13,7 +13,7 @@ export default async function SearchPage({
   const location = typeof params.location === "string" ? params.location : "";
 
   // Fetch events based on search query and filters
-  let events: Event[] = [];
+  let events: IEventCard[] = [];
   let error = null;
 
   try {

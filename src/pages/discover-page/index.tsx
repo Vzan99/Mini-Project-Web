@@ -8,24 +8,7 @@ import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { debounce } from "lodash";
-
-type Event = {
-  id: string;
-  name: string;
-  description: string;
-  category: "Concert" | "Festival" | "Comedy" | "Museum" | "Others";
-  location: string;
-  price: number;
-  start_date: string;
-  end_date: string;
-  event_image?: string | null;
-  remaining_seats: number;
-};
-
-type EventSuggestion = {
-  id: string;
-  name: string;
-};
+import { IEventDiscover, IEventSuggestion } from "@/interfaces/discoverPage";
 
 const categories = [
   "All Events",
@@ -36,27 +19,53 @@ const categories = [
   "Others",
 ];
 
-// Common locations - these would ideally come from your database
-const locations = [
-  "Jakarta",
-  "Bandung",
-  "Surabaya",
-  "Bali",
-  "Yogyakarta",
-  "Medan",
-  "Makassar",
-];
-
 const sortOptions = [
   { value: "asc", label: "Ascending" },
   { value: "desc", label: "Descending" },
 ];
 
+// Format date in user-friendly way
+const formatEventDates = (start_date: string, end_date: string) => {
+  const startDate = new Date(start_date);
+  const endDate = new Date(end_date);
+
+  const formatDate = (date: string) => {
+    const options: Intl.DateTimeFormatOptions = {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    };
+    return new Date(date).toLocaleDateString("en-GB", options);
+  };
+
+  // Check if the event is a single day
+  if (startDate.toDateString() === endDate.toDateString()) {
+    return formatDate(start_date);
+  }
+
+  // Check if the event spans within the same month
+  if (
+    startDate.getMonth() === endDate.getMonth() &&
+    startDate.getFullYear() === endDate.getFullYear()
+  ) {
+    // Only show day range without repeating the month
+    return `${startDate.getDate()} - ${endDate.getDate()} ${startDate.toLocaleString(
+      "en-GB",
+      { month: "long" }
+    )} ${startDate.getFullYear()}`;
+  } else {
+    return `${formatDate(start_date)} - ${formatDate(end_date)}`;
+  }
+};
+
 export default function DiscoverPage() {
   // Search and suggestions
   const [searchQuery, setSearchQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<EventSuggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<IEventSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Add state for locations
+  const [locations, setLocations] = useState<string[]>([]);
 
   // Filters
   const [activeFilter, setActiveFilter] = useState("All Events");
@@ -75,7 +84,7 @@ export default function DiscoverPage() {
   const [debouncedMaxPrice, setDebouncedMaxPrice] = useState("");
 
   // Events and pagination
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<IEventDiscover[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -90,6 +99,29 @@ export default function DiscoverPage() {
 
   // Add a ref for the search input
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Function to fetch locations (moved inside the component)
+  const fetchLocations = async () => {
+    try {
+      console.log("Fetching locations...");
+      const response = await axios.get("http://localhost:8000/admin/locations");
+
+      console.log("Locations response:", response.data);
+      if (response.data && response.data.data) {
+        setLocations(response.data.data);
+        console.log("Locations set:", response.data.data);
+      }
+    } catch (err) {
+      console.error("Error fetching locations:", err);
+      // Fallback to empty array if fetch fails
+      setLocations([]);
+    }
+  };
+
+  // Call fetchLocations when component mounts (moved inside the component)
+  useEffect(() => {
+    fetchLocations();
+  }, []);
 
   // Add this useEffect to focus the search input when the component mounts
   useEffect(() => {
@@ -146,7 +178,7 @@ export default function DiscoverPage() {
   };
 
   // Handle suggestion click
-  const handleSuggestionClick = (suggestion: EventSuggestion) => {
+  const handleSuggestionClick = (suggestion: IEventSuggestion) => {
     setSearchQuery(suggestion.name);
     setShowSuggestions(false);
     fetchEvents(suggestion.name);
@@ -462,16 +494,38 @@ export default function DiscoverPage() {
 
           {/* Search Suggestions */}
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute z-10 w-full bg-white mt-1 rounded-lg shadow-lg">
-              {suggestions.map((suggestion) => (
-                <div
-                  key={suggestion.id}
-                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => handleSuggestionClick(suggestion)}
+            <div className="absolute z-10 w-full bg-white mt-1 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              <ul>
+                {suggestions.map((suggestion) => (
+                  <li
+                    key={suggestion.id}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                  >
+                    <div className="flex items-center">
+                      {suggestion.event_image && (
+                        <img
+                          src={`https://res.cloudinary.com/dnb5cxo2m/image/upload/${suggestion.event_image}`}
+                          alt={suggestion.name}
+                          className="w-10 h-10 object-cover rounded mr-3"
+                        />
+                      )}
+                      <div className="text-left w-full">
+                        <div className="font-medium">{suggestion.name}</div>
+                        <div className="text-sm text-gray-500 text-left">
+                          {suggestion.location}
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+                <li
+                  className="p-3 text-center text-blue-600 hover:bg-gray-100 cursor-pointer font-medium"
+                  onClick={() => fetchEvents()}
                 >
-                  {suggestion.name}
-                </div>
-              ))}
+                  See all results for "{searchQuery}"
+                </li>
+              </ul>
             </div>
           )}
         </div>
@@ -522,20 +576,26 @@ export default function DiscoverPage() {
               {showLocationFilter && (
                 <div className="absolute z-10 mt-2 bg-white rounded-lg shadow-lg p-4 w-64">
                   <div className="mb-3 max-h-60 overflow-y-auto">
-                    {locations.map((location) => (
-                      <label
-                        key={location}
-                        className="flex items-center text-sm font-medium text-gray-700 mb-2"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedLocations.includes(location)}
-                          onChange={() => handleLocationChange(location)}
-                          className="mr-2"
-                        />
-                        {location}
-                      </label>
-                    ))}
+                    {locations.length > 0 ? (
+                      locations.map((location) => (
+                        <label
+                          key={location}
+                          className="flex items-center text-sm font-medium text-gray-700 mb-2"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedLocations.includes(location)}
+                            onChange={() => handleLocationChange(location)}
+                            className="mr-2"
+                          />
+                          {location}
+                        </label>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500">
+                        Loading locations...
+                      </p>
+                    )}
                   </div>
                   <div className="flex justify-between">
                     <button
@@ -821,8 +881,7 @@ export default function DiscoverPage() {
                 </p>
                 <p className="text-sm text-gray-500">{event.location}</p>
                 <p className="text-sm text-gray-500">
-                  {new Date(event.start_date).toLocaleDateString()} –{" "}
-                  {new Date(event.end_date).toLocaleDateString()}
+                  {formatEventDates(event.start_date, event.end_date)}
                 </p>
                 <p className="mt-2 text-sm font-bold text-green-700">
                   {event.price === 0
@@ -833,9 +892,6 @@ export default function DiscoverPage() {
                   <p className="text-xs text-orange-600">
                     Only {event.remaining_seats} seats left!
                   </p>
-                )}
-                {event.remaining_seats === 0 && (
-                  <p className="text-xs text-red-600 font-bold">Sold Out</p>
                 )}
               </div>
             </div>

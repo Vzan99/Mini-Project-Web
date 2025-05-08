@@ -6,54 +6,14 @@ import Image from "next/image";
 import axios from "axios";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 import EventCard from "@/components/cards/eventCard";
-
-// Define types based on your updated backend response
-type Review = {
-  id: string;
-  rating: number;
-  comment: string;
-  created_at: string;
-  user: {
-    username: string;
-  };
-};
-
-type EventSummary = {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  location: string;
-  price: number;
-  totalSeats: number;
-  remainingSeats: number;
-  category: string;
-  eventImage: string;
-  totalReviews: number;
-};
-
-type OrganizerInfo = {
-  id: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-  profilePicture: string;
-};
-
-type OrganizerProfile = {
-  organizer: OrganizerInfo;
-  averageRating: number;
-  totalReviews: number;
-  reviews: Review[];
-  events: EventSummary[];
-};
+import { IOrganizerProfile } from "@/interfaces/eoDetails";
 
 export default function EODetailsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const organizerId = searchParams?.get("id") || "";
 
-  const [profile, setProfile] = useState<OrganizerProfile | null>(null);
+  const [profile, setProfile] = useState<IOrganizerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
