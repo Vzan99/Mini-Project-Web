@@ -1,5 +1,5 @@
-import SearchBar from "@/app/components/searchbar";
-import { Event } from "@/app/types/event";
+import SearchBar from "@/components/searchbar";
+import { Event } from "@/types/event";
 import Link from "next/link";
 
 export default async function SearchPage({

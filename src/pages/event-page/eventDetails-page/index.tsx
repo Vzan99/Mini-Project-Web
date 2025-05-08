@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import BuyTicketButton from "@/app/components/buttons/BuyTicketButton";
+import BuyTicketButton from "@/components/buttons/BuyTicketButton";
 import Link from "next/link";
 
 // Define the Event type based on your backend API response

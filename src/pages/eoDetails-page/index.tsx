@@ -3,10 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
 import axios from "axios";
-import { cloudinaryBaseUrl } from "@/app/components/config/cloudinary";
-import EventCard from "@/app/components/cards/eventCard";
+import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
+import EventCard from "@/components/cards/eventCard";
 
 // Define types based on your updated backend response
 type Review = {

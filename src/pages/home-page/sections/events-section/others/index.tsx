@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import EventCard from "@/app/components/cards/eventCard";
-import { Event } from "@/app/types/event";
+import EventCard from "@/components/cards/eventCard";
+import { Event } from "@/types/event";
 import axios from "axios";
 import Link from "next/link";
 

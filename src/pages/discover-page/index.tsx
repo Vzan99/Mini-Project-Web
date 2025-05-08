@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { format } from "date-fns";
 import Link from "next/link";
-import { cloudinaryBaseUrl } from "@/app/components/config/cloudinary";
+import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { debounce } from "lodash";
