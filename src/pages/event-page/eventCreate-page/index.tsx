@@ -10,6 +10,7 @@ import {
   eventValidationSchema,
 } from "@/schemas/eventCreateSchema";
 import { API_BASE_URL } from "@/components/config/api";
+import { formatNumberWithCommas } from "@/utils/formatters";
 
 // Add this function to generate time options in hourly intervals (24-hour format)
 const generateTimeOptions = () => {
@@ -45,15 +46,19 @@ export default function EventCreatePage() {
   const getCombinedDateTimeValues = (values: EventFormValues) => {
     const combinedData = { ...values };
 
-    // Combine start date and time
+    // Combine start date and time with proper ISO format
     if (values.startDate && values.startTime) {
-      const startDateTime = `${values.startDate}T${values.startTime}`;
+      const startDateTime = new Date(
+        `${values.startDate}T${values.startTime}`
+      ).toISOString();
       combinedData.startDate = startDateTime;
     }
 
-    // Combine end date and time
+    // Combine end date and time with proper ISO format
     if (values.endDate && values.endTime) {
-      const endDateTime = `${values.endDate}T${values.endTime}`;
+      const endDateTime = new Date(
+        `${values.endDate}T${values.endTime}`
+      ).toISOString();
       combinedData.endDate = endDateTime;
     }
 
@@ -73,18 +78,23 @@ export default function EventCreatePage() {
       // Create FormData object for multipart/form-data submission
       const submitData = new FormData();
 
-      // Add all form fields to FormData (excluding separate time fields)
-      Object.entries(combinedData).forEach(([key, value]) => {
-        // Skip the time-only fields since we've combined them
-        if (key !== "startTime" && key !== "endTime") {
-          submitData.append(key, value.toString());
-        }
-      });
+      // Add all form fields to FormData with correct field names
+      submitData.append("name", combinedData.name);
+      submitData.append("startDate", combinedData.startDate); // Already combined date+time
+      submitData.append("endDate", combinedData.endDate); // Already combined date+time
+      submitData.append("description", combinedData.description);
+      submitData.append("location", combinedData.location);
+      submitData.append("price", combinedData.price.toString());
+      submitData.append("totalSeats", combinedData.totalSeats.toString());
+      submitData.append("category", combinedData.category); // Remove .toLowerCase()
 
-      // Add image file if selected
+      // Add image file with correct field name
       if (imageFile) {
         submitData.append("eventImage", imageFile);
       }
+
+      // Log the form data for debugging
+      console.log("Form data:", Object.fromEntries(submitData.entries()));
 
       // Get token from localStorage
       const token = localStorage.getItem("token");
@@ -100,6 +110,34 @@ export default function EventCreatePage() {
         },
       });
 
+      // If voucher creation is enabled and event is paid, create voucher
+      if (values.createVoucher && values.price > 0) {
+        const eventId = response.data.data.id;
+
+        // Combine voucher dates and times
+        const voucherStartDateTime = `${values.voucherStartDate}T${values.voucherStartTime}`;
+        const voucherEndDateTime = `${values.voucherEndDate}T${values.voucherEndTime}`;
+
+        // Create voucher
+        await axios.post(
+          `${API_BASE_URL}/vouchers`,
+          {
+            eventId,
+            voucherCode: values.voucherCode,
+            discountAmount: values.discountAmount,
+            voucherStartDate: new Date(voucherStartDateTime),
+            voucherEndDate: new Date(voucherEndDateTime),
+            maxUsage: values.maxUsage,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+
       // Redirect to the event page on success
       router.push(`/events/${response.data.data.id}`);
     } catch (err: any) {
@@ -111,6 +149,11 @@ export default function EventCreatePage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Add this function to format price with commas
+  const formatPrice = (price: number) => {
+    return formatNumberWithCommas(price);
   };
 
   return (
@@ -131,7 +174,7 @@ export default function EventCreatePage() {
           validationSchema={eventValidationSchema}
           onSubmit={handleSubmit}
         >
-          {({ isSubmitting, errors, touched }) => (
+          {({ isSubmitting, errors, touched, values }) => (
             <Form className="space-y-6 bg-white p-6 rounded-lg shadow-md">
               <div>
                 <label
@@ -331,19 +374,24 @@ export default function EventCreatePage() {
                     htmlFor="price"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Price (IDR) *
+                    Price * (IDR)
                   </label>
                   <Field
                     type="number"
                     id="price"
                     name="price"
-                    min={0}
+                    min="0"
                     className={`w-full px-3 py-2 border rounded-md bg-white ${
                       errors.price && touched.price
                         ? "border-red-500"
                         : "border-gray-300"
                     }`}
                   />
+                  {values.price > 0 && (
+                    <div className="text-sm text-gray-500 mt-1">
+                      Formatted: IDR {formatPrice(values.price)}
+                    </div>
+                  )}
                   <ErrorMessage
                     name="price"
                     component="div"
@@ -393,11 +441,11 @@ export default function EventCreatePage() {
                         : "border-gray-300"
                     }`}
                   >
-                    <option value="concert">Concert</option>
-                    <option value="festival">Festival</option>
-                    <option value="comedy">Comedy</option>
-                    <option value="museum">Museum</option>
-                    <option value="others">Others</option>
+                    <option value="Concert">Concert</option>
+                    <option value="Festival">Festival</option>
+                    <option value="Comedy">Comedy</option>
+                    <option value="Museum">Museum</option>
+                    <option value="Others">Others</option>
                   </Field>
                   <ErrorMessage
                     name="category"
@@ -424,6 +472,236 @@ export default function EventCreatePage() {
                       alt="Preview"
                       className="h-40 object-cover rounded-md"
                     />
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-8 border-t pt-6">
+                <h3 className="text-xl font-semibold mb-4">
+                  Voucher Information
+                </h3>
+
+                {/* Voucher checkbox - disabled for free events */}
+                <div className="mb-4">
+                  <div className="flex items-center">
+                    <Field
+                      type="checkbox"
+                      id="createVoucher"
+                      name="createVoucher"
+                      className="mr-2 h-4 w-4"
+                      disabled={values.price <= 0}
+                    />
+                    <label
+                      htmlFor="createVoucher"
+                      className={`text-sm font-medium ${
+                        values.price <= 0 ? "text-gray-400" : "text-gray-700"
+                      }`}
+                    >
+                      Create voucher for this event
+                    </label>
+                    {values.price <= 0 && (
+                      <span className="ml-2 text-xs text-red-500">
+                        (Only available for paid events)
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Voucher fields - only shown when checkbox is checked */}
+                {values.createVoucher && values.price > 0 && (
+                  <div className="space-y-4 p-4 bg-gray-50 rounded-md">
+                    <div>
+                      <label
+                        htmlFor="voucherCode"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Voucher Code *
+                      </label>
+                      <Field
+                        type="text"
+                        id="voucherCode"
+                        name="voucherCode"
+                        className={`w-full px-3 py-2 border rounded-md bg-white ${
+                          errors.voucherCode && touched.voucherCode
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                      />
+                      <ErrorMessage
+                        name="voucherCode"
+                        component="div"
+                        className="text-red-500 text-sm mt-1"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="discountAmount"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Discount Amount * (max: {formatPrice(values.price)})
+                      </label>
+                      <Field
+                        type="number"
+                        id="discountAmount"
+                        name="discountAmount"
+                        min="1"
+                        max={values.price}
+                        className={`w-full px-3 py-2 border rounded-md bg-white ${
+                          errors.discountAmount && touched.discountAmount
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                      />
+                      <ErrorMessage
+                        name="discountAmount"
+                        component="div"
+                        className="text-red-500 text-sm mt-1"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label
+                          htmlFor="voucherStartDate"
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                          Voucher Start Date *
+                        </label>
+                        <Field
+                          type="date"
+                          id="voucherStartDate"
+                          name="voucherStartDate"
+                          min={values.startDate}
+                          className={`w-full px-3 py-2 border rounded-md bg-white ${
+                            errors.voucherStartDate && touched.voucherStartDate
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                        />
+                        <ErrorMessage
+                          name="voucherStartDate"
+                          component="div"
+                          className="text-red-500 text-sm mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="voucherStartTime"
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                          Voucher Start Time *
+                        </label>
+                        <Field
+                          as="select"
+                          id="voucherStartTime"
+                          name="voucherStartTime"
+                          className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
+                            errors.voucherStartTime && touched.voucherStartTime
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                        >
+                          <option value="">Select time</option>
+                          {timeOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </Field>
+                        <ErrorMessage
+                          name="voucherStartTime"
+                          component="div"
+                          className="text-red-500 text-sm mt-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label
+                          htmlFor="voucherEndDate"
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                          Voucher End Date *
+                        </label>
+                        <Field
+                          type="date"
+                          id="voucherEndDate"
+                          name="voucherEndDate"
+                          min={values.voucherStartDate || values.startDate}
+                          max={values.endDate}
+                          className={`w-full px-3 py-2 border rounded-md bg-white ${
+                            errors.voucherEndDate && touched.voucherEndDate
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                        />
+                        <ErrorMessage
+                          name="voucherEndDate"
+                          component="div"
+                          className="text-red-500 text-sm mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="voucherEndTime"
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                          Voucher End Time *
+                        </label>
+                        <Field
+                          as="select"
+                          id="voucherEndTime"
+                          name="voucherEndTime"
+                          className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
+                            errors.voucherEndTime && touched.voucherEndTime
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                        >
+                          <option value="">Select time</option>
+                          {timeOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </Field>
+                        <ErrorMessage
+                          name="voucherEndTime"
+                          component="div"
+                          className="text-red-500 text-sm mt-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="maxUsage"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Max Usage * (max: {values.totalSeats})
+                      </label>
+                      <Field
+                        type="number"
+                        id="maxUsage"
+                        name="maxUsage"
+                        min="1"
+                        max={values.totalSeats}
+                        className={`w-full px-3 py-2 border rounded-md bg-white ${
+                          errors.maxUsage && touched.maxUsage
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                      />
+                      <ErrorMessage
+                        name="maxUsage"
+                        component="div"
+                        className="text-red-500 text-sm mt-1"
+                      />
+                    </div>
                   </div>
                 )}
               </div>
