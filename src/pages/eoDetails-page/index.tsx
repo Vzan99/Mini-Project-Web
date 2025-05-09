@@ -7,6 +7,7 @@ import axios from "axios";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 import EventCard from "@/components/cards/eventCard";
 import { IOrganizerProfile } from "@/interfaces/eoDetails";
+import { API_BASE_URL } from "@/components/config/api";
 
 export default function EODetailsPage() {
   const router = useRouter();
@@ -27,7 +28,7 @@ export default function EODetailsPage() {
     const fetchOrganizerProfile = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8000/admin/organizers/${organizerId}`
+          `${API_BASE_URL}/admin/organizers/${organizerId}`
         );
         setProfile(response.data.profile);
         console.log("Profile data:", response.data.profile);

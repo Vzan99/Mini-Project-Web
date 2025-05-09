@@ -4,6 +4,7 @@ import axios from "axios";
 import Link from "next/link";
 import { IEventCard } from "@/interfaces/eventCard";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
+import { API_BASE_URL } from "@/components/config/api";
 
 type SectionProps = {
   category: string;
@@ -15,7 +16,7 @@ export default function OtherSection({ category }: SectionProps) {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:8000/admin/sections?category=${category}`)
+      .get(`${API_BASE_URL}/admin/sections?category=${category}`)
       .then((response) => {
         setEvents(response.data.data[0]?.events || []);
       })

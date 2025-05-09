@@ -9,6 +9,7 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { debounce } from "lodash";
 import { IEventDiscover, IEventSuggestion } from "@/interfaces/discoverPage";
+import { API_BASE_URL } from "@/components/config/api";
 
 const categories = [
   "All Events",
@@ -104,7 +105,7 @@ export default function DiscoverPage() {
   const fetchLocations = async () => {
     try {
       console.log("Fetching locations...");
-      const response = await axios.get("http://localhost:8000/admin/locations");
+      const response = await axios.get(`${API_BASE_URL}/admin/locations`);
 
       console.log("Locations response:", response.data);
       if (response.data && response.data.data) {
@@ -141,7 +142,7 @@ export default function DiscoverPage() {
 
       try {
         const response = await axios.get(
-          `http://localhost:8000/events/search?query=${encodeURIComponent(
+          `${API_BASE_URL}/events/search?query=${encodeURIComponent(
             query
           )}&limit=5`
         );
@@ -263,7 +264,7 @@ export default function DiscoverPage() {
     setError("");
 
     try {
-      let url = `http://localhost:8000/events/filter?limit=${eventsPerPage}&page=${currentPage}`;
+      let url = `${API_BASE_URL}/events/filter?limit=${eventsPerPage}&page=${currentPage}`;
 
       // Add keyword search if provided
       if (keyword || searchQuery) {

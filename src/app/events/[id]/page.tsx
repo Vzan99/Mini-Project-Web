@@ -1,9 +1,10 @@
 import EventDetailsPage from "@/pages/event-page/eventDetails-page";
 import { notFound } from "next/navigation";
+import { API_BASE_URL } from "@/components/config/api";
 
 async function getEvent(id: string) {
   try {
-    const url = `http://localhost:8000/events/${id}`;
+    const url = `${API_BASE_URL}/events/${id}`;
     console.log("Fetching event from:", url);
 
     try {
