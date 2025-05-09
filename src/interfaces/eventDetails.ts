@@ -12,7 +12,18 @@ interface ITransaction {
 
 interface IVoucher {
   id: string;
-  // Add other voucher fields as needed
+  code: string; // From API response
+  voucherCode?: string; // From backend schema
+  discount_amount: number; // From API response
+  discountAmount?: number; // From backend schema
+  start_date?: string; // From API response
+  voucherStartDate?: Date; // From backend schema
+  end_date?: string; // From API response
+  voucherEndDate?: Date; // From backend schema
+  max_usage?: number; // From API response
+  maxUsage?: number; // From backend schema
+  current_usage?: number; // From API response
+  eventId?: string; // From backend schema
 }
 
 interface IReview {

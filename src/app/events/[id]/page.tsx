@@ -2,6 +2,40 @@ import EventDetailsPage from "@/pages/event-page/eventDetails-page";
 import { notFound } from "next/navigation";
 import { API_BASE_URL } from "@/components/config/api";
 
+// Define the page component with generateStaticParams to help Next.js understand the dynamic routes
+export default async function EventDetails({
+  params,
+}: {
+  params: { id: string };
+}) {
+  // Extract the ID first to avoid directly accessing params.id multiple times
+  const eventId = params?.id;
+
+  if (!eventId) {
+    console.error("Missing event ID in params");
+    notFound();
+  }
+
+  console.log("Rendering event page for ID:", eventId);
+
+  try {
+    // Fetch the event data
+    const event = await getEvent(eventId);
+
+    if (!event || typeof event !== "object") {
+      console.error("Invalid event data:", event);
+      notFound();
+    }
+
+    // Render the event details page
+    return <EventDetailsPage event={event} />;
+  } catch (error) {
+    console.error("Error in EventDetails:", error);
+    notFound();
+  }
+}
+
+// Separate function to fetch event data
 async function getEvent(id: string) {
   try {
     const url = `${API_BASE_URL}/events/${id}`;
@@ -10,7 +44,7 @@ async function getEvent(id: string) {
     try {
       const res = await fetch(url, {
         cache: "no-store",
-        next: { revalidate: 0 }, // Revalidate every 60 seconds
+        next: { revalidate: 0 },
       });
 
       if (!res.ok) {
@@ -19,7 +53,7 @@ async function getEvent(id: string) {
       }
 
       const data = await res.json();
-      console.log("Received data:", data); // Add this to debug
+      console.log("Received data:", data);
 
       return data.data;
     } catch (fetchError) {
@@ -29,7 +63,7 @@ async function getEvent(id: string) {
       if (process.env.NODE_ENV === "development") {
         console.log("Using fallback data for development");
         return {
-          id: id,
+          id,
           name: "Sample Event",
           start_date: "2023-12-01T10:00:00Z",
           end_date: "2023-12-01T18:00:00Z",
@@ -53,33 +87,10 @@ async function getEvent(id: string) {
         };
       }
 
-      // If not in development, rethrow the error
       throw fetchError;
     }
   } catch (error) {
     console.error("Error in getEvent:", error);
     throw error;
-  }
-}
-
-export default async function EventDetails({
-  params,
-}: {
-  params: { id: string };
-}) {
-  try {
-    console.log("Rendering event page for ID:", params.id);
-    const event = await getEvent(params.id);
-
-    // Add this check to ensure we have valid event data
-    if (!event || typeof event !== "object") {
-      console.error("Invalid event data:", event);
-      notFound();
-    }
-
-    return <EventDetailsPage event={event} />;
-  } catch (error) {
-    console.error("Error in EventDetails:", error);
-    notFound();
   }
 }
