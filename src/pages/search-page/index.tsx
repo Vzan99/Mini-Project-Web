@@ -1,6 +1,8 @@
 import SearchBar from "@/components/searchbar";
 import { IEventCard } from "@/interfaces/eventCard";
 import Link from "next/link";
+import { API_BASE_URL } from "@/components/config/api";
+import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 
 export default async function SearchPage({
   searchParams,
@@ -18,7 +20,7 @@ export default async function SearchPage({
 
   try {
     if (searchQuery) {
-      let url = `http://localhost:8000/events/search?query=${encodeURIComponent(
+      let url = `${API_BASE_URL}/events/search?query=${encodeURIComponent(
         searchQuery
       )}&limit=20`;
 
@@ -35,9 +37,6 @@ export default async function SearchPage({
     error = "Failed to fetch search results";
     console.error(err);
   }
-
-  const cloudinaryBaseUrl =
-    "https://res.cloudinary.com/dnb5cxo2m/image/upload/";
 
   // Format date in user-friendly way
   const formatEventDates = (start_date: string, end_date: string) => {

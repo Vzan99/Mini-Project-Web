@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
+import { API_BASE_URL } from "@/components/config/api";
 
 export default function SearchBar() {
   const [query, setQuery] = useState("");
@@ -32,7 +33,7 @@ export default function SearchBar() {
       setLoading(true);
       try {
         const response = await fetch(
-          `http://localhost:8000/events/search?query=${encodeURIComponent(
+          `${API_BASE_URL}/events/search?query=${encodeURIComponent(
             debouncedQuery
           )}&limit=5`
         );

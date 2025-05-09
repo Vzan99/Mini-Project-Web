@@ -9,6 +9,7 @@ import {
   eventInitialValues,
   eventValidationSchema,
 } from "@/schemas/eventCreateSchema";
+import { API_BASE_URL } from "@/components/config/api";
 
 // Add this function to generate time options in hourly intervals (24-hour format)
 const generateTimeOptions = () => {
@@ -92,16 +93,12 @@ export default function EventCreatePage() {
       }
 
       // Submit the form data
-      const response = await axios.post(
-        "http://localhost:8000/events",
-        submitData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const response = await axios.post(`${API_BASE_URL}/events`, submitData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       // Redirect to the event page on success
       router.push(`/events/${response.data.data.id}`);

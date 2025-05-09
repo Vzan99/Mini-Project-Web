@@ -23,27 +23,6 @@ export default function BuyTicketButton({
     try {
       // Include quantity in the URL parameters
       router.push(`/checkout?eventId=${eventId}&quantity=${quantity}`);
-
-      // Example of how you might create a transaction with quantity:
-      // const response = await fetch('http://localhost:8000/transactions', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${userToken}`
-      //   },
-      //   body: JSON.stringify({
-      //     eventId,
-      //     quantity,
-      //     // other required fields
-      //   })
-      // });
-
-      // if (response.ok) {
-      //   const data = await response.json();
-      //   router.push(`/payment?transactionId=${data.data.id}`);
-      // } else {
-      //   throw new Error('Failed to create transaction');
-      // }
     } catch (error) {
       console.error("Error processing ticket purchase:", error);
       alert(
