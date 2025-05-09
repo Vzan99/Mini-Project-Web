@@ -21,6 +21,21 @@ export default function BuyTicketButton({
     setIsLoading(true);
 
     try {
+      // Log the eventId to verify it's correct
+      console.log("Event ID being passed to checkout:", eventId);
+
+      // Make sure the eventId is properly formatted
+      if (
+        !eventId ||
+        !eventId.match(
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+        )
+      ) {
+        console.error("Invalid event ID format:", eventId);
+        alert("Invalid event ID. Please try again or contact support.");
+        return;
+      }
+
       // Include quantity in the URL parameters
       router.push(`/checkout?eventId=${eventId}&quantity=${quantity}`);
     } catch (error) {
