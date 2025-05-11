@@ -6,6 +6,7 @@ import BuyTicketButton from "@/components/buttons/BuyTicketButton";
 import Link from "next/link";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 import { IEventDetails } from "@/interfaces/eventDetails";
+import SocialMedia from "@/components/socialMedia";
 
 export default function EventDetailsPage({ event }: { event: IEventDetails }) {
   // Add state for ticket quantity
@@ -226,79 +227,24 @@ export default function EventDetailsPage({ event }: { event: IEventDetails }) {
           {/* Right column - Ticket information */}
           <div className="lg:w-1/3">
             <div className="bg-gray-50 p-6 rounded-lg sticky top-24">
-              <h2 className="text-2xl font-semibold mb-4">Tickets</h2>
-
-              <p className="text-3xl font-bold mb-6">
-                {formatPrice(event.price)}
-              </p>
-
               {event.remaining_seats > 0 ? (
                 <>
-                  {/* Ticket quantity selector */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Number of Tickets (Max 3)
-                    </label>
-                    <div className="flex items-center">
-                      <button
-                        onClick={() => handleQuantityChange(ticketQuantity - 1)}
-                        disabled={ticketQuantity <= 1}
-                        className="px-3 py-1 bg-[#222432] rounded-l-md disabled:opacity-50 text-white"
-                        aria-label="Decrease quantity"
-                      >
-                        -
-                      </button>
-                      <span className="px-4 py-1 bg-white border-t border-b text-center w-12">
-                        {ticketQuantity}
-                      </span>
-                      <button
-                        onClick={() => handleQuantityChange(ticketQuantity + 1)}
-                        disabled={
-                          ticketQuantity >= 3 ||
-                          ticketQuantity >= event.remaining_seats
-                        }
-                        className="px-3 py-1 bg-[#222432] rounded-r-md disabled:opacity-50 text-white"
-                        aria-label="Increase quantity"
-                      >
-                        +
-                      </button>
-                    </div>
-                    {event.remaining_seats < 3 && (
-                      <p className="text-xs text-orange-600 mt-1">
-                        Only {event.remaining_seats} seats remaining
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Total price calculation */}
-                  <div className="mb-4 pt-3 border-t border-gray-200">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-gray-600">
-                        Price per ticket:
-                      </span>
-                      <span className="text-sm font-medium">
-                        {formatPrice(event.price)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-gray-600">Quantity:</span>
-                      <span className="text-sm font-medium">
-                        {ticketQuantity}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                      <span className="text-base font-semibold">Total:</span>
-                      <span className="text-base font-bold">
-                        {formatPrice(event.price * ticketQuantity)}
-                      </span>
-                    </div>
-                  </div>
-
+                  {/* Simplified ticket section - only showing the button */}
                   <BuyTicketButton
                     eventId={event.id}
                     eventName={event.name}
-                    quantity={ticketQuantity}
+                    quantity={1} // Fixed quantity of 1
                   />
+
+                  {/* Social media sharing section */}
+                  <div className="mt-6 pt-4 border-t border-gray-200">
+                    <p className="text-center font-medium mb-3">
+                      Share this event!
+                    </p>
+                    <div className="flex justify-center">
+                      <SocialMedia />
+                    </div>
+                  </div>
 
                   {event.voucher && event.voucher.length > 0 && (
                     <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
@@ -309,9 +255,19 @@ export default function EventDetailsPage({ event }: { event: IEventDetails }) {
                   )}
                 </>
               ) : (
-                <div className="w-full py-4 bg-gray-400 text-white font-bold rounded-lg text-center">
-                  Sold Out
-                </div>
+                <>
+                  <div className="w-full py-4 bg-gray-400 text-white font-bold rounded-lg text-center mb-6">
+                    Sold Out
+                  </div>
+
+                  {/* Social media sharing section */}
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <p className="text-center font-medium mb-3">
+                      Share the event!
+                    </p>
+                    <SocialMedia />
+                  </div>
+                </>
               )}
             </div>
           </div>
