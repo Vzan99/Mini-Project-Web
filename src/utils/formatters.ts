@@ -1,7 +1,8 @@
 // Format number with commas (e.g., 1000 -> 1,000)
-export const formatNumberWithCommas = (num: number): string => {
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-};
+export function formatNumberWithCommas(num?: number | null): string {
+  if (typeof num !== "number" || isNaN(num)) return "0";
+  return num.toLocaleString(); // cleaner and handles locales
+}
 
 // Format date to locale string
 export const formatDate = (dateString: string): string => {

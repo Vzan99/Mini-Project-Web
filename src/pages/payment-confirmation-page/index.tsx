@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { API_BASE_URL } from "@/components/config/api";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
-import { ITransaction } from "@/interfaces/transaction";
-import { IEventDetails } from "@/interfaces/eventDetails";
+import { IAcceptedTransaction, IEventDetails } from "./components/types";
 import { formatNumberWithCommas, formatDate } from "@/utils/formatters";
 
 export default function PaymentConfirmationPage({
@@ -15,7 +14,9 @@ export default function PaymentConfirmationPage({
   transactionId: string;
 }) {
   const router = useRouter();
-  const [transaction, setTransaction] = useState<ITransaction | null>(null);
+  const [transaction, setTransaction] = useState<IAcceptedTransaction | null>(
+    null
+  );
   const [event, setEvent] = useState<IEventDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -33,23 +34,60 @@ export default function PaymentConfirmationPage({
           return;
         }
 
+        console.log(`Fetching transaction with ID: ${transactionId}`);
+
+        // Add error handling for invalid transaction ID
+        if (!transactionId || typeof transactionId !== "string") {
+          console.error("Invalid transaction ID:", transactionId);
+          setError("Invalid transaction ID");
+          setLoading(false);
+          return;
+        }
+
+        // Check the API endpoint format - make sure it matches what the backend expects
         const response = await axios.get(
           `${API_BASE_URL}/transactions/${transactionId}`,
           {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: {
+              Authorization: `Bearer ${token}`,
+              // Add Content-Type header
+              "Content-Type": "application/json",
+            },
           }
         );
 
+        console.log("Transaction response:", response.data);
         setTransaction(response.data.data);
 
         // Fetch event details
         const eventResponse = await axios.get(
-          `${API_BASE_URL}/events/${response.data.data.eventId}`
+          `${API_BASE_URL}/events/${response.data.data.event_id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
         );
         setEvent(eventResponse.data.data);
       } catch (err) {
         console.error("Error fetching transaction:", err);
-        setError("Failed to load transaction details");
+
+        // More detailed error logging
+        if (axios.isAxiosError(err)) {
+          console.error("Response status:", err.response?.status);
+          console.error("Response data:", err.response?.data);
+
+          // Check if there are validation details
+          if (
+            err.response?.data?.details &&
+            Array.isArray(err.response.data.details)
+          ) {
+            console.error("Validation details:", err.response.data.details);
+          }
+        }
+
+        setError("Failed to load transaction details. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -142,7 +180,7 @@ export default function PaymentConfirmationPage({
                   <h3 className="font-semibold">{event.name}</h3>
                   <p className="text-gray-600">{event.location}</p>
                   <p className="text-gray-600">
-                    Attend date: {formatDate(transaction.attendDate)}
+                    Attend date: {formatDate(transaction.attend_date)}
                   </p>
                 </div>
               </div>
@@ -156,44 +194,44 @@ export default function PaymentConfirmationPage({
                   </span>
                 </div>
 
-                {transaction.voucherCode && (
+                {transaction.voucher_code && (
                   <div className="flex justify-between text-green-600 mb-2">
                     <span>Voucher</span>
                     <span>
                       -
                       {formatNumberWithCommas(
-                        transaction.totalPrice -
+                        transaction.total_price -
                           event.price * transaction.quantity
                       )}
                     </span>
                   </div>
                 )}
 
-                {transaction.couponCode && (
+                {transaction.coupon_code && (
                   <div className="flex justify-between text-green-600 mb-2">
                     <span>Coupon</span>
                     <span>
                       -
                       {formatNumberWithCommas(
-                        transaction.totalPrice -
+                        transaction.total_price -
                           event.price * transaction.quantity
                       )}
                     </span>
                   </div>
                 )}
 
-                {transaction.pointsUsed > 0 && (
+                {transaction.points_used > 0 && (
                   <div className="flex justify-between text-green-600 mb-2">
                     <span>Points</span>
                     <span>
-                      -{formatNumberWithCommas(transaction.pointsUsed)}
+                      -{formatNumberWithCommas(transaction.points_used)}
                     </span>
                   </div>
                 )}
 
                 <div className="flex justify-between font-bold text-lg pt-2 border-t">
                   <span>Total</span>
-                  <span>{formatNumberWithCommas(transaction.totalPrice)}</span>
+                  <span>{formatNumberWithCommas(transaction.total_price)}</span>
                 </div>
               </div>
             </div>
@@ -205,7 +243,7 @@ export default function PaymentConfirmationPage({
 
           <div className="mb-4">
             <p className="font-medium">Payment Method:</p>
-            <p className="capitalize">{transaction?.paymentMethod}</p>
+            <p className="capitalize">{transaction?.payment_method}</p>
           </div>
 
           <div className="mb-4">
@@ -224,24 +262,21 @@ export default function PaymentConfirmationPage({
           </div>
 
           {/* Add payment proof upload for bank transfer and e-wallet */}
-          {transaction?.paymentMethod !== "creditCard" &&
-            paymentStatus === "pending" && (
-              <div className="mb-4">
-                <p className="font-medium mb-2">Upload Payment Proof:</p>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  accept="image/*"
-                  className="w-full p-2 border border-gray-300 rounded mb-2"
-                />
-                {paymentProof && (
-                  <p className="text-green-600 text-sm">
-                    File selected: {paymentProof.name}
-                  </p>
-                )}
-              </div>
+          <div className="mb-4">
+            <p className="font-medium mb-2">Upload Payment Proof:</p>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="image/*"
+              className="w-full p-2 border border-gray-300 rounded mb-2"
+            />
+            {paymentProof && (
+              <p className="text-green-600 text-sm">
+                File selected: {paymentProof.name}
+              </p>
             )}
+          </div>
 
           {paymentStatus === "pending" && (
             <button

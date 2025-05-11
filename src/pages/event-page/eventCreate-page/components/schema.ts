@@ -3,47 +3,47 @@ import * as Yup from "yup";
 // Define the form values interface
 export interface EventFormValues {
   name: string;
-  startDate: string;
-  startTime: string;
-  endDate: string;
-  endTime: string;
+  start_date: string;
+  start_time: string;
+  end_date: string;
+  end_time: string;
   description: string;
   location: string;
   price: number;
-  totalSeats: number;
+  total_seats: number;
   category: string;
   // Add voucher fields
-  createVoucher: boolean;
-  voucherCode: string;
-  discountAmount: number;
-  voucherStartDate: string;
-  voucherStartTime: string;
-  voucherEndDate: string;
-  voucherEndTime: string;
-  maxUsage: number;
+  create_voucher: boolean;
+  voucher_code: string;
+  discount_amount: number;
+  voucher_start_date: string;
+  voucher_start_time: string;
+  voucher_end_date: string;
+  voucher_end_time: string;
+  max_usage: number;
 }
 
 // Initial form values with correct case for category
 export const eventInitialValues: EventFormValues = {
   name: "",
-  startDate: "",
-  startTime: "",
-  endDate: "",
-  endTime: "",
+  start_date: "",
+  start_time: "",
+  end_date: "",
+  end_time: "",
   description: "",
   location: "",
   price: 0,
-  totalSeats: 1,
+  total_seats: 1,
   category: "Concert", // Default category with correct case
   // Add voucher initial values
-  createVoucher: false,
-  voucherCode: "",
-  discountAmount: 0,
-  voucherStartDate: "",
-  voucherStartTime: "",
-  voucherEndDate: "",
-  voucherEndTime: "",
-  maxUsage: 1,
+  create_voucher: false,
+  voucher_code: "",
+  discount_amount: 0,
+  voucher_start_date: "",
+  voucher_start_time: "",
+  voucher_end_date: "",
+  voucher_end_time: "",
+  max_usage: 1,
 };
 
 // Validation schema
@@ -51,10 +51,10 @@ export const eventValidationSchema = Yup.object({
   name: Yup.string()
     .required("Event name is required")
     .max(100, "Name must be 100 characters or less"),
-  startDate: Yup.string().required("Start date is required"),
-  startTime: Yup.string().required("Start time is required"),
-  endDate: Yup.string().required("End date is required"),
-  endTime: Yup.string().required("End time is required"),
+  start_date: Yup.string().required("Start date is required"),
+  start_time: Yup.string().required("Start time is required"),
+  end_date: Yup.string().required("End date is required"),
+  end_time: Yup.string().required("End time is required"),
   description: Yup.string()
     .required("Description is required")
     .max(2000, "Description must be 2000 characters or less"),
@@ -64,7 +64,7 @@ export const eventValidationSchema = Yup.object({
   price: Yup.number()
     .min(0, "Price cannot be negative")
     .required("Price is required"),
-  totalSeats: Yup.number()
+  total_seats: Yup.number()
     .min(1, "Total seats must be at least 1")
     .required("Total seats is required"),
   category: Yup.string()
@@ -74,15 +74,15 @@ export const eventValidationSchema = Yup.object({
       "Invalid category"
     ),
   // Add voucher validation
-  createVoucher: Yup.boolean(),
-  voucherCode: Yup.string().when("createVoucher", {
+  create_voucher: Yup.boolean(),
+  voucher_code: Yup.string().when("createVoucher", {
     is: true,
     then: (schema) =>
       schema
         .required("Voucher code is required")
         .min(5, "Voucher code must be at least 5 characters"),
   }),
-  discountAmount: Yup.number().when("createVoucher", {
+  discount_amount: Yup.number().when("createVoucher", {
     is: true,
     then: (schema) =>
       schema
@@ -96,23 +96,23 @@ export const eventValidationSchema = Yup.object({
           }
         ),
   }),
-  voucherStartDate: Yup.string().when("createVoucher", {
+  voucher_start_date: Yup.string().when("createVoucher", {
     is: true,
     then: (schema) => schema.required("Voucher start date is required"),
   }),
-  voucherStartTime: Yup.string().when("createVoucher", {
+  voucher_start_time: Yup.string().when("createVoucher", {
     is: true,
     then: (schema) => schema.required("Voucher start time is required"),
   }),
-  voucherEndDate: Yup.string().when("createVoucher", {
+  voucher_end_date: Yup.string().when("createVoucher", {
     is: true,
     then: (schema) => schema.required("Voucher end date is required"),
   }),
-  voucherEndTime: Yup.string().when("createVoucher", {
+  voucher_end_time: Yup.string().when("createVoucher", {
     is: true,
     then: (schema) => schema.required("Voucher end time is required"),
   }),
-  maxUsage: Yup.number().when("createVoucher", {
+  max_usage: Yup.number().when("createVoucher", {
     is: true,
     then: (schema) =>
       schema

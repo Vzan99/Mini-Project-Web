@@ -6,9 +6,9 @@ import axios from "axios";
 export default async function EventDetails({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const eventId = params?.id;
+  const { id: eventId } = await params;
 
   if (!eventId) {
     console.error("Missing event ID in params");
