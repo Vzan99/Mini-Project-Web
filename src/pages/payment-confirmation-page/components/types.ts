@@ -9,6 +9,8 @@ export interface IAcceptedTransaction {
   points_used: number;
   payment_method: string;
   total_price: number;
+  voucher_discount?: number;
+  coupon_discount?: number;
   status:
     | "waiting_for_payment"
     | "waiting_for_admin_confirmation"
