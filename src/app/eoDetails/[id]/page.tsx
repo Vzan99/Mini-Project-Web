@@ -13,7 +13,5 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default function OrganizerPage({ params }: Props) {
-  // In Next.js app router, we can access the ID from params
-  // and pass it to the EODetailsPage component
   return <EODetailsPage />;
 }

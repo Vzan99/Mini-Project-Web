@@ -1,70 +1,26 @@
-"use client"; // Add this to make it a client component if you're using interactive features
+"use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import BuyTicketButton from "@/components/buttons/BuyTicketButton";
 import Link from "next/link";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
-import { IEventDetails } from "@/interfaces/eventDetails";
+import { IEventDetails } from "./components/types";
+import SocialMedia from "@/components/socialMedia";
+import { formatDateDetails, formatTime } from "@/utils/formatters";
 
 export default function EventDetailsPage({ event }: { event: IEventDetails }) {
-  // Add state for ticket quantity
-  const [ticketQuantity, setTicketQuantity] = useState(1);
-
-  // Function to handle quantity changes
-  const handleQuantityChange = (newQuantity: number) => {
-    // Ensure quantity is between 1 and 3 (the backend limit)
-    if (newQuantity >= 1 && newQuantity <= 3) {
-      setTicketQuantity(newQuantity);
-    }
-  };
-
-  // Add some validation to prevent runtime errors
   if (!event) {
     return <div>Loading event details...</div>;
   }
 
-  // More robust image URL construction
-  // Improved image URL handling
   const getImageUrl = () => {
     if (!event.event_image) {
-      return "/images/placeholder.jpg"; // Fallback to placeholder
+      return "/images/placeholder.jpg";
     }
-
-    // Since you only store the filename in the database,
-    // always construct the full Cloudinary URL
     return `${cloudinaryBaseUrl}${event.event_image}`;
   };
 
   const imageUrl = getImageUrl();
-
-  console.log("Event image path:", event.event_image);
-  console.log("Constructed image URL:", imageUrl);
-
-  const formatDate = (date: string) => {
-    const options: Intl.DateTimeFormatOptions = {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    };
-    return new Date(date).toLocaleDateString("en-GB", options);
-  };
-
-  const formatTime = (date: string) => {
-    return new Date(date).toLocaleTimeString("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
 
   // Get organizer full name
   const organizerName = event.organizer
@@ -83,8 +39,6 @@ export default function EventDetailsPage({ event }: { event: IEventDetails }) {
           sizes="100vw"
           className="object-cover"
           onError={(e) => {
-            console.error("Image failed to load:", imageUrl);
-            console.error("Image error details:", e);
             (e.target as HTMLImageElement).src = "/images/placeholder.jpg";
           }}
         />
@@ -125,11 +79,11 @@ export default function EventDetailsPage({ event }: { event: IEventDetails }) {
                   <div>
                     <p className="text-sm text-gray-500">Date</p>
                     <p className="font-medium">
-                      {formatDate(event.start_date)}
+                      {formatDateDetails(event.start_date)}
                     </p>
                     {event.start_date !== event.end_date && (
                       <p className="font-medium">
-                        to {formatDate(event.end_date)}
+                        to {formatDateDetails(event.end_date)}
                       </p>
                     )}
                   </div>
@@ -209,109 +163,45 @@ export default function EventDetailsPage({ event }: { event: IEventDetails }) {
             <div className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">Location</h2>
               <p className="mb-4">{event.location}</p>
-              {/* You can add a map component here if you have coordinates */}
             </div>
-
-            {event.review && event.review.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
-                {/* Implement reviews display here */}
-                <p className="text-gray-500">
-                  This event has {event.review.length} reviews.
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Right column - Ticket information */}
           <div className="lg:w-1/3">
             <div className="bg-gray-50 p-6 rounded-lg sticky top-24">
-              <h2 className="text-2xl font-semibold mb-4">Tickets</h2>
-
-              <p className="text-3xl font-bold mb-6">
-                {formatPrice(event.price)}
-              </p>
-
               {event.remaining_seats > 0 ? (
                 <>
-                  {/* Ticket quantity selector */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Number of Tickets (Max 3)
-                    </label>
-                    <div className="flex items-center">
-                      <button
-                        onClick={() => handleQuantityChange(ticketQuantity - 1)}
-                        disabled={ticketQuantity <= 1}
-                        className="px-3 py-1 bg-[#222432] rounded-l-md disabled:opacity-50 text-white"
-                        aria-label="Decrease quantity"
-                      >
-                        -
-                      </button>
-                      <span className="px-4 py-1 bg-white border-t border-b text-center w-12">
-                        {ticketQuantity}
-                      </span>
-                      <button
-                        onClick={() => handleQuantityChange(ticketQuantity + 1)}
-                        disabled={
-                          ticketQuantity >= 3 ||
-                          ticketQuantity >= event.remaining_seats
-                        }
-                        className="px-3 py-1 bg-[#222432] rounded-r-md disabled:opacity-50 text-white"
-                        aria-label="Increase quantity"
-                      >
-                        +
-                      </button>
-                    </div>
-                    {event.remaining_seats < 3 && (
-                      <p className="text-xs text-orange-600 mt-1">
-                        Only {event.remaining_seats} seats remaining
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Total price calculation */}
-                  <div className="mb-4 pt-3 border-t border-gray-200">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-gray-600">
-                        Price per ticket:
-                      </span>
-                      <span className="text-sm font-medium">
-                        {formatPrice(event.price)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-gray-600">Quantity:</span>
-                      <span className="text-sm font-medium">
-                        {ticketQuantity}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                      <span className="text-base font-semibold">Total:</span>
-                      <span className="text-base font-bold">
-                        {formatPrice(event.price * ticketQuantity)}
-                      </span>
-                    </div>
-                  </div>
-
+                  {/* Simplified ticket section - only showing the button */}
                   <BuyTicketButton
                     eventId={event.id}
                     eventName={event.name}
-                    quantity={ticketQuantity}
+                    quantity={1} // Fixed quantity of 1
                   />
 
-                  {event.voucher && event.voucher.length > 0 && (
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                      <p className="text-sm font-medium text-blue-800">
-                        Vouchers available for this event!
-                      </p>
+                  {/* Social media sharing section */}
+                  <div className="mt-6 pt-4 border-t border-gray-200">
+                    <p className="text-center font-medium mb-3">
+                      Share this event!
+                    </p>
+                    <div className="flex justify-center">
+                      <SocialMedia />
                     </div>
-                  )}
+                  </div>
                 </>
               ) : (
-                <div className="w-full py-4 bg-gray-400 text-white font-bold rounded-lg text-center">
-                  Sold Out
-                </div>
+                <>
+                  <div className="w-full py-4 bg-gray-400 text-white font-bold rounded-lg text-center mb-6">
+                    Sold Out
+                  </div>
+
+                  {/* Social media sharing section */}
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <p className="text-center font-medium mb-3">
+                      Share the event!
+                    </p>
+                    <SocialMedia />
+                  </div>
+                </>
               )}
             </div>
           </div>

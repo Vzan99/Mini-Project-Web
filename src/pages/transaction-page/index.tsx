@@ -4,18 +4,16 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { Formik, Form, Field, ErrorMessage } from "formik";
-import * as Yup from "yup";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { API_BASE_URL } from "@/components/config/api";
-import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 import { IEventDetails } from "@/interfaces/eventDetails";
 import { formatNumberWithCommas } from "@/utils/formatters";
 import {
   TransactionFormValues,
   transactionInitialValues,
   transactionValidationSchema,
-} from "@/schemas/transactionSchema";
+} from "./components/types";
 
 export default function TransactionPage() {
   const router = useRouter();
@@ -478,11 +476,16 @@ export default function TransactionPage() {
         }
       );
 
-      console.log("Transaction created successfully:", response.data);
+      console.log("Transaction created successfully:", response);
+      const transactionId = response.data.data.id;
 
-      // Show success notification and redirect to confirmation page
-      alert(`Transaction created successfully!`);
-      router.push(`/payment/confirmation/${response.data.data.id}`);
+      // Show success alert
+      alert("Transaction created successfully! Redirecting to payment page...");
+
+      // Add a small delay to ensure the transaction is committed and alert is seen
+      setTimeout(() => {
+        router.push(`/payment/confirmation/${transactionId}`);
+      }, 1000); // Increased delay to 1 second
     } catch (err: any) {
       console.error("Transaction error:", err);
 

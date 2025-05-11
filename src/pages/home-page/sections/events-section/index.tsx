@@ -8,11 +8,11 @@ import OtherSection from "./others";
 export default function EventsSection() {
   return (
     <div>
-      <ConcertSection category="Concert" />
-      <FestivalSection category="Festival" />
-      <ComedySection category="Comedy" />
-      <MuseumSection category="Museum" />
-      <OtherSection category="Others" />
+      <ConcertSection />
+      <FestivalSection />
+      <ComedySection />
+      <MuseumSection />
+      <OtherSection />
     </div>
   );
 }
