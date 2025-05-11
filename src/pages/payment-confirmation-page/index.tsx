@@ -8,7 +8,10 @@ import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 import { IAcceptedTransaction, IEventDetails } from "./components/types";
 import { formatNumberWithCommas, formatDate } from "@/utils/formatters";
 import { useAppSelector, useAppDispatch } from "@/lib/redux/hooks";
-import { updateTransactionStatus } from "@/lib/redux/features/transactionSlice";
+import {
+  updateTransactionStatus,
+  setCurrentTransaction,
+} from "@/lib/redux/features/transactionSlice";
 import { differenceInSeconds, addHours, addDays, format } from "date-fns";
 
 export default function PaymentConfirmationPage({
@@ -104,6 +107,14 @@ export default function PaymentConfirmationPage({
 
           // Set payment status directly from the transaction status
           setPaymentStatus(transactionData.status);
+
+          // Update Redux with transaction data if it's not already there
+          if (
+            !currentTransaction ||
+            currentTransaction.id !== transactionData.id
+          ) {
+            dispatch(setCurrentTransaction(transactionData));
+          }
 
           console.log("Transaction status:", transactionData.status);
           console.log("Transaction total price:", transactionData.total_price);
@@ -286,6 +297,19 @@ export default function PaymentConfirmationPage({
     }
   };
 
+  // Add this new useEffect for automatic redirection
+  useEffect(() => {
+    // Only redirect if payment is confirmed
+    if (paymentStatus === "confirmed") {
+      const redirectTimer = setTimeout(() => {
+        router.push(`/payment/success/${transactionId}`);
+      }, 10000); // 10 seconds
+
+      // Clear the timer if component unmounts
+      return () => clearTimeout(redirectTimer);
+    }
+  }, [paymentStatus, transactionId, router]);
+
   if (loading) return <div className="container mx-auto p-4">Loading...</div>;
   if (error)
     return <div className="container mx-auto p-4 text-red-500">{error}</div>;
@@ -373,7 +397,14 @@ export default function PaymentConfirmationPage({
                   <span>Total</span>
                   <span>
                     {formatNumberWithCommas(
-                      calculatedTotal || transaction.total_price
+                      // First try Redux calculated total
+                      calculatedTotal ||
+                        // Then try transaction total from API
+                        (transaction && transaction.total_price) ||
+                        // Finally calculate from event price and quantity as fallback
+                        (event && transaction
+                          ? event.price * transaction.quantity
+                          : 0)
                     )}
                   </span>
                 </div>
@@ -488,8 +519,19 @@ export default function PaymentConfirmationPage({
           )}
 
           {paymentStatus === "confirmed" && (
-            <div className="text-green-600 text-center p-3 bg-green-50 rounded-md">
-              Your payment has been confirmed. Enjoy the event!
+            <div className="text-green-600 p-3 bg-green-50 rounded-md mb-3">
+              <p className="text-center mb-3">
+                Your payment has been confirmed. Enjoy the event!
+              </p>
+              <p className="text-center text-sm mb-4">
+                You will be redirected to the ticket page in 10 seconds.
+              </p>
+              <button
+                onClick={() => router.push(`/payment/success/${transactionId}`)}
+                className="w-full py-3 bg-[#222432] text-white rounded-md font-medium"
+              >
+                View My Tickets Now
+              </button>
             </div>
           )}
 

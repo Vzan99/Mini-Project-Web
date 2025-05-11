@@ -9,6 +9,29 @@ import { IEventDetails } from "../transaction-page/components/types";
 import { formatDate, formatNumberWithCommas } from "@/utils/formatters";
 import { useAppSelector } from "@/lib/redux/hooks";
 
+interface ITicket {
+  id: string;
+  transaction_id: string;
+  user_id: string;
+  event_id: string;
+  ticket_code: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  event?: {
+    name: string;
+    start_date: string;
+    end_date: string;
+    location: string;
+    event_image: string;
+  };
+  transaction?: {
+    created_at: string;
+    quantity: number;
+    total_pay_amount: number;
+  };
+}
+
 export default function PaymentSuccessPage({
   transactionId,
 }: {
@@ -19,6 +42,7 @@ export default function PaymentSuccessPage({
   const [event, setEvent] = useState<IEventDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [tickets, setTickets] = useState<ITicket[]>([]);
   const { currentTransaction, subtotal, discounts, calculatedTotal } =
     useAppSelector((state) => state.transaction);
 
@@ -75,6 +99,36 @@ export default function PaymentSuccessPage({
 
     fetchTransactionDetails();
   }, [transactionId, router, currentTransaction]);
+
+  useEffect(() => {
+    const fetchTickets = async () => {
+      if (!transaction || transaction.status !== "confirmed") return;
+
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        // Update to the correct endpoint
+        const response = await axios.get(
+          `${API_BASE_URL}/transactions/tickets`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        // Filter tickets for this transaction if needed
+        const transactionTickets = response.data.data.filter(
+          (ticket: ITicket) => ticket.transaction_id === transactionId
+        );
+
+        setTickets(transactionTickets);
+      } catch (err) {
+        console.error("Error fetching tickets:", err);
+      }
+    };
+
+    fetchTickets();
+  }, [transaction, transactionId]);
 
   if (loading) return <div className="container mx-auto p-4">Loading...</div>;
   if (error)
@@ -145,6 +199,30 @@ export default function PaymentSuccessPage({
                   calculatedTotal || transaction.total_price
                 )}
               </p>
+            </div>
+
+            {/* After the existing ticket details section */}
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <h2 className="font-semibold mb-2">Your Tickets:</h2>
+              {tickets.length > 0 ? (
+                <div className="space-y-2">
+                  {tickets.map((ticket) => (
+                    <div
+                      key={ticket.id}
+                      className="bg-white p-2 border rounded-md"
+                    >
+                      <p className="font-medium">
+                        Ticket Code: {ticket.ticket_code}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  Your tickets are being processed. You can view them later in
+                  "My Tickets".
+                </p>
+              )}
             </div>
           </div>
 
