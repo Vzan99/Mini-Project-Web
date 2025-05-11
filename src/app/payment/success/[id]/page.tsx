@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Your payment has been successfully processed",
 };
 
-export default function PaymentSuccess({ params }: { params: { id: string } }) {
+export default async function PaymentSuccess({
+  params,
+}: {
+  params: { id: string };
+}) {
+  // No need to await params, it's already resolved
   return <PaymentSuccessPage transactionId={params.id} />;
 }

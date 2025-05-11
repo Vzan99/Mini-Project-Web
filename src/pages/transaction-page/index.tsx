@@ -502,17 +502,30 @@ export default function TransactionPage() {
         quantity: values.quantity,
         attend_date: values.attend_date,
         payment_method: values.payment_method,
-        ...(values.use_voucher && voucherId ? { voucherId } : {}),
-        ...(values.use_coupon && couponId ? { couponId } : {}),
-        ...(values.use_points && pointsId ? { pointsId } : {}),
+        // Include voucher data properly
+        ...(values.use_voucher && voucherId
+          ? {
+              voucher_id: voucherId, // Changed from voucherId to voucher_id
+              voucher_code: values.voucher_code,
+              voucher_discount: voucherDiscount,
+            }
+          : {}),
+        ...(values.use_coupon && couponId
+          ? {
+              coupon_id: couponId, // Use snake_case for backend consistency
+              coupon_code: values.coupon_code,
+              coupon_discount: couponDiscount,
+            }
+          : {}),
+        ...(values.use_points && pointsId
+          ? {
+              points_id: pointsId, // Use snake_case for backend consistency
+              points_used: availablePoints,
+            }
+          : {}),
         // Include calculated values
         subtotal: subtotal,
         total_price: total,
-        voucher_discount: values.use_voucher
-          ? reduxDiscounts.voucherDiscount
-          : 0,
-        coupon_discount: values.use_coupon ? reduxDiscounts.couponDiscount : 0,
-        points_used: values.use_points ? reduxDiscounts.pointsUsed : 0,
       };
 
       console.log("Submitting transaction with payload:", payload);
