@@ -8,24 +8,11 @@ import {
   EventFormValues,
   eventInitialValues,
   eventValidationSchema,
-} from "@/schemas/eventCreateSchema";
+} from "./components/schema";
 import { API_BASE_URL } from "@/components/config/api";
 import { formatNumberWithCommas } from "@/utils/formatters";
+import { generateTimeOptions } from "@/utils/formatters";
 
-// Add this function to generate time options in hourly intervals (24-hour format)
-const generateTimeOptions = () => {
-  const options = [];
-  for (let hour = 0; hour < 24; hour++) {
-    const hourFormatted = hour.toString().padStart(2, "0");
-    const time = `${hourFormatted}:00`;
-    // Format for display (24-hour format)
-    const displayTime = `${hourFormatted}:00`;
-    options.push({ value: time, label: displayTime });
-  }
-  return options;
-};
-
-// Create the time options array
 const timeOptions = generateTimeOptions();
 
 export default function EventCreatePage() {

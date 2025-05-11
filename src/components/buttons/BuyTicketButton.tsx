@@ -79,7 +79,7 @@ export default function BuyTicketButton({
           Processing...
         </span>
       ) : (
-        "Get Ticket"
+        `Buy ${quantity > 1 ? quantity + " Tickets" : "Ticket"}`
       )}
     </button>
   );

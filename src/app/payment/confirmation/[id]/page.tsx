@@ -6,6 +6,10 @@ export const metadata: Metadata = {
   description: "Confirm your payment details",
 };
 
-export default function PaymentConfirmation({ params }: { params: { id: string } }) {
+export default function PaymentConfirmation({
+  params,
+}: {
+  params: { id: string };
+}) {
   return <PaymentConfirmationPage transactionId={params.id} />;
 }

@@ -1,71 +1,26 @@
-"use client"; // Add this to make it a client component if you're using interactive features
+"use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import BuyTicketButton from "@/components/buttons/BuyTicketButton";
 import Link from "next/link";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
-import { IEventDetails } from "@/interfaces/eventDetails";
+import { IEventDetails } from "./components/types";
 import SocialMedia from "@/components/socialMedia";
+import { formatDateDetails, formatTime } from "@/utils/formatters";
 
 export default function EventDetailsPage({ event }: { event: IEventDetails }) {
-  // Add state for ticket quantity
-  const [ticketQuantity, setTicketQuantity] = useState(1);
-
-  // Function to handle quantity changes
-  const handleQuantityChange = (newQuantity: number) => {
-    // Ensure quantity is between 1 and 3 (the backend limit)
-    if (newQuantity >= 1 && newQuantity <= 3) {
-      setTicketQuantity(newQuantity);
-    }
-  };
-
-  // Add some validation to prevent runtime errors
   if (!event) {
     return <div>Loading event details...</div>;
   }
 
-  // More robust image URL construction
-  // Improved image URL handling
   const getImageUrl = () => {
     if (!event.event_image) {
-      return "/images/placeholder.jpg"; // Fallback to placeholder
+      return "/images/placeholder.jpg";
     }
-
-    // Since you only store the filename in the database,
-    // always construct the full Cloudinary URL
     return `${cloudinaryBaseUrl}${event.event_image}`;
   };
 
   const imageUrl = getImageUrl();
-
-  console.log("Event image path:", event.event_image);
-  console.log("Constructed image URL:", imageUrl);
-
-  const formatDate = (date: string) => {
-    const options: Intl.DateTimeFormatOptions = {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    };
-    return new Date(date).toLocaleDateString("en-GB", options);
-  };
-
-  const formatTime = (date: string) => {
-    return new Date(date).toLocaleTimeString("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
 
   // Get organizer full name
   const organizerName = event.organizer
@@ -84,8 +39,6 @@ export default function EventDetailsPage({ event }: { event: IEventDetails }) {
           sizes="100vw"
           className="object-cover"
           onError={(e) => {
-            console.error("Image failed to load:", imageUrl);
-            console.error("Image error details:", e);
             (e.target as HTMLImageElement).src = "/images/placeholder.jpg";
           }}
         />
@@ -126,11 +79,11 @@ export default function EventDetailsPage({ event }: { event: IEventDetails }) {
                   <div>
                     <p className="text-sm text-gray-500">Date</p>
                     <p className="font-medium">
-                      {formatDate(event.start_date)}
+                      {formatDateDetails(event.start_date)}
                     </p>
                     {event.start_date !== event.end_date && (
                       <p className="font-medium">
-                        to {formatDate(event.end_date)}
+                        to {formatDateDetails(event.end_date)}
                       </p>
                     )}
                   </div>
@@ -210,18 +163,7 @@ export default function EventDetailsPage({ event }: { event: IEventDetails }) {
             <div className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">Location</h2>
               <p className="mb-4">{event.location}</p>
-              {/* You can add a map component here if you have coordinates */}
             </div>
-
-            {event.review && event.review.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
-                {/* Implement reviews display here */}
-                <p className="text-gray-500">
-                  This event has {event.review.length} reviews.
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Right column - Ticket information */}
@@ -245,14 +187,6 @@ export default function EventDetailsPage({ event }: { event: IEventDetails }) {
                       <SocialMedia />
                     </div>
                   </div>
-
-                  {event.voucher && event.voucher.length > 0 && (
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                      <p className="text-sm font-medium text-blue-800">
-                        Vouchers available for this event!
-                      </p>
-                    </div>
-                  )}
                 </>
               ) : (
                 <>
