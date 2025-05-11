@@ -18,6 +18,12 @@ import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   setCurrentTransaction,
   clearCurrentTransaction,
+  setTransactionForm,
+  applyVoucher,
+  applyCoupon,
+  applyPoints,
+  setCalculatedTotal,
+  setSubtotal, // Add this import
 } from "@/lib/redux/features/transactionSlice";
 
 export default function TransactionPage() {
@@ -27,7 +33,11 @@ export default function TransactionPage() {
   const dispatch = useAppDispatch();
 
   // Get current transaction from Redux
-  const { currentTransaction } = useAppSelector((state) => state.transaction);
+  const {
+    transactionForm,
+    calculatedTotal,
+    discounts: reduxDiscounts,
+  } = useAppSelector((state) => state.transaction);
 
   // State variables
   const [event, setEvent] = useState<IEventDetails | null>(null);
@@ -398,15 +408,78 @@ export default function TransactionPage() {
     const subtotal = event.price * values.quantity;
     let discount = 0;
 
-    if (values.use_voucher) discount += voucherDiscount;
-    if (values.use_coupon) discount += couponDiscount;
-    if (values.use_points) discount += values.points_to_use;
+    if (values.use_voucher) discount += reduxDiscounts.voucherDiscount;
+    if (values.use_coupon) discount += reduxDiscounts.couponDiscount;
+    if (values.use_points) discount += reduxDiscounts.pointsUsed;
 
-    return Math.max(0, subtotal - discount);
+    const total = Math.max(0, subtotal - discount);
+
+    // Don't dispatch during render - just return the calculated value
+    return total;
   };
+
+  // Add this useEffect to update the Redux state when relevant values change
+  useEffect(() => {
+    if (event && transactionForm) {
+      const subtotal = event.price * transactionForm.quantity;
+      dispatch(setSubtotal(subtotal));
+
+      let discount = 0;
+
+      if (transactionForm.use_voucher)
+        discount += reduxDiscounts.voucherDiscount;
+      if (transactionForm.use_coupon) discount += reduxDiscounts.couponDiscount;
+      if (transactionForm.use_points) discount += reduxDiscounts.pointsUsed;
+
+      const total = Math.max(0, subtotal - discount);
+      dispatch(setCalculatedTotal(total));
+    }
+  }, [
+    event,
+    transactionForm,
+    reduxDiscounts.voucherDiscount,
+    reduxDiscounts.couponDiscount,
+    reduxDiscounts.pointsUsed,
+    dispatch,
+  ]);
+
+  // Update the Redux state when discounts change
+  useEffect(() => {
+    if (event) {
+      // Update Redux with the current discount values
+      if (voucherId && voucherDiscount > 0) {
+        dispatch(applyVoucher({ id: voucherId, amount: voucherDiscount }));
+      }
+
+      if (couponId && couponDiscount > 0) {
+        dispatch(applyCoupon({ id: couponId, amount: couponDiscount }));
+      }
+
+      if (pointsId && availablePoints > 0) {
+        dispatch(applyPoints(availablePoints));
+      }
+    }
+  }, [
+    voucherId,
+    voucherDiscount,
+    couponId,
+    couponDiscount,
+    pointsId,
+    availablePoints,
+    dispatch,
+    event,
+  ]);
 
   // Handle form submission
   const handleSubmit = async (values: TransactionFormValues) => {
+    // Save form values to Redux first
+    dispatch(setTransactionForm(values));
+
+    // Calculate final values before submission
+    const subtotal = event?.price ? event.price * values.quantity : 0;
+    dispatch(setSubtotal(subtotal)); // Store subtotal in Redux for consistent order summary
+    const total = calculateTotal(values);
+
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -432,6 +505,14 @@ export default function TransactionPage() {
         ...(values.use_voucher && voucherId ? { voucherId } : {}),
         ...(values.use_coupon && couponId ? { couponId } : {}),
         ...(values.use_points && pointsId ? { pointsId } : {}),
+        // Include calculated values
+        subtotal: subtotal,
+        total_price: total,
+        voucher_discount: values.use_voucher
+          ? reduxDiscounts.voucherDiscount
+          : 0,
+        coupon_discount: values.use_coupon ? reduxDiscounts.couponDiscount : 0,
+        points_used: values.use_points ? reduxDiscounts.pointsUsed : 0,
       };
 
       console.log("Submitting transaction with payload:", payload);

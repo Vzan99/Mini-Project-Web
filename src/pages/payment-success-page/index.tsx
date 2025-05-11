@@ -4,39 +4,65 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { API_BASE_URL } from "@/components/config/api";
-import { ITransaction } from "@/interfaces/transaction";
-import { IEventDetails } from "@/interfaces/eventDetails";
-import { formatDate } from "@/utils/formatters";
+import { ReduxTransaction } from "@/lib/redux/features/transactionSlice";
+import { IEventDetails } from "../transaction-page/components/types";
+import { formatDate, formatNumberWithCommas } from "@/utils/formatters";
+import { useAppSelector } from "@/lib/redux/hooks";
 
-export default function PaymentSuccessPage({ 
-  transactionId 
-}: { 
-  transactionId: string 
+export default function PaymentSuccessPage({
+  transactionId,
+}: {
+  transactionId: string;
 }) {
   const router = useRouter();
-  const [transaction, setTransaction] = useState<ITransaction | null>(null);
+  const [transaction, setTransaction] = useState<ReduxTransaction | null>(null);
   const [event, setEvent] = useState<IEventDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { currentTransaction, subtotal, discounts, calculatedTotal } =
+    useAppSelector((state) => state.transaction);
 
   useEffect(() => {
     const fetchTransactionDetails = async () => {
       try {
+        // If we already have the transaction in Redux, use it
+        if (currentTransaction && currentTransaction.id === transactionId) {
+          setTransaction(currentTransaction);
+
+          // Check if event property exists in currentTransaction
+          if (currentTransaction.event) {
+            setEvent(currentTransaction.event);
+          } else {
+            // Fetch event details if not included in the transaction
+            const eventResponse = await axios.get(
+              `${API_BASE_URL}/events/${currentTransaction.event_id}`
+            );
+            setEvent(eventResponse.data.data);
+          }
+
+          setLoading(false);
+          return;
+        }
+
+        // Otherwise fetch from API
         const token = localStorage.getItem("token");
         if (!token) {
           router.push("/login");
           return;
         }
 
-        const response = await axios.get(`${API_BASE_URL}/transactions/${transactionId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
+        const response = await axios.get(
+          `${API_BASE_URL}/transactions/${transactionId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
         setTransaction(response.data.data);
-        
+
         // Fetch event details
         const eventResponse = await axios.get(
-          `${API_BASE_URL}/events/${response.data.data.eventId}`
+          `${API_BASE_URL}/events/${response.data.data.event_id}`
         );
         setEvent(eventResponse.data.data);
       } catch (err) {
@@ -48,11 +74,13 @@ export default function PaymentSuccessPage({
     };
 
     fetchTransactionDetails();
-  }, [transactionId, router]);
+  }, [transactionId, router, currentTransaction]);
 
   if (loading) return <div className="container mx-auto p-4">Loading...</div>;
-  if (error) return <div className="container mx-auto p-4 text-red-500">{error}</div>;
-  if (!transaction || !event) return <div className="container mx-auto p-4">Transaction not found</div>;
+  if (error)
+    return <div className="container mx-auto p-4 text-red-500">{error}</div>;
+  if (!transaction || !event)
+    return <div className="container mx-auto p-4">Transaction not found</div>;
 
   return (
     <div className="bg-[#FAF0D7] min-h-screen py-8">
@@ -63,20 +91,67 @@ export default function PaymentSuccessPage({
           <p className="text-gray-600 mb-6">
             Your tickets for {event.name} have been confirmed.
           </p>
-          
+
           <div className="bg-gray-50 p-4 rounded-md mb-6 text-left">
             <h2 className="font-semibold mb-2">Ticket Details:</h2>
             <p>Event: {event.name}</p>
-            <p>Date: {formatDate(transaction.attendDate)}</p>
+            <p>Date: {formatDate(transaction.attend_date)}</p>
             <p>Location: {event.location}</p>
             <p>Tickets: {transaction.quantity}</p>
             <p>Transaction ID: {transaction.id}</p>
+
+            {/* Add price details */}
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <p className="font-semibold">Price Details:</p>
+              <p>
+                Subtotal:{" "}
+                {formatNumberWithCommas(
+                  subtotal || event.price * transaction.quantity
+                )}
+              </p>
+
+              {transaction.voucher_code && (
+                <p className="text-green-600">
+                  Voucher Discount: -
+                  {formatNumberWithCommas(
+                    discounts.voucherDiscount ||
+                      transaction.voucher_discount ||
+                      0
+                  )}
+                </p>
+              )}
+
+              {transaction.coupon_code && (
+                <p className="text-green-600">
+                  Coupon Discount: -
+                  {formatNumberWithCommas(
+                    discounts.couponDiscount || transaction.coupon_discount || 0
+                  )}
+                </p>
+              )}
+
+              {transaction.points_used > 0 && (
+                <p className="text-green-600">
+                  Points Used: -
+                  {formatNumberWithCommas(
+                    discounts.pointsUsed || transaction.points_used || 0
+                  )}
+                </p>
+              )}
+
+              <p className="font-bold mt-2 pt-2 border-t">
+                Total:{" "}
+                {formatNumberWithCommas(
+                  calculatedTotal || transaction.total_price
+                )}
+              </p>
+            </div>
           </div>
-          
+
           <p className="text-sm text-gray-500 mb-6">
             A confirmation email has been sent to your registered email address.
           </p>
-          
+
           <div className="space-y-3">
             <button
               onClick={() => router.push(`/tickets/${transaction.id}`)}
@@ -84,7 +159,7 @@ export default function PaymentSuccessPage({
             >
               View My Tickets
             </button>
-            
+
             <button
               onClick={() => router.push("/")}
               className="w-full py-3 border border-gray-300 rounded-md font-medium"
