@@ -16,7 +16,7 @@ export const transactionInitialValues = (
   coupon_code: "",
   use_points: false,
   points_to_use: 0,
-  payment_method: "creditCard",
+  payment_method: "creditCard", // This is correct but make sure your form has this value
 });
 
 // Validation schema for the transaction form

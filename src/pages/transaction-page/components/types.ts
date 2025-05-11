@@ -23,7 +23,7 @@ interface IVoucher {
   max_usage?: number; // From API response
   maxUsage?: number; // From backend schema
   current_usage?: number; // From API response
-  eventId?: string; // From backend schema
+  event_id?: string; // From backend schema
 }
 
 interface IReview {
