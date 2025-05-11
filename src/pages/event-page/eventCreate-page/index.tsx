@@ -34,19 +34,19 @@ export default function EventCreatePage() {
     const combinedData = { ...values };
 
     // Combine start date and time with proper ISO format
-    if (values.startDate && values.startTime) {
+    if (values.start_date && values.start_time) {
       const startDateTime = new Date(
-        `${values.startDate}T${values.startTime}`
+        `${values.start_date}T${values.start_time}`
       ).toISOString();
-      combinedData.startDate = startDateTime;
+      combinedData.start_date = startDateTime;
     }
 
     // Combine end date and time with proper ISO format
-    if (values.endDate && values.endTime) {
+    if (values.end_date && values.end_time) {
       const endDateTime = new Date(
-        `${values.endDate}T${values.endTime}`
+        `${values.end_date}T${values.end_time}`
       ).toISOString();
-      combinedData.endDate = endDateTime;
+      combinedData.end_date = endDateTime;
     }
 
     return combinedData;
@@ -67,12 +67,12 @@ export default function EventCreatePage() {
 
       // Add all form fields to FormData with correct field names
       submitData.append("name", combinedData.name);
-      submitData.append("startDate", combinedData.startDate); // Already combined date+time
-      submitData.append("endDate", combinedData.endDate); // Already combined date+time
+      submitData.append("startDate", combinedData.start_date); // Already combined date+time
+      submitData.append("endDate", combinedData.end_date); // Already combined date+time
       submitData.append("description", combinedData.description);
       submitData.append("location", combinedData.location);
       submitData.append("price", combinedData.price.toString());
-      submitData.append("totalSeats", combinedData.totalSeats.toString());
+      submitData.append("totalSeats", combinedData.total_seats.toString());
       submitData.append("category", combinedData.category); // Remove .toLowerCase()
 
       // Add image file with correct field name
@@ -98,23 +98,23 @@ export default function EventCreatePage() {
       });
 
       // If voucher creation is enabled and event is paid, create voucher
-      if (values.createVoucher && values.price > 0) {
+      if (values.create_voucher && values.price > 0) {
         const eventId = response.data.data.id;
 
         // Combine voucher dates and times
-        const voucherStartDateTime = `${values.voucherStartDate}T${values.voucherStartTime}`;
-        const voucherEndDateTime = `${values.voucherEndDate}T${values.voucherEndTime}`;
+        const voucherStartDateTime = `${values.voucher_start_date}T${values.voucher_start_time}`;
+        const voucherEndDateTime = `${values.voucher_end_date}T${values.voucher_end_time}`;
 
         // Create voucher
         await axios.post(
           `${API_BASE_URL}/vouchers`,
           {
             eventId,
-            voucherCode: values.voucherCode,
-            discountAmount: values.discountAmount,
+            voucherCode: values.voucher_code,
+            discountAmount: values.discount_amount,
             voucherStartDate: new Date(voucherStartDateTime),
             voucherEndDate: new Date(voucherEndDateTime),
-            maxUsage: values.maxUsage,
+            maxUsage: values.max_usage,
           },
           {
             headers: {
@@ -202,7 +202,7 @@ export default function EventCreatePage() {
                     id="startDate"
                     name="startDate"
                     className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
-                      errors.startDate && touched.startDate
+                      errors.start_date && touched.start_date
                         ? "border-red-500"
                         : "border-gray-300"
                     }`}
@@ -226,7 +226,7 @@ export default function EventCreatePage() {
                     id="startTime"
                     name="startTime"
                     className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
-                      errors.startTime && touched.startTime
+                      errors.start_time && touched.start_time
                         ? "border-red-500"
                         : "border-gray-300"
                     }`}
@@ -260,7 +260,7 @@ export default function EventCreatePage() {
                     id="endDate"
                     name="endDate"
                     className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
-                      errors.endDate && touched.endDate
+                      errors.end_date && touched.end_date
                         ? "border-red-500"
                         : "border-gray-300"
                     }`}
@@ -284,7 +284,7 @@ export default function EventCreatePage() {
                     id="endTime"
                     name="endTime"
                     className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
-                      errors.endTime && touched.endTime
+                      errors.end_time && touched.end_time
                         ? "border-red-500"
                         : "border-gray-300"
                     }`}
@@ -399,7 +399,7 @@ export default function EventCreatePage() {
                     name="totalSeats"
                     min={1}
                     className={`w-full px-3 py-2 border rounded-md bg-white ${
-                      errors.totalSeats && touched.totalSeats
+                      errors.total_seats && touched.total_seats
                         ? "border-red-500"
                         : "border-gray-300"
                     }`}
@@ -495,7 +495,7 @@ export default function EventCreatePage() {
                 </div>
 
                 {/* Voucher fields - only shown when checkbox is checked */}
-                {values.createVoucher && values.price > 0 && (
+                {values.create_voucher && values.price > 0 && (
                   <div className="space-y-4 p-4 bg-gray-50 rounded-md">
                     <div>
                       <label
@@ -509,7 +509,7 @@ export default function EventCreatePage() {
                         id="voucherCode"
                         name="voucherCode"
                         className={`w-full px-3 py-2 border rounded-md bg-white ${
-                          errors.voucherCode && touched.voucherCode
+                          errors.voucher_code && touched.voucher_code
                             ? "border-red-500"
                             : "border-gray-300"
                         }`}
@@ -535,7 +535,7 @@ export default function EventCreatePage() {
                         min="1"
                         max={values.price}
                         className={`w-full px-3 py-2 border rounded-md bg-white ${
-                          errors.discountAmount && touched.discountAmount
+                          errors.discount_amount && touched.discount_amount
                             ? "border-red-500"
                             : "border-gray-300"
                         }`}
@@ -559,9 +559,10 @@ export default function EventCreatePage() {
                           type="date"
                           id="voucherStartDate"
                           name="voucherStartDate"
-                          min={values.startDate}
+                          min={values.start_date}
                           className={`w-full px-3 py-2 border rounded-md bg-white ${
-                            errors.voucherStartDate && touched.voucherStartDate
+                            errors.voucher_start_date &&
+                            touched.voucher_start_date
                               ? "border-red-500"
                               : "border-gray-300"
                           }`}
@@ -585,7 +586,8 @@ export default function EventCreatePage() {
                           id="voucherStartTime"
                           name="voucherStartTime"
                           className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
-                            errors.voucherStartTime && touched.voucherStartTime
+                            errors.voucher_start_time &&
+                            touched.voucher_start_time
                               ? "border-red-500"
                               : "border-gray-300"
                           }`}
@@ -617,10 +619,10 @@ export default function EventCreatePage() {
                           type="date"
                           id="voucherEndDate"
                           name="voucherEndDate"
-                          min={values.voucherStartDate || values.startDate}
-                          max={values.endDate}
+                          min={values.voucher_start_date || values.start_date}
+                          max={values.end_date}
                           className={`w-full px-3 py-2 border rounded-md bg-white ${
-                            errors.voucherEndDate && touched.voucherEndDate
+                            errors.voucher_end_date && touched.voucher_end_date
                               ? "border-red-500"
                               : "border-gray-300"
                           }`}
@@ -644,7 +646,7 @@ export default function EventCreatePage() {
                           id="voucherEndTime"
                           name="voucherEndTime"
                           className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
-                            errors.voucherEndTime && touched.voucherEndTime
+                            errors.voucher_end_time && touched.voucher_end_time
                               ? "border-red-500"
                               : "border-gray-300"
                           }`}
@@ -669,16 +671,16 @@ export default function EventCreatePage() {
                         htmlFor="maxUsage"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Max Usage * (max: {values.totalSeats})
+                        Max Usage * (max: {values.total_seats})
                       </label>
                       <Field
                         type="number"
                         id="maxUsage"
                         name="maxUsage"
                         min="1"
-                        max={values.totalSeats}
+                        max={values.total_seats}
                         className={`w-full px-3 py-2 border rounded-md bg-white ${
-                          errors.maxUsage && touched.maxUsage
+                          errors.max_usage && touched.max_usage
                             ? "border-red-500"
                             : "border-gray-300"
                         }`}

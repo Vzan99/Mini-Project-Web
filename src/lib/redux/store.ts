@@ -1,13 +1,14 @@
 import { configureStore } from "@reduxjs/toolkit";
 import eventReducer from "./features/eventSlice";
 import organizerReducer from "./features/organizerSlice";
-// Import other reducers as needed
+import transactionReducer from "./features/transactionSlice";
 
 export function makeStore() {
   return configureStore({
     reducer: {
       event: eventReducer,
       organizer: organizerReducer,
+      transaction: transactionReducer,
     },
   });
 }

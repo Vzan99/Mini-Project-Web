@@ -9,7 +9,13 @@ export interface ITransaction {
   pointsUsed: number;
   paymentMethod: string;
   totalPrice: number;
-  status: 'pending' | 'paid' | 'cancelled';
+  status:
+    | "waiting_for_payment"
+    | "waiting_for_admin_confirmation"
+    | "confirmed"
+    | "rejected"
+    | "expired"
+    | "canceled";
   createdAt: string;
   updatedAt: string;
 }

@@ -37,7 +37,7 @@ export default function BuyTicketButton({
       }
 
       // Include quantity in the URL parameters
-      router.push(`/checkout?eventId=${eventId}&quantity=${quantity}`);
+      router.push(`/checkout?eventId=${eventId}`);
     } catch (error) {
       console.error("Error processing ticket purchase:", error);
       alert(

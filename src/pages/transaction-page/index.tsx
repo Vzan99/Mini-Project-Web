@@ -7,56 +7,27 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { API_BASE_URL } from "@/components/config/api";
-import { IEventDetails } from "@/interfaces/eventDetails";
+import { IEventDetails, TransactionFormValues } from "./components/types";
 import { formatNumberWithCommas } from "@/utils/formatters";
 import {
-  TransactionFormValues,
   transactionInitialValues,
   transactionValidationSchema,
-} from "./components/types";
+} from "./components/schema";
+// Add Redux imports - only what we need
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import {
+  setCurrentTransaction,
+  clearCurrentTransaction,
+} from "@/lib/redux/features/transactionSlice";
 
 export default function TransactionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  // Add Redux dispatch
+  const dispatch = useAppDispatch();
 
-  // Enhanced validation for query parameters
-  const validateAndGetParams = () => {
-    if (!searchParams) {
-      console.error("No search parameters available");
-      return { eventId: null, quantity: 1, isValid: false };
-    }
-
-    const eventId = searchParams.get("eventId");
-    const quantityParam = searchParams.get("quantity");
-    const quantity = quantityParam ? parseInt(quantityParam, 10) : 1;
-
-    // Validate eventId format (UUID)
-    const isValidEventId =
-      eventId &&
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-        eventId
-      );
-
-    // Validate quantity
-    const isValidQuantity = !isNaN(quantity) && quantity > 0 && quantity <= 3;
-
-    return {
-      eventId,
-      quantity,
-      isValid: isValidEventId && isValidQuantity,
-    };
-  };
-
-  const {
-    eventId,
-    quantity: initialQuantity,
-    isValid: areParamsValid,
-  } = validateAndGetParams();
-
-  // Log the extracted eventId for debugging
-  console.log("Extracted eventId from URL:", eventId);
-  console.log("Extracted quantity from URL:", initialQuantity);
-  console.log("Are parameters valid:", areParamsValid);
+  // Get current transaction from Redux
+  const { currentTransaction } = useAppSelector((state) => state.transaction);
 
   // State variables
   const [event, setEvent] = useState<IEventDetails | null>(null);
@@ -72,7 +43,36 @@ export default function TransactionPage() {
   const [couponId, setCouponId] = useState<string | null>(null);
   const [pointsId, setPointsId] = useState<string | null>(null);
 
-  // Add this toggle function
+  // Enhanced validation for query parameters
+  const validateAndGetParams = () => {
+    if (!searchParams) {
+      console.error("No search parameters available");
+      return { eventId: null, isValid: false };
+    }
+
+    const eventId = searchParams.get("eventId");
+
+    // Validate eventId format (UUID)
+    const isValidEventId =
+      eventId &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        eventId
+      );
+
+    return {
+      eventId,
+      isValid: isValidEventId,
+    };
+  };
+
+  const { eventId, isValid: areParamsValid } = validateAndGetParams();
+
+  // Clear any existing transaction when the page loads
+  useEffect(() => {
+    dispatch(clearCurrentTransaction());
+  }, [dispatch]);
+
+  // Toggle description function
   const toggleDescription = () => {
     setShowFullDescription(!showFullDescription);
   };
@@ -99,27 +99,15 @@ export default function TransactionPage() {
   const initialValues = useMemo(() => {
     // Make sure we have a valid start date
     let startDate = "";
-
     if (event && event.start_date) {
       startDate = event.start_date;
-      // Remove the debugDate call
     }
-
-    return transactionInitialValues(eventId || "", initialQuantity, startDate);
-  }, [event, eventId, initialQuantity]);
+    // Always use quantity 1 as default
+    return transactionInitialValues(eventId || "", 1, startDate);
+  }, [event, eventId]);
 
   // Validation schema
   const validationSchema = transactionValidationSchema(availablePoints);
-
-  // Add this debugging function
-  const debugDate = (label: string, dateValue: any) => {
-    console.log(`${label}:`, dateValue);
-    console.log(`${label} type:`, typeof dateValue);
-    console.log(`${label} is valid:`, !isNaN(new Date(dateValue).getTime()));
-    if (typeof dateValue === "string") {
-      console.log(`${label} parsed:`, new Date(dateValue));
-    }
-  };
 
   // Fetch event details and user points
   useEffect(() => {
@@ -129,20 +117,8 @@ export default function TransactionPage() {
       setLoading(true);
 
       try {
-        console.log(`Fetching event with ID: ${eventId}`);
-        console.log(`Full API URL: ${API_BASE_URL}/events/${eventId}`);
-        console.log("API_BASE_URL value:", API_BASE_URL);
-
         const response = await axios.get(`${API_BASE_URL}/events/${eventId}`);
-        console.log("Event API response:", response);
-        const eventData = response.data.data;
-        setEvent(eventData);
-
-        // Debug the event dates
-        if (eventData) {
-          debugDate("Event start_date", eventData.start_date);
-          debugDate("Event end_date", eventData.end_date);
-        }
+        setEvent(response.data.data);
 
         // Fetch user points with the correct endpoint
         try {
@@ -176,13 +152,14 @@ export default function TransactionPage() {
           console.log("Request config:", err.config);
         }
 
+        let errorMessage =
+          "Failed to load event details. Please try again later.";
         if (axios.isAxiosError(err) && err.response?.status === 404) {
-          setError(
-            "Event not found. It may have been deleted or the ID is incorrect."
-          );
-        } else {
-          setError("Failed to load event details. Please try again later.");
+          errorMessage =
+            "Event not found. It may have been deleted or the ID is incorrect.";
         }
+
+        setError(errorMessage);
         setLoading(false);
       }
     };
@@ -406,15 +383,15 @@ export default function TransactionPage() {
     setFieldValue: any
   ) => {
     const usePoints = e.target.checked;
-    setFieldValue("usePoints", usePoints);
+    setFieldValue("use_points", usePoints); // Changed from "usePoints"
 
     if (usePoints && availablePoints > 0) {
-      setFieldValue("pointsToUse", availablePoints);
+      setFieldValue("points_to_use", availablePoints); // Changed from "pointsToUse"
       // Fetch and store points ID
       const id = await fetchPointsId(availablePoints);
       setPointsId(id);
     } else {
-      setFieldValue("pointsToUse", 0);
+      setFieldValue("points_to_use", 0); // Changed from "pointsToUse"
       setPointsId(null);
     }
   };
@@ -426,9 +403,9 @@ export default function TransactionPage() {
     const subtotal = event.price * values.quantity;
     let discount = 0;
 
-    if (values.useVoucher) discount += voucherDiscount;
-    if (values.useCoupon) discount += couponDiscount;
-    if (values.usePoints) discount += values.pointsToUse;
+    if (values.use_voucher) discount += voucherDiscount;
+    if (values.use_coupon) discount += couponDiscount;
+    if (values.use_points) discount += values.points_to_use;
 
     return Math.max(0, subtotal - discount);
   };
@@ -449,17 +426,17 @@ export default function TransactionPage() {
       }
 
       // Use the selected date or fall back to event start date
-      const attendDate = values.attendDate || event.start_date;
+      const attendDate = values.attend_date || event.start_date;
 
       // Create payload
       const payload = {
-        eventId: values.eventId,
+        event_id: values.event_id,
         quantity: values.quantity,
-        attendDate: attendDate,
-        paymentMethod: values.paymentMethod,
-        ...(values.useVoucher && voucherId ? { voucherId } : {}),
-        ...(values.useCoupon && couponId ? { couponId } : {}),
-        ...(values.usePoints && pointsId ? { pointsId } : {}),
+        attend_date: values.attend_date,
+        payment_method: values.payment_method,
+        ...(values.use_voucher && voucherId ? { voucherId } : {}),
+        ...(values.use_coupon && couponId ? { couponId } : {}),
+        ...(values.use_points && pointsId ? { pointsId } : {}),
       };
 
       console.log("Submitting transaction with payload:", payload);
@@ -476,16 +453,25 @@ export default function TransactionPage() {
         }
       );
 
-      console.log("Transaction created successfully:", response);
-      const transactionId = response.data.data.id;
+      console.log("Transaction created successfully:", response.data);
+      const transactionData = response.data.data;
+
+      // Store transaction in Redux - make sure this is working
+      console.log("Storing transaction in Redux:", transactionData);
+      dispatch(setCurrentTransaction(transactionData));
 
       // Show success alert
       alert("Transaction created successfully! Redirecting to payment page...");
 
       // Add a small delay to ensure the transaction is committed and alert is seen
       setTimeout(() => {
-        router.push(`/payment/confirmation/${transactionId}`);
-      }, 1000); // Increased delay to 1 second
+        // Log the transaction ID before redirecting
+        console.log(
+          "Redirecting to payment confirmation with ID:",
+          transactionData.id
+        );
+        router.push(`/payment/confirmation/${transactionData.id}`);
+      }, 1000);
     } catch (err: any) {
       console.error("Transaction error:", err);
 
@@ -499,9 +485,8 @@ export default function TransactionPage() {
         }
       }
 
-      // Show error notification
-      alert(`Error: ${errorMessage}`);
       setError(errorMessage);
+      alert(errorMessage);
     }
   };
 
@@ -541,9 +526,9 @@ export default function TransactionPage() {
   const hasUnappliedDiscountCode = (values: TransactionFormValues) => {
     // Check if there's text in voucher field but no voucher discount applied
     if (
-      values.useVoucher &&
-      values.voucherCode &&
-      values.voucherCode.trim() !== "" &&
+      values.use_voucher && // Changed from values.useVoucher
+      values.voucher_code && // Changed from values.voucherCode
+      values.voucher_code.trim() !== "" &&
       voucherDiscount === 0
     ) {
       return true;
@@ -551,9 +536,9 @@ export default function TransactionPage() {
 
     // Check if there's text in coupon field but no coupon discount applied
     if (
-      values.useCoupon &&
-      values.couponCode &&
-      values.couponCode.trim() !== "" &&
+      values.use_coupon && // Changed from values.useCoupon
+      values.coupon_code && // Changed from values.couponCode
+      values.coupon_code.trim() !== "" &&
       couponDiscount === 0
     ) {
       return true;
@@ -722,8 +707,8 @@ export default function TransactionPage() {
                           className="w-full px-4 py-2 border rounded-md bg-white flex justify-between items-center"
                         >
                           <span>
-                            {values.attendDate
-                              ? new Date(values.attendDate).toLocaleDateString(
+                            {values.attend_date
+                              ? new Date(values.attend_date).toLocaleDateString(
                                   "en-US",
                                   {
                                     weekday: "short",
@@ -773,8 +758,8 @@ export default function TransactionPage() {
                                   }
                                 }}
                                 value={
-                                  values.attendDate
-                                    ? new Date(values.attendDate)
+                                  values.attend_date
+                                    ? new Date(values.attend_date)
                                     : null
                                 }
                                 tileDisabled={({ date }) => {
@@ -817,15 +802,15 @@ export default function TransactionPage() {
                           <div className="mb-3 sm:mb-0">
                             <select
                               className={`px-4 py-2 border rounded-md ${
-                                (values.useVoucher && voucherDiscount > 0) ||
-                                (values.useCoupon && couponDiscount > 0)
+                                (values.use_voucher && voucherDiscount > 0) ||
+                                (values.use_coupon && couponDiscount > 0)
                                   ? "bg-gray-100 text-gray-500 cursor-not-allowed opacity-60"
                                   : "bg-white"
                               }`}
                               value={
-                                values.useVoucher
+                                values.use_voucher
                                   ? "voucher"
-                                  : values.useCoupon
+                                  : values.use_coupon
                                   ? "coupon"
                                   : "voucher" // Default to voucher
                               }
@@ -843,8 +828,8 @@ export default function TransactionPage() {
                                 setCouponDiscount(0);
                               }}
                               disabled={
-                                (values.useVoucher && voucherDiscount > 0) ||
-                                (values.useCoupon && couponDiscount > 0)
+                                (values.use_voucher && voucherDiscount > 0) ||
+                                (values.use_coupon && couponDiscount > 0)
                               }
                             >
                               <option value="voucher">Event Voucher</option>
@@ -857,33 +842,33 @@ export default function TransactionPage() {
                               <Field
                                 type="text"
                                 name={
-                                  values.useVoucher
+                                  values.use_voucher
                                     ? "voucherCode"
-                                    : values.useCoupon
+                                    : values.use_coupon
                                     ? "couponCode"
                                     : "voucherCode" // Default to voucher code
                                 }
                                 value={
-                                  values.useVoucher
-                                    ? values.voucherCode || ""
-                                    : values.useCoupon
-                                    ? values.couponCode || ""
-                                    : values.voucherCode || ""
+                                  values.use_voucher
+                                    ? values.voucher_code || ""
+                                    : values.use_coupon
+                                    ? values.coupon_code || ""
+                                    : values.voucher_code || ""
                                 }
                                 placeholder={
-                                  values.useVoucher
+                                  values.use_voucher
                                     ? "Enter voucher code (optional)"
-                                    : values.useCoupon
+                                    : values.use_coupon
                                     ? "Enter coupon code (optional)"
                                     : "Enter voucher code (optional)"
                                 }
                                 disabled={
-                                  (values.useVoucher && voucherDiscount > 0) ||
-                                  (values.useCoupon && couponDiscount > 0)
+                                  (values.use_voucher && voucherDiscount > 0) ||
+                                  (values.use_coupon && couponDiscount > 0)
                                 }
                                 className={`w-full px-3 py-2 border rounded-md ${
-                                  (values.useVoucher && voucherDiscount > 0) ||
-                                  (values.useCoupon && couponDiscount > 0)
+                                  (values.use_voucher && voucherDiscount > 0) ||
+                                  (values.use_coupon && couponDiscount > 0)
                                     ? "bg-gray-100 text-gray-500 cursor-not-allowed opacity-60"
                                     : "bg-white"
                                 }`}
@@ -891,39 +876,39 @@ export default function TransactionPage() {
                               <button
                                 type="button"
                                 onClick={() =>
-                                  values.useVoucher
-                                    ? checkVoucher(values.voucherCode)
-                                    : checkCoupon(values.couponCode)
+                                  values.use_voucher
+                                    ? checkVoucher(values.voucher_code)
+                                    : checkCoupon(values.coupon_code)
                                 }
                                 disabled={
-                                  (values.useVoucher &&
-                                    (!values.voucherCode ||
-                                      values.voucherCode.trim() === "") &&
+                                  (values.use_voucher &&
+                                    (!values.voucher_code ||
+                                      values.voucher_code.trim() === "") &&
                                     voucherDiscount === 0) ||
-                                  (values.useCoupon &&
-                                    (!values.couponCode ||
-                                      values.couponCode.trim() === "") &&
+                                  (values.use_coupon &&
+                                    (!values.coupon_code ||
+                                      values.coupon_code.trim() === "") &&
                                     couponDiscount === 0) ||
-                                  (values.useVoucher && voucherDiscount > 0) ||
-                                  (values.useCoupon && couponDiscount > 0)
+                                  (values.use_voucher && voucherDiscount > 0) ||
+                                  (values.use_coupon && couponDiscount > 0)
                                 }
                                 className={`px-3 py-2 rounded-md ${
-                                  (values.useVoucher &&
-                                    (!values.voucherCode ||
-                                      values.voucherCode.trim() === "") &&
+                                  (values.use_voucher &&
+                                    (!values.voucher_code ||
+                                      values.voucher_code.trim() === "") &&
                                     voucherDiscount === 0) ||
-                                  (values.useCoupon &&
-                                    (!values.couponCode ||
-                                      values.couponCode.trim() === "") &&
+                                  (values.use_coupon &&
+                                    (!values.coupon_code ||
+                                      values.coupon_code.trim() === "") &&
                                     couponDiscount === 0) ||
-                                  (values.useVoucher && voucherDiscount > 0) ||
-                                  (values.useCoupon && couponDiscount > 0)
+                                  (values.use_voucher && voucherDiscount > 0) ||
+                                  (values.use_coupon && couponDiscount > 0)
                                     ? "bg-gray-100 text-gray-400 cursor-not-allowed opacity-60"
                                     : "bg-[#222432] text-white hover:bg-gray-800 cursor-pointer"
                                 }`}
                               >
-                                {(values.useVoucher && voucherDiscount > 0) ||
-                                (values.useCoupon && couponDiscount > 0)
+                                {(values.use_voucher && voucherDiscount > 0) ||
+                                (values.use_coupon && couponDiscount > 0)
                                   ? "Applied"
                                   : "Apply"}
                               </button>
@@ -933,7 +918,7 @@ export default function TransactionPage() {
 
                         {/* Success message in its own row */}
                         <div>
-                          {values.useVoucher && voucherDiscount > 0 && (
+                          {values.use_voucher && voucherDiscount > 0 && (
                             <div className="text-sm text-green-600 flex items-center">
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -953,7 +938,7 @@ export default function TransactionPage() {
                             </div>
                           )}
 
-                          {values.useCoupon && couponDiscount > 0 && (
+                          {values.use_coupon && couponDiscount > 0 && (
                             <div className="text-sm text-green-600 flex items-center">
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -976,14 +961,14 @@ export default function TransactionPage() {
 
                         {/* Error messages */}
                         <div>
-                          {values.useVoucher && (
+                          {values.use_voucher && (
                             <ErrorMessage
                               name="voucherCode"
                               component="div"
                               className="text-red-500 text-sm"
                             />
                           )}
-                          {values.useCoupon && (
+                          {values.use_coupon && (
                             <ErrorMessage
                               name="couponCode"
                               component="div"
@@ -1013,7 +998,7 @@ export default function TransactionPage() {
                               >
                                 <div
                                   className={`absolute top-0.5 left-0.5 bg-white border border-gray-300 rounded-full h-5 w-5 transition-all ${
-                                    values.usePoints
+                                    values.use_points
                                       ? "translate-x-5 border-blue-600"
                                       : ""
                                   }`}
@@ -1025,11 +1010,12 @@ export default function TransactionPage() {
                             </label>
                           </div>
 
-                          {values.usePoints && availablePoints > 0 && (
+                          {values.use_points && availablePoints > 0 && (
                             <div className="mt-2 text-sm text-green-600">
-                              Using {formatNumberWithCommas(values.pointsToUse)}{" "}
+                              Using{" "}
+                              {formatNumberWithCommas(values.points_to_use)}{" "}
                               points for a discount of{" "}
-                              {formatNumberWithCommas(values.pointsToUse)}
+                              {formatNumberWithCommas(values.points_to_use)}
                             </div>
                           )}
 
@@ -1102,7 +1088,7 @@ export default function TransactionPage() {
                           </span>
                         </div>
 
-                        {values.useVoucher && voucherDiscount > 0 && (
+                        {values.use_voucher && voucherDiscount > 0 && (
                           <div className="flex justify-between text-green-600">
                             <span>Voucher Discount</span>
                             <span>
@@ -1111,7 +1097,7 @@ export default function TransactionPage() {
                           </div>
                         )}
 
-                        {values.useCoupon && couponDiscount > 0 && (
+                        {values.use_coupon && couponDiscount > 0 && (
                           <div className="flex justify-between text-green-600">
                             <span>Coupon Discount</span>
                             <span>
@@ -1120,11 +1106,11 @@ export default function TransactionPage() {
                           </div>
                         )}
 
-                        {values.usePoints && values.pointsToUse > 0 && (
+                        {values.use_points && values.points_to_use > 0 && (
                           <div className="flex justify-between text-green-600">
                             <span>Points Used</span>
                             <span>
-                              -{formatNumberWithCommas(values.pointsToUse)}
+                              -{formatNumberWithCommas(values.points_to_use)}
                             </span>
                           </div>
                         )}

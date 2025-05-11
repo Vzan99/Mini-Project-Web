@@ -1,3 +1,25 @@
+export interface IAcceptedTransaction {
+  id: string;
+  event_id: string;
+  user_id: string;
+  quantity: number;
+  attend_date: string;
+  voucher_code?: string;
+  coupon_code?: string;
+  points_used: number;
+  payment_method: string;
+  total_price: number;
+  status:
+    | "waiting_for_payment"
+    | "waiting_for_admin_confirmation"
+    | "confirmed"
+    | "rejected"
+    | "expired"
+    | "canceled";
+  created_at: string;
+  updated_at: string;
+}
+
 interface IOrganizer {
   id: string;
   username: string;
@@ -50,18 +72,4 @@ export interface IEventDetails {
   review: IReview[];
   created_at?: string;
   updated_at?: string;
-}
-
-// Transaction form values interface
-export interface TransactionFormValues {
-  event_id: string;
-  quantity: number;
-  attend_date: string;
-  use_voucher: boolean;
-  voucher_code: string;
-  use_coupon: boolean;
-  coupon_code: string;
-  use_points: boolean;
-  points_to_use: number;
-  payment_method: string;
 }

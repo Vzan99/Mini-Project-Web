@@ -6,10 +6,12 @@ export const metadata: Metadata = {
   description: "Confirm your payment details",
 };
 
-export default function PaymentConfirmation({
+export default async function PaymentConfirmation({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  return <PaymentConfirmationPage transactionId={params.id} />;
+  // Await the params to fix the error
+  const { id } = await params;
+  return <PaymentConfirmationPage transactionId={id} />;
 }
