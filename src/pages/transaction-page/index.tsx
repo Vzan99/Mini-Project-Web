@@ -197,20 +197,15 @@ export default function TransactionPage() {
       setError("");
       console.log(`Checking voucher code: ${code} for event: ${eventId}`);
 
-      if (
-        !eventId ||
-        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-          eventId
-        )
-      ) {
-        alert("Invalid event ID format");
+      if (!eventId) {
+        alert("Invalid event ID");
         return false;
       }
 
       const response = await axios.get(`${API_BASE_URL}/vouchers/check`, {
         params: {
-          eventId: eventId,
-          voucherCode: code,
+          event_id: eventId, // Changed from eventId to event_id to match backend expectation
+          voucher_code: code,
         },
       });
 
@@ -219,13 +214,13 @@ export default function TransactionPage() {
       if (
         response.data &&
         response.data.data &&
-        response.data.data.isValid === true
+        response.data.data.is_valid === true // Changed from isValid to is_valid to match backend
       ) {
-        setVoucherDiscount(response.data.data.discountAmount);
-        setVoucherId(response.data.data.voucherId); // Store the voucher ID from the response
+        setVoucherDiscount(response.data.data.discount_amount); // Changed from discountAmount to discount_amount
+        setVoucherId(response.data.data.voucher_id); // Changed from voucherId to voucher_id
         alert(
           `Voucher applied successfully! Discount: ${formatNumberWithCommas(
-            response.data.data.discountAmount
+            response.data.data.discount_amount
           )}`
         );
         return true;
@@ -287,7 +282,7 @@ export default function TransactionPage() {
       const response = await axios.get(`${API_BASE_URL}/coupon/check`, {
         params: {
           userId: userId,
-          couponCode: code,
+          coupon_code: code,
         },
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -817,13 +812,13 @@ export default function TransactionPage() {
                               onChange={(e) => {
                                 const value = e.target.value;
                                 setFieldValue(
-                                  "useVoucher",
+                                  "use_voucher",
                                   value === "voucher"
                                 );
-                                setFieldValue("useCoupon", value === "coupon");
+                                setFieldValue("use_coupon", value === "coupon");
                                 // Clear any previously entered codes
-                                setFieldValue("voucherCode", "");
-                                setFieldValue("couponCode", "");
+                                setFieldValue("voucher_code", "");
+                                setFieldValue("coupon_code", "");
                                 setVoucherDiscount(0);
                                 setCouponDiscount(0);
                               }}
@@ -843,10 +838,10 @@ export default function TransactionPage() {
                                 type="text"
                                 name={
                                   values.use_voucher
-                                    ? "voucherCode"
+                                    ? "voucher_code" // Changed from "voucherCode"
                                     : values.use_coupon
-                                    ? "couponCode"
-                                    : "voucherCode" // Default to voucher code
+                                    ? "coupon_code" // Changed from "couponCode"
+                                    : "voucher_code" // Changed from "voucherCode"
                                 }
                                 value={
                                   values.use_voucher
@@ -963,14 +958,14 @@ export default function TransactionPage() {
                         <div>
                           {values.use_voucher && (
                             <ErrorMessage
-                              name="voucherCode"
+                              name="voucher_code"
                               component="div"
                               className="text-red-500 text-sm"
                             />
                           )}
                           {values.use_coupon && (
                             <ErrorMessage
-                              name="couponCode"
+                              name="coupon_code"
                               component="div"
                               className="text-red-500 text-sm"
                             />
@@ -1038,7 +1033,7 @@ export default function TransactionPage() {
                         <label className="flex items-center">
                           <Field
                             type="radio"
-                            name="paymentMethod"
+                            name="payment_method"
                             value="creditCard"
                             className="mr-2"
                           />
@@ -1048,7 +1043,7 @@ export default function TransactionPage() {
                         <label className="flex items-center">
                           <Field
                             type="radio"
-                            name="paymentMethod"
+                            name="payment_method"
                             value="bankTransfer"
                             className="mr-2"
                           />
@@ -1058,7 +1053,7 @@ export default function TransactionPage() {
                         <label className="flex items-center">
                           <Field
                             type="radio"
-                            name="paymentMethod"
+                            name="payment_method"
                             value="eWallet"
                             className="mr-2"
                           />
@@ -1066,7 +1061,7 @@ export default function TransactionPage() {
                         </label>
                       </div>
                       <ErrorMessage
-                        name="paymentMethod"
+                        name="payment_method"
                         component="div"
                         className="text-red-500 text-sm mt-1"
                       />
