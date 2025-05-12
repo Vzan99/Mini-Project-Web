@@ -5,32 +5,9 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { API_BASE_URL } from "@/components/config/api";
 import { ReduxTransaction } from "@/lib/redux/features/transactionSlice";
-import { IEventDetails } from "../transaction-page/components/types";
+import { IEventDetails, ITicket } from "./types/components/types";
 import { formatDate, formatNumberWithCommas } from "@/utils/formatters";
 import { useAppSelector } from "@/lib/redux/hooks";
-
-interface ITicket {
-  id: string;
-  transaction_id: string;
-  user_id: string;
-  event_id: string;
-  ticket_code: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  event?: {
-    name: string;
-    start_date: string;
-    end_date: string;
-    location: string;
-    event_image: string;
-  };
-  transaction?: {
-    created_at: string;
-    quantity: number;
-    total_pay_amount: number;
-  };
-}
 
 export default function PaymentSuccessPage({
   transactionId,
