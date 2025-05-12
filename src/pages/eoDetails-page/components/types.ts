@@ -11,29 +11,29 @@ interface IReview {
 interface IEventSummary {
   id: string;
   name: string;
-  startDate: string;
-  endDate: string;
+  start_date: string;
+  end_date: string;
   location: string;
   price: number;
-  totalSeats: number;
-  remainingSeats: number;
+  total_seats: number;
+  remaining_seats: number;
   category: string;
-  eventImage: string;
-  totalReviews: number;
+  event_image: string;
+  total_reviews: number;
 }
 
 interface IOrganizerInfo {
   id: string;
   username: string;
-  firstName: string;
-  lastName: string;
-  profilePicture: string;
+  first_name: string;
+  last_name: string;
+  profile_picture: string;
 }
 
 export interface IOrganizerProfile {
   organizer: IOrganizerInfo;
-  averageRating: number;
-  totalReviews: number;
+  average_rating: number;
+  total_reviews: number;
   reviews: IReview[];
   events: IEventSummary[];
 }
