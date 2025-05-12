@@ -8,7 +8,7 @@ import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { debounce } from "lodash";
-import { IEventDiscover, IEventSuggestion } from "@/interfaces/discoverPage";
+import { IEventDiscover, IEventSuggestion } from "./components/types";
 import { API_BASE_URL } from "@/components/config/api";
 import { formatEventDates } from "@/utils/formatters";
 
@@ -46,6 +46,39 @@ export default function DiscoverPage() {
   const [maxPrice, setMaxPrice] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [sortOrder, setSortOrder] = useState("asc");
+
+  // Add temporary state to hold filter values before applying
+  const [tempSelectedLocations, setTempSelectedLocations] = useState<string[]>(
+    []
+  );
+  const [tempFreeOnly, setTempFreeOnly] = useState(false);
+  const [tempMinPrice, setTempMinPrice] = useState("");
+  const [tempMaxPrice, setTempMaxPrice] = useState("");
+  const [tempSelectedDate, setTempSelectedDate] = useState<Date | null>(null);
+  const [tempSortOrder, setTempSortOrder] = useState("asc");
+
+  // Initialize temp values when opening filters
+  useEffect(() => {
+    if (showLocationFilter) {
+      setTempSelectedLocations([...selectedLocations]);
+    }
+  }, [showLocationFilter]);
+
+  useEffect(() => {
+    if (showPriceFilter) {
+      setTempFreeOnly(freeOnly);
+      setTempMinPrice(minPrice);
+      setTempMaxPrice(maxPrice);
+      setTempSortOrder(sortOrder);
+    }
+  }, [showPriceFilter]);
+
+  useEffect(() => {
+    if (showDateFilter) {
+      setTempSelectedDate(selectedDate);
+      setTempSortOrder(sortOrder);
+    }
+  }, [showDateFilter]);
 
   // Debounced price state
   const [debouncedMinPrice, setDebouncedMinPrice] = useState("");
@@ -251,8 +284,15 @@ export default function DiscoverPage() {
 
       // Add date filter if selected
       if (selectedDate) {
-        const formattedDate = format(selectedDate, "yyyy-MM-dd");
-        url += `&specific_date=${formattedDate}`; // Changed from specificDate to specific_date
+        // Format the date as YYYY-MM-DD
+        const year = selectedDate.getFullYear();
+        const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+        const day = String(selectedDate.getDate()).padStart(2, "0");
+        const formattedDate = `${year}-${month}-${day}`;
+
+        url += `&specific_date=${formattedDate}`;
+
+        console.log(`Filtering by date: ${formattedDate}`);
       }
 
       // Add price filters - use debounced values
@@ -405,6 +445,48 @@ export default function DiscoverPage() {
     }
   }, []);
 
+  // Handle temp location checkbox change
+  const handleTempLocationChange = (location: string) => {
+    setTempSelectedLocations(
+      tempSelectedLocations.includes(location) ? [] : [location]
+    );
+  };
+
+  // Apply location filter
+  const applyLocationFilter = () => {
+    setSelectedLocations(tempSelectedLocations);
+    setShowLocationFilter(false);
+    setCurrentPage(1);
+  };
+
+  // Apply price filter
+  const applyPriceFilter = () => {
+    setFreeOnly(tempFreeOnly);
+    setMinPrice(tempMinPrice);
+    setMaxPrice(tempMaxPrice);
+    setSortOrder(tempSortOrder);
+    setShowPriceFilter(false);
+    setCurrentPage(1);
+  };
+
+  // Apply date filter
+  const applyDateFilter = () => {
+    setSelectedDate(tempSelectedDate);
+    setSortOrder(tempSortOrder);
+    setShowDateFilter(false);
+    setCurrentPage(1);
+  };
+
+  // Handle temp price input change
+  const handleTempPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (name === "tempMinPrice") {
+      setTempMinPrice(value);
+    } else if (name === "tempMaxPrice") {
+      setTempMaxPrice(value);
+    }
+  };
+
   return (
     <div className="bg-[#FAF0D7]">
       <div className="w-full px-6 py-10 max-w-screen-xl mx-auto">
@@ -552,8 +634,8 @@ export default function DiscoverPage() {
                         >
                           <input
                             type="checkbox"
-                            checked={selectedLocations.includes(location)}
-                            onChange={() => handleLocationChange(location)}
+                            checked={tempSelectedLocations.includes(location)}
+                            onChange={() => handleTempLocationChange(location)}
                             className="mr-2"
                           />
                           {location}
@@ -567,13 +649,20 @@ export default function DiscoverPage() {
                   </div>
                   <div className="flex justify-between">
                     <button
-                      onClick={() => setSelectedLocations([])}
+                      onClick={() => {
+                        // Clear temp state
+                        setTempSelectedLocations([]);
+                        // Also clear actual state and close dropdown
+                        setSelectedLocations([]);
+                        setShowLocationFilter(false);
+                        setCurrentPage(1);
+                      }}
                       className="text-sm text-gray-600"
                     >
                       Clear
                     </button>
                     <button
-                      onClick={() => setShowLocationFilter(false)}
+                      onClick={applyLocationFilter}
                       className="text-sm bg-black text-white px-3 py-1 rounded"
                     >
                       Apply
@@ -606,12 +695,12 @@ export default function DiscoverPage() {
                     <label className="flex items-center text-sm font-medium text-gray-700 mb-3">
                       <input
                         type="checkbox"
-                        checked={freeOnly}
+                        checked={tempFreeOnly}
                         onChange={(e) => {
-                          setFreeOnly(e.target.checked);
+                          setTempFreeOnly(e.target.checked);
                           if (e.target.checked) {
-                            setMinPrice("");
-                            setMaxPrice("");
+                            setTempMinPrice("");
+                            setTempMaxPrice("");
                           }
                         }}
                         className="mr-2"
@@ -621,7 +710,7 @@ export default function DiscoverPage() {
 
                     <div
                       className={`space-y-2 ${
-                        freeOnly ? "opacity-50 pointer-events-none" : ""
+                        tempFreeOnly ? "opacity-50 pointer-events-none" : ""
                       }`}
                     >
                       <div>
@@ -630,13 +719,13 @@ export default function DiscoverPage() {
                         </label>
                         <input
                           type="number"
-                          value={minPrice}
-                          onChange={handlePriceChange}
-                          name="minPrice"
+                          value={tempMinPrice}
+                          onChange={handleTempPriceChange}
+                          name="tempMinPrice"
                           className="w-full p-2 border rounded text-sm"
                           placeholder="0"
                           min="0"
-                          disabled={freeOnly}
+                          disabled={tempFreeOnly}
                         />
                       </div>
                       <div>
@@ -645,13 +734,13 @@ export default function DiscoverPage() {
                         </label>
                         <input
                           type="number"
-                          value={maxPrice}
-                          onChange={handlePriceChange}
-                          name="maxPrice"
+                          value={tempMaxPrice}
+                          onChange={handleTempPriceChange}
+                          name="tempMaxPrice"
                           className="w-full p-2 border rounded text-sm"
                           placeholder="1000000"
                           min="0"
-                          disabled={freeOnly}
+                          disabled={tempFreeOnly}
                         />
                       </div>
                     </div>
@@ -663,8 +752,8 @@ export default function DiscoverPage() {
                       Sort by Price
                     </label>
                     <select
-                      value={sortOrder}
-                      onChange={(e) => setSortOrder(e.target.value)}
+                      value={tempSortOrder}
+                      onChange={(e) => setTempSortOrder(e.target.value)}
                       className="w-full p-2 border rounded text-sm"
                     >
                       {sortOptions.map((option) => (
@@ -678,16 +767,23 @@ export default function DiscoverPage() {
                   <div className="flex justify-between">
                     <button
                       onClick={() => {
+                        // Clear temp state
+                        setTempFreeOnly(false);
+                        setTempMinPrice("");
+                        setTempMaxPrice("");
+                        // Also clear actual state and close dropdown
                         setFreeOnly(false);
                         setMinPrice("");
                         setMaxPrice("");
+                        setShowPriceFilter(false);
+                        setCurrentPage(1);
                       }}
                       className="text-sm text-gray-600"
                     >
                       Clear
                     </button>
                     <button
-                      onClick={() => setShowPriceFilter(false)}
+                      onClick={applyPriceFilter}
                       className="text-sm bg-black text-white px-3 py-1 rounded"
                     >
                       Apply
@@ -717,8 +813,8 @@ export default function DiscoverPage() {
               {showDateFilter && (
                 <div className="absolute z-10 mt-2 bg-white rounded-lg shadow-lg p-4">
                   <Calendar
-                    onChange={(date) => setSelectedDate(date as Date)}
-                    value={selectedDate}
+                    onChange={(date) => setTempSelectedDate(date as Date)}
+                    value={tempSelectedDate}
                     minDate={new Date()}
                     className="border-0"
                   />
@@ -729,8 +825,8 @@ export default function DiscoverPage() {
                       Sort by Date
                     </label>
                     <select
-                      value={sortOrder}
-                      onChange={(e) => setSortOrder(e.target.value)}
+                      value={tempSortOrder}
+                      onChange={(e) => setTempSortOrder(e.target.value)}
                       className="w-full p-2 border rounded text-sm"
                     >
                       {sortOptions.map((option) => (
@@ -743,13 +839,20 @@ export default function DiscoverPage() {
 
                   <div className="flex justify-between">
                     <button
-                      onClick={() => setSelectedDate(null)}
+                      onClick={() => {
+                        // Clear temp state
+                        setTempSelectedDate(null);
+                        // Also clear actual state and close dropdown
+                        setSelectedDate(null);
+                        setShowDateFilter(false);
+                        setCurrentPage(1);
+                      }}
                       className="text-sm text-gray-600"
                     >
                       Clear
                     </button>
                     <button
-                      onClick={() => setShowDateFilter(false)}
+                      onClick={applyDateFilter}
                       className="text-sm bg-black text-white px-3 py-1 rounded"
                     >
                       Apply

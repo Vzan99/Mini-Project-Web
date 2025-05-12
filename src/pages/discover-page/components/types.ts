@@ -19,13 +19,18 @@ export interface IEventSuggestion {
 }
 
 export interface IFilterState {
-  category: string;
-  locations: string[];
-  date: Date | null;
-  minPrice: string;
-  maxPrice: string;
-  freeOnly: boolean;
-  sortOrder: string;
+  keyword?: string;
+  category?: string;
+  location?: string;
+  min_price?: string;
+  max_price?: string;
+  free_only?: boolean;
+  specific_date?: Date | null;
+  sort_by?: "name" | "price" | "start_date" | "location" | "created_at";
+  sort_order?: "asc" | "desc";
+  available_seats_only?: boolean;
+  page: number;
+  limit: number;
 }
 
 export interface IDiscoverPageProps {

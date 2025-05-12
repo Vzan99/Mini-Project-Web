@@ -6,7 +6,7 @@ import Image from "next/image";
 import axios from "axios";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 import EventCard from "@/components/cards/eventCard";
-import { IOrganizerProfile } from "@/interfaces/eoDetails";
+import { IOrganizerProfile } from "./components/types";
 import { API_BASE_URL } from "@/components/config/api";
 
 export default function EODetailsPage() {
@@ -68,9 +68,9 @@ export default function EODetailsPage() {
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
             <div className="w-32 h-32 bg-gray-200 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
-              {profile.organizer.profilePicture ? (
+              {profile.organizer.profile_picture ? (
                 <Image
-                  src={`${cloudinaryBaseUrl}${profile.organizer.profilePicture}`}
+                  src={`${cloudinaryBaseUrl}${profile.organizer.profile_picture}`}
                   alt="Organizer"
                   width={128}
                   height={128}
@@ -78,7 +78,7 @@ export default function EODetailsPage() {
                   onError={(e) => {
                     console.error(
                       "Image failed to load:",
-                      `${cloudinaryBaseUrl}${profile.organizer.profilePicture}`
+                      `${cloudinaryBaseUrl}${profile.organizer.profile_picture}`
                     );
                     // Remove the image on error and show the div background
                     e.currentTarget.style.display = "none";
@@ -91,16 +91,16 @@ export default function EODetailsPage() {
 
             <div className="flex-1 text-center md:text-left">
               <h1 className="text-2xl font-bold mb-2">
-                {profile.organizer.firstName} {profile.organizer.lastName}
+                {profile.organizer.first_name} {profile.organizer.last_name}
               </h1>
               <p className="text-gray-600 mb-2">
                 @{profile.organizer.username}
               </p>
               <div className="flex items-center justify-center md:justify-start mb-2">
                 <span className="text-yellow-500 mr-1">★</span>
-                <span>{profile.averageRating.toFixed(1)}</span>
+                <span>{profile.average_rating.toFixed(1)}</span>
                 <span className="text-gray-500 ml-1">
-                  ({profile.totalReviews} reviews)
+                  ({profile.total_reviews} reviews)
                 </span>
               </div>
             </div>
@@ -123,10 +123,10 @@ export default function EODetailsPage() {
                       <EventCard
                         id={event.id}
                         name={event.name}
-                        event_image={event.eventImage}
+                        event_image={event.event_image}
                         location={event.location}
-                        start_date={event.startDate}
-                        end_date={event.endDate}
+                        start_date={event.start_date}
+                        end_date={event.end_date}
                         cloudinaryBaseUrl={cloudinaryBaseUrl}
                       />
                     </div>
@@ -141,10 +141,10 @@ export default function EODetailsPage() {
                     key={event.id}
                     id={event.id}
                     name={event.name}
-                    event_image={event.eventImage}
+                    event_image={event.event_image}
                     location={event.location}
-                    start_date={event.startDate}
-                    end_date={event.endDate}
+                    start_date={event.start_date}
+                    end_date={event.end_date}
                     cloudinaryBaseUrl={cloudinaryBaseUrl}
                   />
                 ))}
