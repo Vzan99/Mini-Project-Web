@@ -21,6 +21,39 @@ export const formatDateDetails = (date: string) => {
   return new Date(date).toLocaleDateString("en-GB", options);
 };
 
+export const formatEventDates = (start_date: string, end_date: string) => {
+  const startDate = new Date(start_date);
+  const endDate = new Date(end_date);
+
+  const formatDate = (date: string) => {
+    const options: Intl.DateTimeFormatOptions = {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    };
+    return new Date(date).toLocaleDateString("en-GB", options);
+  };
+
+  // Check if the event is a single day
+  if (startDate.toDateString() === endDate.toDateString()) {
+    return formatDate(start_date);
+  }
+
+  // Check if the event spans within the same month
+  if (
+    startDate.getMonth() === endDate.getMonth() &&
+    startDate.getFullYear() === endDate.getFullYear()
+  ) {
+    // Only show day range without repeating the month
+    return `${startDate.getDate()} - ${endDate.getDate()} ${startDate.toLocaleString(
+      "en-GB",
+      { month: "long" }
+    )} ${startDate.getFullYear()}`;
+  } else {
+    return `${formatDate(start_date)} - ${formatDate(end_date)}`;
+  }
+};
+
 // Format time to locale string
 export const formatTime = (date: string) => {
   return new Date(date).toLocaleTimeString("en-GB", {

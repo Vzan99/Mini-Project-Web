@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { API_BASE_URL } from "@/components/config/api";
 import { ReduxTransaction } from "@/lib/redux/features/transactionSlice";
-import { IEventDetails, ITicket } from "./types/components/types";
+import { IEventDetails, ITicket } from "./components/types";
 import { formatDate, formatNumberWithCommas } from "@/utils/formatters";
 import { useAppSelector } from "@/lib/redux/hooks";
 

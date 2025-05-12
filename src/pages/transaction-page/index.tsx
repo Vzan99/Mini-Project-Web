@@ -842,7 +842,7 @@ export default function TransactionPage() {
                                     // Simple ISO date string
                                     const dateString = `${year}-${month}-${day}`;
 
-                                    setFieldValue("attendDate", dateString);
+                                    setFieldValue("attend_date", dateString); // Changed from "attendDate"
                                     setShowCalendar(false); // Close calendar after selection
                                   }
                                 }}
@@ -875,7 +875,7 @@ export default function TransactionPage() {
                       </div>
 
                       <ErrorMessage
-                        name="attendDate"
+                        name="attend_date" // Changed from "attendDate"
                         component="div"
                         className="text-red-500 text-sm mt-1"
                       />
