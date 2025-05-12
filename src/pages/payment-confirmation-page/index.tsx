@@ -39,6 +39,9 @@ export default function PaymentConfirmationPage({
   const [adminDeadline, setAdminDeadline] = useState<Date | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
 
+  // Add state to track if polling should be active
+  const [isPolling, setIsPolling] = useState(false);
+
   // Add this helper function
   const formatDeadline = (date: Date | null) => {
     if (!date) return "";
@@ -297,18 +300,79 @@ export default function PaymentConfirmationPage({
     }
   };
 
-  // Add this new useEffect for automatic redirection
+  // Add polling mechanism after payment proof submission
   useEffect(() => {
-    // Only redirect if payment is confirmed
-    if (paymentStatus === "confirmed") {
-      const redirectTimer = setTimeout(() => {
-        router.push(`/payment/success/${transactionId}`);
-      }, 10000); // 10 seconds
+    // Only start polling if we're waiting for admin confirmation
+    // or if polling is explicitly enabled
+    if (paymentStatus === "waiting_for_admin_confirmation" || isPolling) {
+      console.log("Starting status polling after payment submission...");
 
-      // Clear the timer if component unmounts
-      return () => clearTimeout(redirectTimer);
+      // Poll every 20 seconds
+      const intervalId = setInterval(async () => {
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) return;
+
+          console.log(`Polling transaction ${transactionId} status...`);
+          const response = await axios.get(
+            `${API_BASE_URL}/transactions/${transactionId}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+
+          if (response.data && response.data.data) {
+            const newStatus = response.data.data.status;
+            const updatedTransaction = response.data.data;
+
+            console.log(
+              `Current status: ${paymentStatus}, New status: ${newStatus}`
+            );
+
+            // Update transaction data and status if changed
+            if (
+              JSON.stringify(transaction) !== JSON.stringify(updatedTransaction)
+            ) {
+              setTransaction(updatedTransaction);
+            }
+
+            // If status changed, update UI
+            if (newStatus !== paymentStatus) {
+              console.log(
+                `Status changed from ${paymentStatus} to ${newStatus}`
+              );
+              setPaymentStatus(newStatus);
+              dispatch(updateTransactionStatus(newStatus));
+
+              // Handle confirmed status
+              if (newStatus === "confirmed") {
+                console.log(
+                  "Payment confirmed! Redirecting to success page..."
+                );
+                router.push(`/payment/success/${transactionId}`);
+              }
+
+              // Stop polling if we reach a final state
+              if (
+                ["confirmed", "rejected", "expired", "canceled"].includes(
+                  newStatus
+                )
+              ) {
+                setIsPolling(false);
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Error polling for status:", err);
+        }
+      }, 20000); // 20 seconds
+
+      return () => {
+        console.log("Stopping polling");
+        clearInterval(intervalId);
+      };
     }
-  }, [paymentStatus, transactionId, router]);
+  }, [paymentStatus, transactionId, transaction, isPolling, dispatch, router]);
 
   if (loading) return <div className="container mx-auto p-4">Loading...</div>;
   if (error)
