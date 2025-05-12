@@ -1,14 +1,16 @@
 interface IReview {
   id: string;
   rating: number;
-  comment: string;
+  review: string;
   created_at: string;
   user: {
     username: string;
   };
+  event_name?: string;
+  event_id?: string;
 }
 
-interface IEventSummary {
+export interface IEventSummary {
   id: string;
   name: string;
   start_date: string;

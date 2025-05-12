@@ -6,8 +6,9 @@ import Image from "next/image";
 import axios from "axios";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 import EventCard from "@/components/cards/eventCard";
-import { IOrganizerProfile } from "./components/types";
+import { IOrganizerProfile, IEventSummary } from "./components/types";
 import { API_BASE_URL } from "@/components/config/api";
+import Link from "next/link";
 
 export default function EODetailsPage() {
   const router = useRouter();
@@ -17,6 +18,8 @@ export default function EODetailsPage() {
   const [profile, setProfile] = useState<IOrganizerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [upcomingEvents, setUpcomingEvents] = useState<IEventSummary[]>([]);
+  const [pastEvents, setPastEvents] = useState<IEventSummary[]>([]);
 
   useEffect(() => {
     if (!organizerId) {
@@ -31,6 +34,19 @@ export default function EODetailsPage() {
           `${API_BASE_URL}/admin/organizers/${organizerId}`
         );
         setProfile(response.data.profile);
+
+        // Separate upcoming and past events
+        const now = new Date();
+        const upcoming = response.data.profile.events.filter(
+          (event: IEventSummary) => new Date(event.end_date) >= now
+        );
+        const past = response.data.profile.events.filter(
+          (event: IEventSummary) => new Date(event.end_date) < now
+        );
+
+        setUpcomingEvents(upcoming);
+        setPastEvents(past);
+
         console.log("Profile data:", response.data.profile);
       } catch (err: any) {
         console.error("Error fetching organizer profile:", err);
@@ -107,18 +123,18 @@ export default function EODetailsPage() {
           </div>
         </div>
 
-        {/* Events Section */}
+        {/* Upcoming Events Section */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
           <h2 className="text-xl font-bold mb-4">Upcoming Events</h2>
 
-          {profile.events.length === 0 ? (
+          {upcomingEvents.length === 0 ? (
             <p className="text-gray-500">No upcoming events</p>
           ) : (
             <>
               {/* Mobile and tablet view: Horizontal scroll */}
               <div className="block lg:hidden overflow-x-auto scrollbar-hide mb-4">
                 <div className="flex gap-4 px-1 w-max">
-                  {profile.events.map((event) => (
+                  {upcomingEvents.map((event) => (
                     <div key={event.id} className="w-[280px] flex-shrink-0">
                       <EventCard
                         id={event.id}
@@ -136,7 +152,53 @@ export default function EODetailsPage() {
 
               {/* Desktop view: grid layout */}
               <div className="hidden lg:grid gap-6 grid-cols-1 lg:grid-cols-3">
-                {profile.events.map((event) => (
+                {upcomingEvents.map((event) => (
+                  <EventCard
+                    key={event.id}
+                    id={event.id}
+                    name={event.name}
+                    event_image={event.event_image}
+                    location={event.location}
+                    start_date={event.start_date}
+                    end_date={event.end_date}
+                    cloudinaryBaseUrl={cloudinaryBaseUrl}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Past Events Section */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+          <h2 className="text-xl font-bold mb-4">Past Events</h2>
+
+          {pastEvents.length === 0 ? (
+            <p className="text-gray-500">No past events</p>
+          ) : (
+            <>
+              {/* Mobile and tablet view: Horizontal scroll */}
+              <div className="block lg:hidden overflow-x-auto scrollbar-hide mb-4">
+                <div className="flex gap-4 px-1 w-max">
+                  {pastEvents.map((event) => (
+                    <div key={event.id} className="w-[280px] flex-shrink-0">
+                      <EventCard
+                        id={event.id}
+                        name={event.name}
+                        event_image={event.event_image}
+                        location={event.location}
+                        start_date={event.start_date}
+                        end_date={event.end_date}
+                        cloudinaryBaseUrl={cloudinaryBaseUrl}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Desktop view: grid layout */}
+              <div className="hidden lg:grid gap-6 grid-cols-1 lg:grid-cols-3">
+                {pastEvents.map((event) => (
                   <EventCard
                     key={event.id}
                     id={event.id}
@@ -176,7 +238,15 @@ export default function EODetailsPage() {
                       {formatDate(review.created_at)}
                     </span>
                   </div>
-                  <p className="text-gray-700">{review.comment}</p>
+                  {/* Show which event this review is for if available */}
+                  {review.event_name && (
+                    <p className="text-sm text-black mb-1">
+                      <Link href={`/events/${review.event_id}`}>
+                        Review for: {review.event_name}
+                      </Link>
+                    </p>
+                  )}
+                  <p className="text-gray-700">{review.review}</p>
                 </div>
               ))}
             </div>
