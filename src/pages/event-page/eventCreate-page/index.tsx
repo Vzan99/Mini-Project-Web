@@ -12,6 +12,18 @@ import { generateTimeOptions } from "@/utils/formatters";
 
 const timeOptions = generateTimeOptions();
 
+// Add this function to properly format dates for HTML date inputs
+const formatDateForInput = (date: Date): string => {
+  return date.toISOString().split("T")[0]; // Returns YYYY-MM-DD
+};
+
+// Get tomorrow's date for min attribute
+const getTomorrowDateString = () => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return formatDateForInput(tomorrow);
+};
+
 export default function EventCreatePage() {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -30,23 +42,78 @@ export default function EventCreatePage() {
   const getCombinedDateTimeValues = (values: IEventFormValues) => {
     const combinedData = { ...values };
 
-    // Combine start date and time with proper ISO format
-    if (values.start_date && values.start_time) {
-      const startDateTime = new Date(
-        `${values.start_date}T${values.start_time}`
-      ).toISOString();
-      combinedData.start_date = startDateTime;
-    }
+    try {
+      // Combine start date and time with proper ISO format
+      if (values.start_date && values.start_time) {
+        const startDateTime = new Date(
+          `${values.start_date}T${values.start_time}`
+        ).toISOString();
+        combinedData.start_date = startDateTime;
+      }
 
-    // Combine end date and time with proper ISO format
-    if (values.end_date && values.end_time) {
-      const endDateTime = new Date(
-        `${values.end_date}T${values.end_time}`
-      ).toISOString();
-      combinedData.end_date = endDateTime;
-    }
+      // Combine end date and time with proper ISO format
+      if (values.end_date && values.end_time) {
+        const endDateTime = new Date(
+          `${values.end_date}T${values.end_time}`
+        ).toISOString();
+        combinedData.end_date = endDateTime;
+      }
 
-    return combinedData;
+      return combinedData;
+    } catch (error) {
+      console.error("Error combining date and time values:", error);
+      throw new Error("Invalid date or time format. Please check your inputs.");
+    }
+  };
+
+  // Validate voucher dates against event dates
+  const validateVoucherDates = (values: IEventFormValues) => {
+    if (!values.create_voucher || values.price <= 0) return true;
+
+    try {
+      // Create Date objects for event dates
+      const eventStart = new Date(`${values.start_date}T${values.start_time}`);
+      const eventEnd = new Date(`${values.end_date}T${values.end_time}`);
+
+      // Create Date objects for voucher dates
+      const voucherStart = new Date(
+        `${values.voucher_start_date}T${values.voucher_start_time}`
+      );
+      const voucherEnd = new Date(
+        `${values.voucher_end_date}T${values.voucher_end_time}`
+      );
+
+      // Allow voucher to start from yesterday
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(0, 0, 0, 0); // Start of yesterday
+
+      // Check if voucher start is at least yesterday
+      if (voucherStart < yesterday) {
+        setError("Voucher start date cannot be earlier than yesterday");
+        return false;
+      }
+
+      // Check if voucher end is before event end
+      if (voucherEnd > eventEnd) {
+        setError(
+          "Voucher end date/time must be on or before event end date/time"
+        );
+        return false;
+      }
+
+      // Check if voucher end is after voucher start
+      if (voucherEnd <= voucherStart) {
+        setError("Voucher end date/time must be after voucher start date/time");
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Date validation error:", error);
+      setError("Invalid date format. Please check all dates and times.");
+      return false;
+    }
   };
 
   const handleSubmit = async (
@@ -55,22 +122,33 @@ export default function EventCreatePage() {
   ) => {
     setError("");
 
-    try {
-      // Get combined date/time values
-      const combinedData = getCombinedDateTimeValues(values);
+    // Validate voucher dates if creating a voucher
+    if (values.create_voucher && values.price > 0) {
+      if (!validateVoucherDates(values)) {
+        setSubmitting(false);
+        return;
+      }
+    }
 
+    try {
       // Create FormData object for multipart/form-data submission
       const submitData = new FormData();
 
-      // Add all form fields to FormData with correct field names
-      submitData.append("name", combinedData.name);
-      submitData.append("startDate", combinedData.start_date); // Already combined date+time
-      submitData.append("endDate", combinedData.end_date); // Already combined date+time
-      submitData.append("description", combinedData.description);
-      submitData.append("location", combinedData.location);
-      submitData.append("price", combinedData.price.toString());
-      submitData.append("totalSeats", combinedData.total_seats.toString());
-      submitData.append("category", combinedData.category); // Remove .toLowerCase()
+      // Parse dates correctly
+      const startDateTime = new Date(
+        `${values.start_date}T${values.start_time}`
+      );
+      const endDateTime = new Date(`${values.end_date}T${values.end_time}`);
+
+      // Add all form fields to FormData with correct field names matching backend
+      submitData.append("name", values.name);
+      submitData.append("start_date", startDateTime.toISOString());
+      submitData.append("end_date", endDateTime.toISOString());
+      submitData.append("description", values.description);
+      submitData.append("location", values.location);
+      submitData.append("price", values.price.toString());
+      submitData.append("total_seats", values.total_seats.toString());
+      submitData.append("category", values.category);
 
       // Add image file with correct field name
       if (imageFile) {
@@ -94,38 +172,68 @@ export default function EventCreatePage() {
         },
       });
 
+      console.log("Event creation successful:", response.data);
+
       // If voucher creation is enabled and event is paid, create voucher
       if (values.create_voucher && values.price > 0) {
-        const eventId = response.data.data.id;
+        try {
+          const eventId = response.data.data.id;
 
-        // Combine voucher dates and times
-        const voucherStartDateTime = `${values.voucher_start_date}T${values.voucher_start_time}`;
-        const voucherEndDateTime = `${values.voucher_end_date}T${values.voucher_end_time}`;
+          // Combine voucher dates and times with proper ISO format
+          const voucherStartDateTime = new Date(
+            `${values.voucher_start_date}T${values.voucher_start_time}`
+          );
+          const voucherEndDateTime = new Date(
+            `${values.voucher_end_date}T${values.voucher_end_time}`
+          );
 
-        // Create voucher
-        await axios.post(
-          `${API_BASE_URL}/vouchers`,
-          {
-            eventId,
-            voucherCode: values.voucher_code,
-            discountAmount: values.discount_amount,
-            voucherStartDate: new Date(voucherStartDateTime),
-            voucherEndDate: new Date(voucherEndDateTime),
-            maxUsage: values.max_usage,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
+          // Create voucher with snake_case field names to match backend
+          await axios.post(
+            `${API_BASE_URL}/vouchers`,
+            {
+              event_id: eventId,
+              voucher_code: values.voucher_code,
+              discount_amount: values.discount_amount,
+              voucher_start_date: voucherStartDateTime.toISOString(),
+              voucher_end_date: voucherEndDateTime.toISOString(),
+              max_usage: values.max_usage,
             },
-          }
-        );
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+        } catch (voucherErr: any) {
+          console.error("Error creating voucher:", voucherErr);
+          // Show error message but don't block navigation
+          alert(
+            voucherErr.response?.data?.message ||
+              "Failed to create voucher. Please try again."
+          );
+        }
       }
 
       // Redirect to the event page on success
       router.push(`/events/${response.data.data.id}`);
     } catch (err: any) {
       console.error("Error creating event:", err);
+
+      // More detailed error logging
+      if (axios.isAxiosError(err)) {
+        console.error("Response status:", err.response?.status);
+        console.error("Response data:", err.response?.data);
+
+        // Check if there are validation details
+        if (
+          err.response?.data?.details &&
+          Array.isArray(err.response.data.details)
+        ) {
+          console.error("Validation details:", err.response.data.details);
+        }
+      }
+
       setError(
         err.response?.data?.message ||
           "Failed to create event. Please try again."
@@ -189,23 +297,24 @@ export default function EventCreatePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label
-                    htmlFor="startDate"
+                    htmlFor="start_date"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
                     Start Date *
                   </label>
                   <Field
                     type="date"
-                    id="startDate"
-                    name="startDate"
-                    className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
+                    id="start_date"
+                    name="start_date"
+                    min={getTomorrowDateString()} // Must be in the future
+                    className={`w-full px-3 py-2 border rounded-md bg-white ${
                       errors.start_date && touched.start_date
                         ? "border-red-500"
                         : "border-gray-300"
                     }`}
                   />
                   <ErrorMessage
-                    name="startDate"
+                    name="start_date"
                     component="div"
                     className="text-red-500 text-sm mt-1"
                   />
@@ -213,15 +322,15 @@ export default function EventCreatePage() {
 
                 <div>
                   <label
-                    htmlFor="startTime"
+                    htmlFor="start_time"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
                     Start Time *
                   </label>
                   <Field
                     as="select"
-                    id="startTime"
-                    name="startTime"
+                    id="start_time"
+                    name="start_time"
                     className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
                       errors.start_time && touched.start_time
                         ? "border-red-500"
@@ -236,7 +345,7 @@ export default function EventCreatePage() {
                     ))}
                   </Field>
                   <ErrorMessage
-                    name="startTime"
+                    name="start_time"
                     component="div"
                     className="text-red-500 text-sm mt-1"
                   />
@@ -247,15 +356,15 @@ export default function EventCreatePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label
-                    htmlFor="endDate"
+                    htmlFor="end_date"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
                     End Date *
                   </label>
                   <Field
                     type="date"
-                    id="endDate"
-                    name="endDate"
+                    id="end_date"
+                    name="end_date"
                     className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
                       errors.end_date && touched.end_date
                         ? "border-red-500"
@@ -263,7 +372,7 @@ export default function EventCreatePage() {
                     }`}
                   />
                   <ErrorMessage
-                    name="endDate"
+                    name="end_date"
                     component="div"
                     className="text-red-500 text-sm mt-1"
                   />
@@ -271,15 +380,15 @@ export default function EventCreatePage() {
 
                 <div>
                   <label
-                    htmlFor="endTime"
+                    htmlFor="end_time"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
                     End Time *
                   </label>
                   <Field
                     as="select"
-                    id="endTime"
-                    name="endTime"
+                    id="end_time"
+                    name="end_time"
                     className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
                       errors.end_time && touched.end_time
                         ? "border-red-500"
@@ -294,7 +403,7 @@ export default function EventCreatePage() {
                     ))}
                   </Field>
                   <ErrorMessage
-                    name="endTime"
+                    name="end_time"
                     component="div"
                     className="text-red-500 text-sm mt-1"
                   />
@@ -352,6 +461,7 @@ export default function EventCreatePage() {
                 />
               </div>
 
+              {/* Price, Total Seats, and Category */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label
@@ -385,15 +495,15 @@ export default function EventCreatePage() {
 
                 <div>
                   <label
-                    htmlFor="totalSeats"
+                    htmlFor="total_seats"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
                     Total Seats *
                   </label>
                   <Field
                     type="number"
-                    id="totalSeats"
-                    name="totalSeats"
+                    id="total_seats"
+                    name="total_seats"
                     min={1}
                     className={`w-full px-3 py-2 border rounded-md bg-white ${
                       errors.total_seats && touched.total_seats
@@ -402,7 +512,7 @@ export default function EventCreatePage() {
                     }`}
                   />
                   <ErrorMessage
-                    name="totalSeats"
+                    name="total_seats"
                     component="div"
                     className="text-red-500 text-sm mt-1"
                   />
@@ -460,238 +570,232 @@ export default function EventCreatePage() {
                 )}
               </div>
 
-              <div className="mt-8 border-t pt-6">
-                <h3 className="text-xl font-semibold mb-4">
-                  Voucher Information
-                </h3>
-
-                {/* Voucher checkbox - disabled for free events */}
-                <div className="mb-4">
-                  <div className="flex items-center">
-                    <Field
-                      type="checkbox"
-                      id="createVoucher"
-                      name="createVoucher"
-                      className="mr-2 h-4 w-4"
-                      disabled={values.price <= 0}
-                    />
-                    <label
-                      htmlFor="createVoucher"
-                      className={`text-sm font-medium ${
-                        values.price <= 0 ? "text-gray-400" : "text-gray-700"
-                      }`}
-                    >
-                      Create voucher for this event
-                    </label>
-                    {values.price <= 0 && (
-                      <span className="ml-2 text-xs text-red-500">
-                        (Only available for paid events)
-                      </span>
-                    )}
-                  </div>
+              {/* Voucher checkbox */}
+              <div className="mb-4">
+                <div className="flex items-center">
+                  <Field
+                    type="checkbox"
+                    id="create_voucher"
+                    name="create_voucher"
+                    className="mr-2 h-4 w-4"
+                    disabled={values.price <= 0}
+                  />
+                  <label
+                    htmlFor="create_voucher"
+                    className={`text-sm font-medium ${
+                      values.price <= 0 ? "text-gray-400" : "text-gray-700"
+                    }`}
+                  >
+                    Create voucher for this event
+                  </label>
+                  {values.price <= 0 && (
+                    <span className="ml-2 text-xs text-red-500">
+                      (Only available for paid events)
+                    </span>
+                  )}
                 </div>
-
-                {/* Voucher fields - only shown when checkbox is checked */}
-                {values.create_voucher && values.price > 0 && (
-                  <div className="space-y-4 p-4 bg-gray-50 rounded-md">
-                    <div>
-                      <label
-                        htmlFor="voucherCode"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Voucher Code *
-                      </label>
-                      <Field
-                        type="text"
-                        id="voucherCode"
-                        name="voucherCode"
-                        className={`w-full px-3 py-2 border rounded-md bg-white ${
-                          errors.voucher_code && touched.voucher_code
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                      />
-                      <ErrorMessage
-                        name="voucherCode"
-                        component="div"
-                        className="text-red-500 text-sm mt-1"
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="discountAmount"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Discount Amount * (max: {formatPrice(values.price)})
-                      </label>
-                      <Field
-                        type="number"
-                        id="discountAmount"
-                        name="discountAmount"
-                        min="1"
-                        max={values.price}
-                        className={`w-full px-3 py-2 border rounded-md bg-white ${
-                          errors.discount_amount && touched.discount_amount
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                      />
-                      <ErrorMessage
-                        name="discountAmount"
-                        component="div"
-                        className="text-red-500 text-sm mt-1"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label
-                          htmlFor="voucherStartDate"
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Voucher Start Date *
-                        </label>
-                        <Field
-                          type="date"
-                          id="voucherStartDate"
-                          name="voucherStartDate"
-                          min={values.start_date}
-                          className={`w-full px-3 py-2 border rounded-md bg-white ${
-                            errors.voucher_start_date &&
-                            touched.voucher_start_date
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          }`}
-                        />
-                        <ErrorMessage
-                          name="voucherStartDate"
-                          component="div"
-                          className="text-red-500 text-sm mt-1"
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="voucherStartTime"
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Voucher Start Time *
-                        </label>
-                        <Field
-                          as="select"
-                          id="voucherStartTime"
-                          name="voucherStartTime"
-                          className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
-                            errors.voucher_start_time &&
-                            touched.voucher_start_time
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          }`}
-                        >
-                          <option value="">Select time</option>
-                          {timeOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </Field>
-                        <ErrorMessage
-                          name="voucherStartTime"
-                          component="div"
-                          className="text-red-500 text-sm mt-1"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label
-                          htmlFor="voucherEndDate"
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Voucher End Date *
-                        </label>
-                        <Field
-                          type="date"
-                          id="voucherEndDate"
-                          name="voucherEndDate"
-                          min={values.voucher_start_date || values.start_date}
-                          max={values.end_date}
-                          className={`w-full px-3 py-2 border rounded-md bg-white ${
-                            errors.voucher_end_date && touched.voucher_end_date
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          }`}
-                        />
-                        <ErrorMessage
-                          name="voucherEndDate"
-                          component="div"
-                          className="text-red-500 text-sm mt-1"
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="voucherEndTime"
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Voucher End Time *
-                        </label>
-                        <Field
-                          as="select"
-                          id="voucherEndTime"
-                          name="voucherEndTime"
-                          className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
-                            errors.voucher_end_time && touched.voucher_end_time
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          }`}
-                        >
-                          <option value="">Select time</option>
-                          {timeOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </Field>
-                        <ErrorMessage
-                          name="voucherEndTime"
-                          component="div"
-                          className="text-red-500 text-sm mt-1"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="maxUsage"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Max Usage * (max: {values.total_seats})
-                      </label>
-                      <Field
-                        type="number"
-                        id="maxUsage"
-                        name="maxUsage"
-                        min="1"
-                        max={values.total_seats}
-                        className={`w-full px-3 py-2 border rounded-md bg-white ${
-                          errors.max_usage && touched.max_usage
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                      />
-                      <ErrorMessage
-                        name="maxUsage"
-                        component="div"
-                        className="text-red-500 text-sm mt-1"
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
 
+              {/* Voucher fields */}
+              {values.create_voucher && values.price > 0 && (
+                <div className="space-y-4 p-4 bg-gray-50 rounded-md">
+                  <div>
+                    <label
+                      htmlFor="voucher_code"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Voucher Code *
+                    </label>
+                    <Field
+                      type="text"
+                      id="voucher_code"
+                      name="voucher_code"
+                      className={`w-full px-3 py-2 border rounded-md bg-white ${
+                        errors.voucher_code && touched.voucher_code
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                    />
+                    <ErrorMessage
+                      name="voucher_code"
+                      component="div"
+                      className="text-red-500 text-sm mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="discount_amount"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Discount Amount * (max: {formatPrice(values.price)})
+                    </label>
+                    <Field
+                      type="number"
+                      id="discount_amount"
+                      name="discount_amount"
+                      min="1"
+                      max={values.price}
+                      className={`w-full px-3 py-2 border rounded-md bg-white ${
+                        errors.discount_amount && touched.discount_amount
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                    />
+                    <ErrorMessage
+                      name="discount_amount"
+                      component="div"
+                      className="text-red-500 text-sm mt-1"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        htmlFor="voucher_start_date"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Voucher Start Date *
+                      </label>
+                      <Field
+                        type="date"
+                        id="voucher_start_date"
+                        name="voucher_start_date"
+                        min={getTomorrowDateString()} // Must be in the future
+                        max={values.end_date} // Cannot be after event end date
+                        className={`w-full px-3 py-2 border rounded-md bg-white ${
+                          errors.voucher_start_date &&
+                          touched.voucher_start_date
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                      />
+                      <ErrorMessage
+                        name="voucher_start_date"
+                        component="div"
+                        className="text-red-500 text-sm mt-1"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="voucher_start_time"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Voucher Start Time *
+                      </label>
+                      <Field
+                        as="select"
+                        id="voucher_start_time"
+                        name="voucher_start_time"
+                        className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
+                          errors.voucher_start_time &&
+                          touched.voucher_start_time
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                      >
+                        <option value="">Select time</option>
+                        {timeOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </Field>
+                      <ErrorMessage
+                        name="voucher_start_time"
+                        component="div"
+                        className="text-red-500 text-sm mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        htmlFor="voucher_end_date"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Voucher End Date *
+                      </label>
+                      <Field
+                        type="date"
+                        id="voucher_end_date"
+                        name="voucher_end_date"
+                        min={values.voucher_start_date || values.start_date} // Must be after voucher start date
+                        max={values.end_date} // Cannot be after event end date
+                        className={`w-full px-3 py-2 border rounded-md bg-white ${
+                          errors.voucher_end_date && touched.voucher_end_date
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                      />
+                      <ErrorMessage
+                        name="voucher_end_date"
+                        component="div"
+                        className="text-red-500 text-sm mt-1"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="voucher_end_time"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Voucher End Time *
+                      </label>
+                      <Field
+                        as="select"
+                        id="voucher_end_time"
+                        name="voucher_end_time"
+                        className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
+                          errors.voucher_end_time && touched.voucher_end_time
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                      >
+                        <option value="">Select time</option>
+                        {timeOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </Field>
+                      <ErrorMessage
+                        name="voucher_end_time"
+                        component="div"
+                        className="text-red-500 text-sm mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="max_usage"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Max Usage * (max: {values.total_seats})
+                    </label>
+                    <Field
+                      type="number"
+                      id="max_usage"
+                      name="max_usage"
+                      min="1"
+                      max={values.total_seats}
+                      className={`w-full px-3 py-2 border rounded-md bg-white ${
+                        errors.max_usage && touched.max_usage
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                    />
+                    <ErrorMessage
+                      name="max_usage"
+                      component="div"
+                      className="text-red-500 text-sm mt-1"
+                    />
+                  </div>
+                </div>
+              )}
               <div className="flex justify-end space-x-4">
                 <button
                   type="button"

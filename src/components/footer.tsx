@@ -1,9 +1,10 @@
 import SocialMedia from "./socialMedia";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#FFD9C0] py-8 md:py-12">
+    <footer className="bg-[#FFD9C0] py-8 md:py-12 relative">
       <div className="container mx-auto px-6 md:px-10">
         <div className="flex flex-col lg:flex-row lg:justify-between">
           {/* Logo and Tagline Section */}
@@ -95,6 +96,16 @@ export default function Footer() {
             © {new Date().getFullYear()} Quick Ticket. All rights reserved.
           </p>
         </div>
+      </div>
+
+      {/* Test Review Link - Bottom Right Corner */}
+      <div className="absolute bottom-4 right-4">
+        <Link
+          href="/reviews/new?eventId=YOUR_EVENT_ID&transactionId=YOUR_TRANSACTION_ID"
+          className="bg-[#222432] text-white px-4 py-2 rounded-full hover:bg-opacity-90 text-sm flex items-center shadow-lg"
+        >
+          <span className="mr-1">✏️</span> Test Review
+        </Link>
       </div>
     </footer>
   );
