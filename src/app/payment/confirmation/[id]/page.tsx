@@ -1,4 +1,4 @@
-import PaymentConfirmationPage from "@/pages/payment-confirmation-page";
+import PaymentConfirmationPage from "@/pages/payment-page/paymentConfirmation-page";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
