@@ -57,42 +57,36 @@ export default function ReviewPage() {
         }
 
         // Fetch event details
-        const eventResponse = await axios.get(`${API_BASE_URL}/events/${eventId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        
+        const eventResponse = await axios.get(
+          `${API_BASE_URL}/events/${eventId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
         setEvent(eventResponse.data.data);
-        
+
         // Fetch transaction to verify it's confirmed
         const transactionResponse = await axios.get(
           `${API_BASE_URL}/transactions/${transactionId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        
+
         const transaction = transactionResponse.data.data;
-        
-        // Check if user has already reviewed this event
-        const reviewsResponse = await axios.get(
-          `${API_BASE_URL}/reviews/user/event/${eventId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        
-        const hasReviewed = reviewsResponse.data.data.length > 0;
-        
-        // Check all conditions:
+
+        // Check conditions:
         // 1. Transaction is confirmed
         // 2. Event has ended
-        // 3. User hasn't already reviewed this event
         const isConfirmed = transaction.status === "confirmed";
-        const eventEnded = new Date(eventResponse.data.data.end_date) < new Date();
-        
+        const eventEnded =
+          new Date(eventResponse.data.data.end_date) < new Date();
+
         if (!isConfirmed) {
           setError("You can only review events with confirmed payments");
         } else if (!eventEnded) {
           setError("You can only review events that have already ended");
-        } else if (hasReviewed) {
-          setError("You have already reviewed this event");
         } else {
+          // Let the backend handle the duplicate review check
           setCanReview(true);
         }
       } catch (err: any) {
@@ -108,29 +102,30 @@ export default function ReviewPage() {
 
   const handleSubmit = async (values: IReviewFormValues) => {
     if (!eventId) return;
-    
+
     setSubmitting(true);
     setError(null);
-    
+
     try {
       const token = localStorage.getItem("token");
       if (!token) {
         router.push("/login");
         return;
       }
-      
+
+      // Submit review without user_id - backend will extract it from token
       await axios.post(
         `${API_BASE_URL}/reviews`,
         {
-          eventId,
+          event_id: eventId,
           rating: values.rating,
-          comment: values.comment,
+          review: values.comment, // Backend expects 'review', not 'comment'
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+
       setSuccess(true);
-      
+
       // Redirect to event page after 2 seconds
       setTimeout(() => {
         router.push(`/events/${eventId}`);
@@ -208,7 +203,7 @@ export default function ReviewPage() {
       <div className="container mx-auto px-4 max-w-2xl">
         <div className="bg-white rounded-lg shadow-md p-6">
           <h1 className="text-2xl font-bold mb-4">Review Event</h1>
-          
+
           {/* Event details */}
           <div className="mb-6 flex items-center">
             <div className="w-24 h-24 relative mr-4 rounded-md overflow-hidden">
@@ -226,7 +221,7 @@ export default function ReviewPage() {
               <p className="text-gray-600">{event.location}</p>
             </div>
           </div>
-          
+
           {canReview ? (
             <Formik
               initialValues={initialValues}
@@ -258,7 +253,7 @@ export default function ReviewPage() {
                       className="text-red-500 text-sm mt-1"
                     />
                   </div>
-                  
+
                   {/* Review Comment */}
                   <div>
                     <label
@@ -284,7 +279,7 @@ export default function ReviewPage() {
                       {values.comment.length}/500 characters
                     </div>
                   </div>
-                  
+
                   {/* Submit Button */}
                   <div className="flex justify-end space-x-4">
                     <button
