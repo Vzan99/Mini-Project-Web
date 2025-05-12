@@ -10,6 +10,7 @@ import "react-calendar/dist/Calendar.css";
 import { debounce } from "lodash";
 import { IEventDiscover, IEventSuggestion } from "@/interfaces/discoverPage";
 import { API_BASE_URL } from "@/components/config/api";
+import { formatEventDates } from "@/utils/formatters";
 
 const categories = [
   "All Events",
@@ -24,40 +25,6 @@ const sortOptions = [
   { value: "asc", label: "Ascending" },
   { value: "desc", label: "Descending" },
 ];
-
-// Format date in user-friendly way
-const formatEventDates = (start_date: string, end_date: string) => {
-  const startDate = new Date(start_date);
-  const endDate = new Date(end_date);
-
-  const formatDate = (date: string) => {
-    const options: Intl.DateTimeFormatOptions = {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    };
-    return new Date(date).toLocaleDateString("en-GB", options);
-  };
-
-  // Check if the event is a single day
-  if (startDate.toDateString() === endDate.toDateString()) {
-    return formatDate(start_date);
-  }
-
-  // Check if the event spans within the same month
-  if (
-    startDate.getMonth() === endDate.getMonth() &&
-    startDate.getFullYear() === endDate.getFullYear()
-  ) {
-    // Only show day range without repeating the month
-    return `${startDate.getDate()} - ${endDate.getDate()} ${startDate.toLocaleString(
-      "en-GB",
-      { month: "long" }
-    )} ${startDate.getFullYear()}`;
-  } else {
-    return `${formatDate(start_date)} - ${formatDate(end_date)}`;
-  }
-};
 
 export default function DiscoverPage() {
   // Search and suggestions
@@ -285,24 +252,24 @@ export default function DiscoverPage() {
       // Add date filter if selected
       if (selectedDate) {
         const formattedDate = format(selectedDate, "yyyy-MM-dd");
-        url += `&specificDate=${formattedDate}`;
+        url += `&specific_date=${formattedDate}`; // Changed from specificDate to specific_date
       }
 
       // Add price filters - use debounced values
       if (freeOnly) {
         // For free events, set both minPrice and maxPrice to 0
-        url += "&minPrice=0&maxPrice=0";
+        url += "&min_price=0&max_price=0"; // Changed from minPrice/maxPrice to min_price/max_price
       } else if (debouncedMinPrice || debouncedMaxPrice) {
         if (debouncedMinPrice) {
-          url += `&minPrice=${debouncedMinPrice}`;
+          url += `&min_price=${debouncedMinPrice}`; // Changed from minPrice to min_price
         }
         if (debouncedMaxPrice) {
-          url += `&maxPrice=${debouncedMaxPrice}`;
+          url += `&max_price=${debouncedMaxPrice}`; // Changed from maxPrice to max_price
         }
       }
 
       // Add sort order
-      url += `&sortOrder=${sortOrder}`;
+      url += `&sort_order=${sortOrder}`; // Changed from sortOrder to sort_order
 
       console.log("Fetching events with URL:", url);
 

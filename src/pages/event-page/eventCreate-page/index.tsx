@@ -4,11 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Formik, Form, Field, ErrorMessage, FormikHelpers } from "formik";
-import {
-  EventFormValues,
-  eventInitialValues,
-  eventValidationSchema,
-} from "./components/schema";
+import { eventInitialValues, eventValidationSchema } from "./components/schema";
+import { IEventFormValues } from "./components/types";
 import { API_BASE_URL } from "@/components/config/api";
 import { formatNumberWithCommas } from "@/utils/formatters";
 import { generateTimeOptions } from "@/utils/formatters";
@@ -30,7 +27,7 @@ export default function EventCreatePage() {
   };
 
   // Combine date and time fields when submitting
-  const getCombinedDateTimeValues = (values: EventFormValues) => {
+  const getCombinedDateTimeValues = (values: IEventFormValues) => {
     const combinedData = { ...values };
 
     // Combine start date and time with proper ISO format
@@ -53,8 +50,8 @@ export default function EventCreatePage() {
   };
 
   const handleSubmit = async (
-    values: EventFormValues,
-    { setSubmitting }: FormikHelpers<EventFormValues>
+    values: IEventFormValues,
+    { setSubmitting }: FormikHelpers<IEventFormValues>
   ) => {
     setError("");
 

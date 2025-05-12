@@ -1,5 +1,5 @@
 import SearchBar from "@/components/searchbar";
-import { IEventCard } from "@/interfaces/eventCard";
+import { IEventCard } from "./components/type";
 import Link from "next/link";
 import { API_BASE_URL } from "@/components/config/api";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
