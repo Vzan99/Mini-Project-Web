@@ -101,12 +101,12 @@ export default function Footer() {
       {/* Test Review Link - Bottom Right Corner */}
       <div className="absolute bottom-4 right-4">
         <div className="flex flex-row gap-2">
-          <Link
+          {/* <Link
             href="/reviews/new?eventId=YOUR_EVENT_ID&transactionId=YOUR_TRANSACTION_ID"
             className="bg-[#222432] text-white px-4 py-2 rounded-full hover:bg-opacity-90 text-sm flex items-center shadow-lg"
           >
             <span className="mr-1">✏️</span> Test Review
-          </Link>
+          </Link> */}
 
           <Link
             href="/past-events"

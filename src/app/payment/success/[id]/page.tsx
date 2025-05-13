@@ -11,6 +11,6 @@ export default async function PaymentSuccess({
 }: {
   params: { id: string };
 }) {
-  // No need to await params, it's already resolved
-  return <PaymentSuccessPage transactionId={params.id} />;
+  const { id } = await params;
+  return <PaymentSuccessPage transactionId={id} />;
 }

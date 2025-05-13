@@ -412,7 +412,7 @@ export default function PaymentConfirmationPage({
                 <div className="flex justify-between mb-2">
                   <span>Subtotal ({transaction.quantity} tickets)</span>
                   <span>
-                    IDR{" "}
+                    Rp{" "}
                     {formatNumberWithCommas(
                       subtotal || event.price * transaction.quantity
                     )}
