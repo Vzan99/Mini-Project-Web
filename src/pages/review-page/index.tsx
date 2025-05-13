@@ -9,6 +9,7 @@ import { API_BASE_URL } from "@/components/config/api";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 import { IEventDetails, IReviewFormValues } from "./components/types";
 import { formatDate } from "@/utils/formatters";
+import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 
 // Review validation schema
 const reviewValidationSchema = Yup.object({
@@ -138,17 +139,7 @@ export default function ReviewPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="bg-[#FAF0D7] min-h-screen py-8">
-        <div className="container mx-auto px-4 max-w-2xl">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <p className="text-center">Loading...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return LoadingSpinnerScreen();
 
   if (error) {
     return (

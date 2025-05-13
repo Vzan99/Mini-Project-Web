@@ -13,6 +13,7 @@ import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 import ReactDOM from "react-dom/client";
 import TicketDownloadTemplate from "@/components/TicketDownloadTemplate";
 import { ITicket, ITransaction } from "./components/types";
+import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 
 export default function TicketDetailsPage({
   transactionId,
@@ -162,13 +163,18 @@ export default function TicketDetailsPage({
     }
   };
 
-  if (loading) return <div className="container mx-auto p-4">Loading...</div>;
+  if (loading) return LoadingSpinnerScreen();
   if (error)
     return <div className="container mx-auto p-4 text-red-500">{error}</div>;
   if (!transaction || tickets.length === 0)
     return (
-      <div className="container mx-auto p-4">
-        No tickets found for this transaction
+      <div className="container mx-auto p-4 h-[75vh] bg-[#FAF0D7] flex justify-center items-center">
+        <div className="flex flex-col gap-5">
+          <p>No tickets found for this transaction.</p>
+          <button onClick={() => router.push("/")} className="buttonA">
+            Return to Home
+          </button>
+        </div>
       </div>
     );
 

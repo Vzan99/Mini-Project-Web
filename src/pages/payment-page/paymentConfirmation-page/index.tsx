@@ -13,6 +13,7 @@ import {
   setCurrentTransaction,
 } from "@/lib/redux/features/transactionSlice";
 import { differenceInSeconds, addHours, addDays, format } from "date-fns";
+import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 
 export default function PaymentConfirmationPage({
   transactionId,
@@ -374,7 +375,7 @@ export default function PaymentConfirmationPage({
     }
   }, [paymentStatus, transactionId, transaction, isPolling, dispatch, router]);
 
-  if (loading) return <div className="container mx-auto p-4">Loading...</div>;
+  if (loading) return LoadingSpinnerScreen();
   if (error)
     return <div className="container mx-auto p-4 text-red-500">{error}</div>;
   if (!transaction || !event)

@@ -11,6 +11,7 @@ import { debounce } from "lodash";
 import { IEventDiscover, IEventSuggestion } from "./components/types";
 import { API_BASE_URL } from "@/components/config/api";
 import { formatEventDates } from "@/utils/formatters";
+import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 
 const categories = [
   "All Events",
@@ -906,9 +907,7 @@ export default function DiscoverPage() {
         </div>
 
         {/* Events Display */}
-        {loading && (
-          <p className="text-center text-gray-500">Loading events...</p>
-        )}
+        {loading && LoadingSpinnerScreen()}
         {error && <p className="text-center text-red-500">{error}</p>}
         {!loading && events.length === 0 && (
           <p className="text-center text-gray-400">No events found.</p>

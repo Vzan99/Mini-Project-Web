@@ -9,6 +9,7 @@ import EventCard from "@/components/cards/eventCard";
 import { IOrganizerProfile, IEventSummary } from "./components/types";
 import { API_BASE_URL } from "@/components/config/api";
 import Link from "next/link";
+import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 
 export default function EODetailsPage() {
   const router = useRouter();
@@ -71,7 +72,7 @@ export default function EODetailsPage() {
     });
   };
 
-  if (loading) return <div className="text-center py-10">Loading...</div>;
+  if (loading) return LoadingSpinnerScreen();
   if (error)
     return <div className="text-center py-10 text-red-500">{error}</div>;
   if (!profile)

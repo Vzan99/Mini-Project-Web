@@ -8,6 +8,7 @@ import { ReduxTransaction } from "@/lib/redux/features/transactionSlice";
 import { IEventDetails, ITicket } from "./components/types";
 import { formatDate, formatNumberWithCommas } from "@/utils/formatters";
 import { useAppSelector } from "@/lib/redux/hooks";
+import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 
 export default function PaymentSuccessPage({
   transactionId,
@@ -107,7 +108,7 @@ export default function PaymentSuccessPage({
     fetchTickets();
   }, [transaction, transactionId]);
 
-  if (loading) return <div className="container mx-auto p-4">Loading...</div>;
+  if (loading) return LoadingSpinnerScreen();
   if (error)
     return <div className="container mx-auto p-4 text-red-500">{error}</div>;
   if (!transaction || !event)
