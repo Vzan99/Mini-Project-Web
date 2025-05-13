@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import eventReducer from "./features/eventSlice";
 import organizerReducer from "./features/organizerSlice";
 import transactionReducer from "./features/transactionSlice";
+import authSlice from "./features/authSlice";
 
 export function makeStore() {
   return configureStore({
@@ -9,6 +10,7 @@ export function makeStore() {
       event: eventReducer,
       organizer: organizerReducer,
       transaction: transactionReducer,
+      auth: authSlice,
     },
   });
 }
