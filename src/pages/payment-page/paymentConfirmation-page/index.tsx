@@ -412,6 +412,7 @@ export default function PaymentConfirmationPage({
                 <div className="flex justify-between mb-2">
                   <span>Subtotal ({transaction.quantity} tickets)</span>
                   <span>
+                    IDR{" "}
                     {formatNumberWithCommas(
                       subtotal || event.price * transaction.quantity
                     )}
@@ -461,6 +462,7 @@ export default function PaymentConfirmationPage({
                 <div className="flex justify-between font-bold mt-2 pt-2 border-t">
                   <span>Total</span>
                   <span>
+                    Rp{" "}
                     {formatNumberWithCommas(
                       // First try Redux calculated total
                       calculatedTotal ||
@@ -515,7 +517,14 @@ export default function PaymentConfirmationPage({
               ref={fileInputRef}
               onChange={handleFileChange}
               accept="image/*"
-              className="w-full p-2 border border-gray-300 rounded mb-2"
+              disabled={
+                paymentStatus !== "waiting_for_payment" || uploading // Disable if not in correct state
+              }
+              className={`w-full p-2 border border-gray-300 rounded mb-2 ${
+                paymentStatus !== "waiting_for_payment" || uploading
+                  ? "bg-gray-100 cursor-not-allowed"
+                  : ""
+              }`}
             />
             {paymentProof && (
               <p className="text-green-600 text-sm">
