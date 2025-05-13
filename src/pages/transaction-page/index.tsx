@@ -25,6 +25,8 @@ import {
   setCalculatedTotal,
   setSubtotal, // Add this import
 } from "@/lib/redux/features/transactionSlice";
+import loadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
+import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 
 export default function TransactionPage() {
   const router = useRouter();
@@ -605,11 +607,20 @@ export default function TransactionPage() {
     }
   };
 
-  if (loading) return <div className="container mx-auto p-4">Loading...</div>;
+  if (loading) return LoadingSpinnerScreen();
   if (error)
     return <div className="container mx-auto p-4 text-red-500">{error}</div>;
   if (!event)
-    return <div className="container mx-auto p-4">Event not found</div>;
+    return (
+      <div className="container mx-auto p-4 h-[75vh] bg-[#FAF0D7] flex justify-center items-center">
+        <div className="flex flex-col gap-5">
+          <p>Event Not Found.</p>
+          <button onClick={() => router.push("/")} className="buttonA">
+            Return to Home
+          </button>
+        </div>
+      </div>
+    );
 
   // Add this function to check if there's an unapplied discount code
   const hasUnappliedDiscountCode = (values: TransactionFormValues) => {

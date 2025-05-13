@@ -17,6 +17,7 @@ import {
   IPagination,
 } from "./components/types";
 import { reviewValidationSchema } from "./components/schemas";
+import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 
 export default function PastEventsPage() {
   const router = useRouter();
@@ -119,18 +120,7 @@ export default function PastEventsPage() {
     }
   };
 
-  if (loading && pastEvents.length === 0) {
-    return (
-      <div className="bg-[#FAF0D7] min-h-screen py-8">
-        <div className="container mx-auto px-4">
-          <h1 className="text-3xl font-bold mb-6">Past Events</h1>
-          <div className="text-center py-8">
-            <p className="text-gray-600">Loading...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return LoadingSpinnerScreen();
 
   if (error) {
     return (
