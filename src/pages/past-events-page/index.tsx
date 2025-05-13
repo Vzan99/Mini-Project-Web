@@ -137,7 +137,7 @@ export default function PastEventsPage() {
 
   return (
     <div className="bg-[#FAF0D7] min-h-screen py-8">
-      <div className="container mx-auto px-40">
+      <div className="container mx-auto px-5 md:px-10 lg:px-40">
         <h1 className="text-3xl font-bold mb-6">Past Events</h1>
 
         {pastEvents.length === 0 ? (
