@@ -136,7 +136,7 @@ export default function PaymentSuccessPage({
             <div className="mt-3 pt-3 border-t border-gray-200">
               <p className="font-semibold">Price Details:</p>
               <p>
-                Subtotal:{" "}
+                Subtotal: Rp{" "}
                 {formatNumberWithCommas(
                   subtotal || event.price * transaction.quantity
                 )}
@@ -172,7 +172,7 @@ export default function PaymentSuccessPage({
               )}
 
               <p className="font-bold mt-2 pt-2 border-t">
-                Total:{" "}
+                Total: Rp{" "}
                 {formatNumberWithCommas(
                   calculatedTotal || transaction.total_price
                 )}
