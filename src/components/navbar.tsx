@@ -32,6 +32,16 @@ export default function NavBar() {
     setIsMenuOpen(false);
   };
 
+  const navigateToLogin = () => {
+    router.push("/auth/login");
+    setIsMenuOpen(false);
+  };
+
+  const navigateToRegister = () => {
+    router.push("/auth/register");
+    setIsMenuOpen(false);
+  };
+
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -94,8 +104,12 @@ export default function NavBar() {
         </div>
 
         <div className="nav-buttons-group hidden lg:flex">
-          <button className="buttonA">Sign In</button>
-          <button className="buttonB">Get Started</button>
+          <button className="buttonA" onClick={navigateToLogin}>
+            Sign In
+          </button>
+          <button className="buttonB" onClick={navigateToRegister}>
+            Get Started
+          </button>
         </div>
 
         {/* Mobile & Tablet Hamburger Menu */}
@@ -156,8 +170,12 @@ export default function NavBar() {
             About
           </Link>
           <div className="flex flex-col space-y-3 pt-3">
-            <button className="buttonA w-full">Sign In</button>
-            <button className="buttonB w-full">Get Started</button>
+            <button className="buttonA w-full" onClick={navigateToLogin}>
+              Sign In
+            </button>
+            <button className="buttonB w-full" onClick={navigateToRegister}>
+              Get Started
+            </button>
           </div>
         </div>
       </div>
