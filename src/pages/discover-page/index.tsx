@@ -8,7 +8,7 @@ import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { debounce } from "lodash";
-import { IEventDiscover, IEventSuggestion } from "./components/types";
+import { IEventDiscover, IEventSuggestion } from "@/components/discover/types";
 import { API_BASE_URL } from "@/components/config/api";
 import { formatEventDates } from "@/utils/formatters";
 import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";

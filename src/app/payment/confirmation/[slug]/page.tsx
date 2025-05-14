@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { API_BASE_URL } from "@/components/config/api";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
-import { IAcceptedTransaction, IEventDetails } from "./components/types";
+import {
+  IAcceptedTransaction,
+  IEventDetails,
+} from "@/components/payment/paymentConfirmation/types";
 import { formatNumberWithCommas, formatDate } from "@/utils/formatters";
 import { useAppSelector, useAppDispatch } from "@/lib/redux/hooks";
 import {
@@ -15,11 +18,7 @@ import {
 import { differenceInSeconds, addHours, addDays, format } from "date-fns";
 import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 
-export default function PaymentConfirmationPage({
-  transactionId,
-}: {
-  transactionId: string;
-}) {
+export default function PaymentConfirmationPage() {
   const router = useRouter();
   const [transaction, setTransaction] = useState<IAcceptedTransaction | null>(
     null
@@ -43,90 +42,30 @@ export default function PaymentConfirmationPage({
   // Add state to track if polling should be active
   const [isPolling, setIsPolling] = useState(false);
 
+  const transactionId = currentTransaction?.id;
+
   // Add this helper function
   const formatDeadline = (date: Date | null) => {
     if (!date) return "";
     return format(date, "MMM dd, yyyy 'at' h:mm a");
   };
 
-  useEffect(() => {
-    const fetchTransactionDetails = async () => {
-      try {
-        // If we already have the transaction in Redux, use it
-        if (currentTransaction && currentTransaction.id === transactionId) {
-          setTransaction(currentTransaction);
-          setPaymentStatus(currentTransaction.status);
+  async function fetchTransactionDetails() {
+    try {
+      if (!transactionId) {
+        // Optionally redirect or show error
+        setError("Missing transaction ID");
+        return;
+      }
+      // If we already have the transaction in Redux, use it
+      if (currentTransaction && currentTransaction.id === transactionId) {
+        setTransaction(currentTransaction);
+        setPaymentStatus(currentTransaction.status);
 
-          // Still fetch the event details
-          const token = localStorage.getItem("token");
-          const eventResponse = await axios.get(
-            `${API_BASE_URL}/events/${currentTransaction.event_id}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-          setEvent(eventResponse.data.data);
-          setLoading(false);
-          return;
-        }
-
-        // Otherwise fetch from API as before
+        // Still fetch the event details
         const token = localStorage.getItem("token");
-        if (!token) {
-          router.push("/login");
-          return;
-        }
-
-        console.log(`Fetching transaction with ID: ${transactionId}`);
-
-        // Add error handling for invalid transaction ID
-        if (!transactionId || typeof transactionId !== "string") {
-          console.error("Invalid transaction ID:", transactionId);
-          setError("Invalid transaction ID");
-          setLoading(false);
-          return;
-        }
-
-        // Check the API endpoint format - make sure it matches what the backend expects
-        const response = await axios.get(
-          `${API_BASE_URL}/transactions/${transactionId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              // Add Content-Type header
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        console.log("Transaction response:", response.data);
-
-        // Make sure we're getting the correct data structure
-        if (response.data && response.data.data) {
-          const transactionData = response.data.data as IAcceptedTransaction;
-          setTransaction(transactionData);
-
-          // Set payment status directly from the transaction status
-          setPaymentStatus(transactionData.status);
-
-          // Update Redux with transaction data if it's not already there
-          if (
-            !currentTransaction ||
-            currentTransaction.id !== transactionData.id
-          ) {
-            dispatch(setCurrentTransaction(transactionData));
-          }
-
-          console.log("Transaction status:", transactionData.status);
-          console.log("Transaction total price:", transactionData.total_price);
-        }
-
-        // Fetch event details
         const eventResponse = await axios.get(
-          `${API_BASE_URL}/events/${response.data.data.event_id}`,
+          `${API_BASE_URL}/events/${currentTransaction.event_id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -135,29 +74,96 @@ export default function PaymentConfirmationPage({
           }
         );
         setEvent(eventResponse.data.data);
-      } catch (err) {
-        console.error("Error fetching transaction:", err);
+        setLoading(false);
+        return;
+      }
 
-        // More detailed error logging
-        if (axios.isAxiosError(err)) {
-          console.error("Response status:", err.response?.status);
-          console.error("Response data:", err.response?.data);
+      // Otherwise fetch from API as before
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/login");
+        return;
+      }
 
-          // Check if there are validation details
-          if (
-            err.response?.data?.details &&
-            Array.isArray(err.response.data.details)
-          ) {
-            console.error("Validation details:", err.response.data.details);
-          }
+      console.log(`Fetching transaction with ID: ${transactionId}`);
+
+      // Add error handling for invalid transaction ID
+      if (!transactionId || typeof transactionId !== "string") {
+        console.error("Invalid transaction ID:", transactionId);
+        setError("Invalid transaction ID");
+        setLoading(false);
+        return;
+      }
+
+      // Check the API endpoint format - make sure it matches what the backend expects
+      const response = await axios.get(
+        `${API_BASE_URL}/transactions/${transactionId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            // Add Content-Type header
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Transaction response:", response.data);
+
+      // Make sure we're getting the correct data structure
+      if (response.data && response.data.data) {
+        const transactionData = response.data.data as IAcceptedTransaction;
+        setTransaction(transactionData);
+
+        // Set payment status directly from the transaction status
+        setPaymentStatus(transactionData.status);
+
+        // Update Redux with transaction data if it's not already there
+        if (
+          !currentTransaction ||
+          currentTransaction.id !== transactionData.id
+        ) {
+          dispatch(setCurrentTransaction(transactionData));
         }
 
-        setError("Failed to load transaction details. Please try again later.");
-      } finally {
-        setLoading(false);
+        console.log("Transaction status:", transactionData.status);
+        console.log("Transaction total price:", transactionData.total_price);
       }
-    };
 
+      // Fetch event details
+      const eventResponse = await axios.get(
+        `${API_BASE_URL}/events/${response.data.data.event_id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      setEvent(eventResponse.data.data);
+    } catch (err) {
+      console.error("Error fetching transaction:", err);
+
+      // More detailed error logging
+      if (axios.isAxiosError(err)) {
+        console.error("Response status:", err.response?.status);
+        console.error("Response data:", err.response?.data);
+
+        // Check if there are validation details
+        if (
+          err.response?.data?.details &&
+          Array.isArray(err.response.data.details)
+        ) {
+          console.error("Validation details:", err.response.data.details);
+        }
+      }
+
+      setError("Failed to load transaction details. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
     fetchTransactionDetails();
   }, [transactionId, currentTransaction, router]);
 
@@ -179,50 +185,48 @@ export default function PaymentConfirmationPage({
     }
   }, [transaction]);
 
-  useEffect(() => {
-    const updateCountdown = () => {
-      const now = new Date();
-      let deadline: Date | null = null;
+  const updateCountdown = () => {
+    const now = new Date();
+    let deadline: Date | null = null;
 
-      // Determine which deadline to use based on status
-      if (paymentStatus === "waiting_for_payment" && paymentDeadline) {
-        deadline = paymentDeadline;
-      } else if (
-        paymentStatus === "waiting_for_admin_confirmation" &&
-        adminDeadline
-      ) {
-        deadline = adminDeadline;
+    // Determine which deadline to use based on status
+    if (paymentStatus === "waiting_for_payment" && paymentDeadline) {
+      deadline = paymentDeadline;
+    } else if (
+      paymentStatus === "waiting_for_admin_confirmation" &&
+      adminDeadline
+    ) {
+      deadline = adminDeadline;
+    }
+
+    if (deadline) {
+      const secondsRemaining = differenceInSeconds(deadline, now);
+
+      if (secondsRemaining <= 0) {
+        setTimeRemaining("Expired");
+        return;
       }
 
-      if (deadline) {
-        const secondsRemaining = differenceInSeconds(deadline, now);
+      // Calculate hours, minutes, seconds
+      const days = Math.floor(secondsRemaining / (24 * 60 * 60));
+      const hours = Math.floor((secondsRemaining % (24 * 60 * 60)) / (60 * 60));
+      const minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
+      const seconds = Math.floor(secondsRemaining % 60);
 
-        if (secondsRemaining <= 0) {
-          setTimeRemaining("Expired");
-          return;
-        }
-
-        // Calculate hours, minutes, seconds
-        const days = Math.floor(secondsRemaining / (24 * 60 * 60));
-        const hours = Math.floor(
-          (secondsRemaining % (24 * 60 * 60)) / (60 * 60)
+      // Format the countdown string based on status
+      if (paymentStatus === "waiting_for_payment") {
+        setTimeRemaining(
+          `${hours.toString().padStart(2, "0")}:${minutes
+            .toString()
+            .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
         );
-        const minutes = Math.floor((secondsRemaining % (60 * 60)) / 60);
-        const seconds = Math.floor(secondsRemaining % 60);
-
-        // Format the countdown string based on status
-        if (paymentStatus === "waiting_for_payment") {
-          setTimeRemaining(
-            `${hours.toString().padStart(2, "0")}:${minutes
-              .toString()
-              .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
-          );
-        } else {
-          setTimeRemaining(`${days}d ${hours}h ${minutes}m ${seconds}s`);
-        }
+      } else {
+        setTimeRemaining(`${days}d ${hours}h ${minutes}m ${seconds}s`);
       }
-    };
+    }
+  };
 
+  useEffect(() => {
     // Update immediately and then every second
     updateCountdown();
     const intervalId = setInterval(updateCountdown, 1000);

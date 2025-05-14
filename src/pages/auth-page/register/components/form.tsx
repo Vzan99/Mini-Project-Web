@@ -5,8 +5,8 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useRef, useEffect } from "react";
 
-import { registerValidationSchema } from "./schema";
-import IRegister from "./types";
+import { registerValidationSchema } from "@/components/register/schema";
+import IRegister from "@/components/register/types";
 
 export default function RegisterForm() {
   const router = useRouter();

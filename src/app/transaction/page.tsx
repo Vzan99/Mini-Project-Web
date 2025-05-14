@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import ReviewClientComponent from "./ReviewClientComponent";
+import TransactionClient from "./TransactionClient";
 
 export default function Page() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <ReviewClientComponent />
+      <TransactionClient />
     </Suspense>
   );
 }

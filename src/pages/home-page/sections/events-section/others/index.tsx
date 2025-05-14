@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import EventCard from "@/components/cards/eventCard";
-import { IEventCard } from "../components/types";
+import { IEventCard } from "@/components/home/sections/types";
 import axios from "axios";
 import Link from "next/link";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 import { API_BASE_URL } from "@/components/config/api";
 import LoadingSpinner from "@/components/loadings/loadingSpinner"; // Import the spinner component
 
-export default function ConcertSection() {
+export default function OthersSection() {
   const [events, setEvents] = useState<IEventCard[]>([]);
   const [loading, setLoading] = useState(true); // Track loading state
   const sectionTitle = "Others";
@@ -23,11 +23,11 @@ export default function ConcertSection() {
       if (eventDetails.length >= 0) {
         setEvents(eventDetails);
       } else {
-        console.error("Concert events is not an array:", eventDetails);
+        console.error("others events is not an array:", eventDetails);
         setEvents([]);
       }
     } catch (err) {
-      console.error("Error fetching concert events:", err);
+      console.error("Error fetching others events:", err);
       setEvents([]);
     } finally {
       setLoading(false); // Hide spinner after fetch completes
@@ -41,14 +41,14 @@ export default function ConcertSection() {
   return (
     <section
       className="py-10 px-4 md:px-10 lg:px-40 bg-[#FFD9C0] text-black"
-      data-section="concert"
-      id="concert"
+      data-section="others"
+      id="others"
     >
       <div className="mb-8">
         {/* Tablet and desktop layout */}
         <div className="hidden md:flex justify-between items-center">
           <h2 className="text-2xl font-bold">{sectionTitle}</h2>
-          <Link href="/discover?category=Concert">
+          <Link href="/discover?category=Others">
             <button className="buttonA">View More</button>
           </Link>
         </div>
@@ -86,7 +86,7 @@ export default function ConcertSection() {
 
           {/* Mobile button below carousel */}
           <div className="md:hidden text-center mb-6 flex justify-center">
-            <Link href="/discover?category=Concert">
+            <Link href="/discover?category=Others">
               <button className="buttonA">View More</button>
             </Link>
           </div>

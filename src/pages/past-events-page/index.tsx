@@ -9,14 +9,8 @@ import { API_BASE_URL } from "@/components/config/api";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 import { formatDate } from "@/utils/formatters";
 import { Formik, Form, Field, ErrorMessage } from "formik";
-import {
-  ITicket,
-  ITransaction,
-  IReview,
-  IPastEvent,
-  IPagination,
-} from "./components/types";
-import { reviewValidationSchema } from "./components/schemas";
+import { IPastEvent, IPagination } from "@/components/past-events/types";
+import { reviewValidationSchema } from "@/components/past-events/schemas";
 import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 
 export default function PastEventsPage() {

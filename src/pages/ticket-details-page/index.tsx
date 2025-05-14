@@ -12,7 +12,7 @@ import { saveAs } from "file-saver";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 import ReactDOM from "react-dom/client";
 import TicketDownloadTemplate from "@/components/TicketDownloadTemplate";
-import { ITicket, ITransaction } from "./components/types";
+import { ITransaction, ITicket } from "@/components/ticketDetails/types";
 import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 
 export default function TicketDetailsPage({

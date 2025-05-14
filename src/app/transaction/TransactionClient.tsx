@@ -7,12 +7,15 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { API_BASE_URL } from "@/components/config/api";
-import { IEventDetails, TransactionFormValues } from "./components/types";
+import {
+  TransactionFormValues,
+  IEventDetails,
+} from "@/components/transactions/types";
 import { formatNumberWithCommas } from "@/utils/formatters";
 import {
   transactionInitialValues,
   transactionValidationSchema,
-} from "./components/schema";
+} from "@/components/transactions/schema";
 // Add Redux imports - only what we need
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
@@ -25,10 +28,9 @@ import {
   setCalculatedTotal,
   setSubtotal, // Add this import
 } from "@/lib/redux/features/transactionSlice";
-import loadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 
-export default function TransactionPage() {
+export default function TransactionClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   // Add Redux dispatch
@@ -485,7 +487,7 @@ export default function TransactionPage() {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        router.push("/login?redirect=checkout");
+        router.push("/login?redirect=transaction");
         return;
       }
 

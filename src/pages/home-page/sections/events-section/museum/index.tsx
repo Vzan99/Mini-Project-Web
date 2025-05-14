@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import EventCard from "@/components/cards/eventCard";
-import { IEventCard } from "../components/types";
+import { IEventCard } from "@/components/home/sections/types";
 import axios from "axios";
 import Link from "next/link";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";

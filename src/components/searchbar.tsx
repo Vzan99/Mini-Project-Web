@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { API_BASE_URL } from "@/components/config/api";
+import { cloudinaryBaseUrl } from "./config/cloudinary";
 
 export default function SearchBar() {
   const [query, setQuery] = useState("");
@@ -74,17 +75,21 @@ export default function SearchBar() {
     };
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
     if (query.trim()) {
       router.push(`/search?query=${encodeURIComponent(query)}`);
       setShowSuggestions(false);
+      setSuggestions([]);
+      setQuery(""); // Clear input
+      setDebouncedQuery(""); // Clear debounced value to stop fetching
     }
   };
 
   const handleSuggestionClick = (suggestion: any) => {
-    router.push(`/events/${suggestion.id}`);
     setShowSuggestions(false);
+    router.push(`/events/${suggestion.id}`);
   };
 
   return (
@@ -160,7 +165,7 @@ export default function SearchBar() {
                       <div className="flex items-center">
                         {suggestion.event_image && (
                           <img
-                            src={`https://res.cloudinary.com/dnb5cxo2m/image/upload/${suggestion.event_image}`}
+                            src={`${cloudinaryBaseUrl}${suggestion.event_image}`}
                             alt={suggestion.name}
                             className="w-10 h-10 object-cover rounded mr-3"
                           />
@@ -176,7 +181,7 @@ export default function SearchBar() {
                   ))}
                   <li
                     className="p-3 text-center text-blue-600 hover:bg-gray-100 cursor-pointer font-medium"
-                    onClick={handleSubmit}
+                    onClick={() => handleSubmit()}
                   >
                     See all results for "{query}"
                   </li>

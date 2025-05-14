@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { TransactionFormValues } from "@/pages/transaction-page/components/types";
-import { IEventDetails } from "@/pages/transaction-page/components/types";
+import { TransactionFormValues } from "@/components/transactions/types";
+import { IEventDetails } from "@/components/transactions/types";
 import { setCookie, getCookie, deleteCookie } from "cookies-next";
 
 // Define a comprehensive transaction interface for Redux
