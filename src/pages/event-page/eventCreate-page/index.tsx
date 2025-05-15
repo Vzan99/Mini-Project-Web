@@ -27,6 +27,12 @@ const getTomorrowDateString = () => {
   return formatDateForInput(tomorrow);
 };
 
+const getTwoDaysAgoDateString = () => {
+  const date = new Date();
+  date.setDate(date.getDate());
+  return formatDateForInput(date);
+};
+
 export default function EventCreatePage() {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -664,7 +670,7 @@ export default function EventCreatePage() {
                         type="date"
                         id="voucher_start_date"
                         name="voucher_start_date"
-                        min={getTomorrowDateString()} // Must be in the future
+                        min={getTwoDaysAgoDateString()} // Must be in the future
                         max={values.end_date} // Cannot be after event end date
                         className={`w-full px-3 py-2 border rounded-md bg-white ${
                           errors.voucher_start_date &&

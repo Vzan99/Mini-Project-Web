@@ -146,9 +146,9 @@ export default function TransactionClient() {
               }
             );
             // Adjust this based on your actual response structure
-            setAvailablePoints(
-              userResponse.data.data.points.totalActivePoints || 0
-            );
+            const profileData = userResponse.data.data;
+            setAvailablePoints(profileData.points.totalActivePoints || 0);
+            setPointsId(profileData.points.id || null);
           }
         } catch (profileErr) {
           console.log("Could not fetch user profile:", profileErr);
@@ -337,50 +337,19 @@ export default function TransactionClient() {
     }
   };
 
-  // Add function to fetch points ID when user toggles points usage
-  const fetchPointsId = async (pointsAmount: number) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return null;
-
-      const userResponse = await axios.get(
-        `${API_BASE_URL}/profile/with-points`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const userId = userResponse.data.data.id;
-
-      // Get points ID for the specified amount
-      const response = await axios.get(`${API_BASE_URL}/points/available`, {
-        params: { userId, amount: pointsAmount },
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      return response.data.data.id;
-    } catch (err) {
-      console.error("Error fetching points ID:", err);
-      return null;
-    }
-  };
-
   // Update the points toggle handler
   const handlePointsToggle = async (
     e: React.ChangeEvent<HTMLInputElement>,
     setFieldValue: any
   ) => {
     const usePoints = e.target.checked;
-    setFieldValue("use_points", usePoints); // Changed from "usePoints"
+    setFieldValue("use_points", usePoints);
 
     if (usePoints && availablePoints > 0) {
-      setFieldValue("points_to_use", availablePoints); // Changed from "pointsToUse"
-      // Fetch and store points ID
-      const id = await fetchPointsId(availablePoints);
-      setPointsId(id);
-      dispatch(applyPoints(availablePoints)); // <-- ADD THIS
+      setFieldValue("points_to_use", availablePoints);
+      dispatch(applyPoints(availablePoints));
     } else {
-      setFieldValue("points_to_use", 0); // Changed from "pointsToUse"
-      setPointsId(null);
+      setFieldValue("points_to_use", 0);
       dispatch(applyPoints(0));
     }
   };
@@ -501,9 +470,8 @@ export default function TransactionClient() {
               coupon_discount: couponDiscount,
             }
           : {}),
-        ...(values.use_points && pointsId
+        ...(values.use_points
           ? {
-              points_id: pointsId, // Use snake_case for backend consistency
               points_used: availablePoints,
             }
           : {}),
@@ -1065,10 +1033,11 @@ export default function TransactionClient() {
                             <label className="inline-flex items-center cursor-pointer">
                               <Field
                                 type="checkbox"
-                                id="usePoints"
-                                name="usePoints"
+                                id="use_points"
+                                name="use_points"
                                 className="sr-only"
                                 disabled={availablePoints <= 0}
+                                checked={values.use_points}
                                 onChange={(
                                   e: React.ChangeEvent<HTMLInputElement>
                                 ) => handlePointsToggle(e, setFieldValue)}
