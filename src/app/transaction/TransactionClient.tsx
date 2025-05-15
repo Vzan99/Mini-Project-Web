@@ -75,11 +75,11 @@ export default function TransactionClient() {
 
     return {
       eventId,
-      isValid: isValidEventId,
+      is_valid: isValidEventId,
     };
   };
 
-  const { eventId, isValid: areParamsValid } = validateAndGetParams();
+  const { eventId, is_valid: areParamsValid } = validateAndGetParams();
 
   // Clear any existing transaction when the page loads
   useEffect(() => {
@@ -274,30 +274,8 @@ export default function TransactionClient() {
         return false;
       }
 
-      const userResponse = await axios.get(
-        `${API_BASE_URL}/profile/with-points`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      const userId = userResponse.data.data.id;
-
-      if (
-        !userId ||
-        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-          userId
-        )
-      ) {
-        alert("Invalid user ID format");
-        return false;
-      }
-
       const response = await axios.get(`${API_BASE_URL}/coupon/check`, {
-        params: {
-          userId: userId,
-          coupon_code: code,
-        },
+        params: { coupon_code: code },
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -306,20 +284,20 @@ export default function TransactionClient() {
       if (
         response.data &&
         response.data.data &&
-        response.data.data.isValid === true
+        response.data.data.is_valid === true
       ) {
-        setCouponDiscount(response.data.data.discountAmount);
-        setCouponId(response.data.data.id); // Store the coupon ID
+        setCouponDiscount(response.data.data.discount_amount);
+        setCouponId(response.data.data.coupon_id); // Store the coupon ID
         alert(
           `Coupon applied successfully! Discount: ${formatNumberWithCommas(
-            response.data.data.discountAmount
+            response.data.data.discount_amount
           )}`
         );
         return true;
       } else if (
         response.data &&
         response.data.data &&
-        !response.data.data.isValid
+        !response.data.data.is_valid
       ) {
         setCouponDiscount(0);
         setCouponId(null);
