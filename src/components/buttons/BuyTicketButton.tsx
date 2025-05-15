@@ -22,7 +22,7 @@ export default function BuyTicketButton({
 
     try {
       // Log the eventId to verify it's correct
-      console.log("Event ID being passed to checkout:", eventId);
+      console.log("Event ID being passed to transaction:", eventId);
 
       // Make sure the eventId is properly formatted
       if (
@@ -37,7 +37,7 @@ export default function BuyTicketButton({
       }
 
       // Include quantity in the URL parameters
-      router.push(`/checkout?eventId=${eventId}`);
+      router.push(`/transaction?eventId=${eventId}`);
     } catch (error) {
       console.error("Error processing ticket purchase:", error);
       alert(

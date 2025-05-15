@@ -3,13 +3,10 @@ interface IReview {
   rating: number;
   review: string;
   created_at: string;
-  user: {
-    username: string;
-  };
+  user: { username: string };
   event_name?: string;
   event_id?: string;
 }
-
 export interface IEventSummary {
   id: string;
   name: string;
@@ -23,7 +20,6 @@ export interface IEventSummary {
   event_image: string;
   total_reviews: number;
 }
-
 interface IOrganizerInfo {
   id: string;
   username: string;
@@ -31,7 +27,6 @@ interface IOrganizerInfo {
   last_name: string;
   profile_picture: string;
 }
-
 export interface IOrganizerProfile {
   organizer: IOrganizerInfo;
   average_rating: number;

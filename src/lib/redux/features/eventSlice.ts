@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { IEventDetails } from "@/interfaces/eventDetails";
 
 interface IEventState {
   currentEvent: {

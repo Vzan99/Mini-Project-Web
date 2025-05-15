@@ -4,7 +4,7 @@ import Image from "next/image";
 import BuyTicketButton from "@/components/buttons/BuyTicketButton";
 import Link from "next/link";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
-import { IEventDetails } from "./components/types";
+import { IEventDetails } from "@/components/event/eventDetails/types";
 import SocialMedia from "@/components/socialMedia";
 import { formatDateDetails, formatTime } from "@/utils/formatters";
 

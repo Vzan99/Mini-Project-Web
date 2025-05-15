@@ -1,7 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { TransactionFormValues } from "@/pages/transaction-page/components/types";
-import { IEventDetails } from "@/pages/transaction-page/components/types";
+import { TransactionFormValues } from "@/components/transactions/types";
+import { IEventDetails } from "@/components/transactions/types";
 import { setCookie, getCookie, deleteCookie } from "cookies-next";
+import { ITicket } from "@/components/payment/paymentSuccess/types";
 
 // Define a comprehensive transaction interface for Redux
 export interface ReduxTransaction {
@@ -42,9 +43,10 @@ interface TransactionState {
     pointsUsed: number;
   };
   calculatedTotal: number;
-  subtotal: number; // Add this to track subtotal
+  subtotal: number;
   loading: boolean;
   error: string | null;
+  currentTickets: ITicket[];
 }
 
 const initialState: TransactionState = {
@@ -58,9 +60,10 @@ const initialState: TransactionState = {
     pointsUsed: 0,
   },
   calculatedTotal: 0,
-  subtotal: 0, // Initialize subtotal
+  subtotal: 0,
   loading: false,
   error: null,
+  currentTickets: [],
 };
 
 // Load state from cookies if available
@@ -128,6 +131,11 @@ export const transactionSlice = createSlice({
       }
     },
 
+    setCurrentTickets: (state, action: PayloadAction<ITicket[]>) => {
+      state.currentTickets = action.payload;
+      saveStateToCookies(state);
+    },
+
     // Utility actions
     setCalculatedTotal: (state, action: PayloadAction<number>) => {
       state.calculatedTotal = action.payload;
@@ -144,6 +152,7 @@ export const transactionSlice = createSlice({
       state.transactionForm = null;
       state.discounts = initialState.discounts;
       state.calculatedTotal = 0;
+      state.currentTickets = [];
       deleteCookie("transactionState");
     },
 
@@ -176,6 +185,7 @@ export const {
   applyPoints,
   setCurrentTransaction,
   updateTransactionStatus,
+  setCurrentTickets,
   setCalculatedTotal,
   setSubtotal,
   clearCurrentTransaction,

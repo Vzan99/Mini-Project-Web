@@ -7,7 +7,7 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { API_BASE_URL } from "@/components/config/api";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
-import { IEventDetails, IReviewFormValues } from "./components/types";
+import { IReviewFormValues, IEventDetails } from "@/components/review/types";
 import { formatDate } from "@/utils/formatters";
 import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 

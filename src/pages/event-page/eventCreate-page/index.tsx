@@ -4,8 +4,11 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Formik, Form, Field, ErrorMessage, FormikHelpers } from "formik";
-import { eventInitialValues, eventValidationSchema } from "./components/schema";
-import { IEventFormValues } from "./components/types";
+import {
+  eventInitialValues,
+  eventValidationSchema,
+} from "@/components/event/eventCreate/schema";
+import { IEventFormValues } from "@/components/event/eventCreate/types";
 import { API_BASE_URL } from "@/components/config/api";
 import { formatNumberWithCommas } from "@/utils/formatters";
 import { generateTimeOptions } from "@/utils/formatters";

@@ -7,12 +7,15 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { API_BASE_URL } from "@/components/config/api";
-import { IEventDetails, TransactionFormValues } from "./components/types";
+import {
+  TransactionFormValues,
+  IEventDetails,
+} from "@/components/transactions/types";
 import { formatNumberWithCommas } from "@/utils/formatters";
 import {
   transactionInitialValues,
   transactionValidationSchema,
-} from "./components/schema";
+} from "@/components/transactions/schema";
 // Add Redux imports - only what we need
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
@@ -23,12 +26,11 @@ import {
   applyCoupon,
   applyPoints,
   setCalculatedTotal,
-  setSubtotal, // Add this import
+  setSubtotal,
 } from "@/lib/redux/features/transactionSlice";
-import loadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 
-export default function TransactionPage() {
+export default function TransactionClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   // Add Redux dispatch
@@ -73,11 +75,11 @@ export default function TransactionPage() {
 
     return {
       eventId,
-      isValid: isValidEventId,
+      is_valid: isValidEventId,
     };
   };
 
-  const { eventId, isValid: areParamsValid } = validateAndGetParams();
+  const { eventId, is_valid: areParamsValid } = validateAndGetParams();
 
   // Clear any existing transaction when the page loads
   useEffect(() => {
@@ -272,30 +274,8 @@ export default function TransactionPage() {
         return false;
       }
 
-      const userResponse = await axios.get(
-        `${API_BASE_URL}/profile/with-points`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      const userId = userResponse.data.data.id;
-
-      if (
-        !userId ||
-        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-          userId
-        )
-      ) {
-        alert("Invalid user ID format");
-        return false;
-      }
-
       const response = await axios.get(`${API_BASE_URL}/coupon/check`, {
-        params: {
-          userId: userId,
-          coupon_code: code,
-        },
+        params: { coupon_code: code },
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -304,20 +284,20 @@ export default function TransactionPage() {
       if (
         response.data &&
         response.data.data &&
-        response.data.data.isValid === true
+        response.data.data.is_valid === true
       ) {
-        setCouponDiscount(response.data.data.discountAmount);
-        setCouponId(response.data.data.id); // Store the coupon ID
+        setCouponDiscount(response.data.data.discount_amount);
+        setCouponId(response.data.data.coupon_id); // Store the coupon ID
         alert(
           `Coupon applied successfully! Discount: ${formatNumberWithCommas(
-            response.data.data.discountAmount
+            response.data.data.discount_amount
           )}`
         );
         return true;
       } else if (
         response.data &&
         response.data.data &&
-        !response.data.data.isValid
+        !response.data.data.is_valid
       ) {
         setCouponDiscount(0);
         setCouponId(null);
@@ -397,9 +377,11 @@ export default function TransactionPage() {
       // Fetch and store points ID
       const id = await fetchPointsId(availablePoints);
       setPointsId(id);
+      dispatch(applyPoints(availablePoints)); // <-- ADD THIS
     } else {
       setFieldValue("points_to_use", 0); // Changed from "pointsToUse"
       setPointsId(null);
+      dispatch(applyPoints(0));
     }
   };
 
@@ -485,7 +467,7 @@ export default function TransactionPage() {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        router.push("/login?redirect=checkout");
+        router.push("/login?redirect=transaction");
         return;
       }
 

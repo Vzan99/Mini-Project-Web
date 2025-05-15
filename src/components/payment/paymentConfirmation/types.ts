@@ -20,6 +20,8 @@ export interface IAcceptedTransaction {
     | "canceled";
   created_at: string;
   updated_at: string;
+  total_pay_amount: number;
+  tickets: any[];
 }
 
 interface IOrganizer {

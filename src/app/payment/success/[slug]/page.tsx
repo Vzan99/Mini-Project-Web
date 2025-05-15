@@ -5,108 +5,85 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { API_BASE_URL } from "@/components/config/api";
 import { ReduxTransaction } from "@/lib/redux/features/transactionSlice";
-import { IEventDetails, ITicket } from "./components/types";
+import {
+  ITicket,
+  IEventDetails,
+} from "@/components/payment/paymentSuccess/types";
 import { formatDate, formatNumberWithCommas } from "@/utils/formatters";
 import { useAppSelector } from "@/lib/redux/hooks";
 import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 
-export default function PaymentSuccessPage({
-  transactionId,
-}: {
-  transactionId: string;
-}) {
+export default function PaymentSuccessPage() {
   const router = useRouter();
   const [transaction, setTransaction] = useState<ReduxTransaction | null>(null);
   const [event, setEvent] = useState<IEventDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [tickets, setTickets] = useState<ITicket[]>([]);
+
+  // Access the current transaction from Redux state
   const { currentTransaction, subtotal, discounts, calculatedTotal } =
     useAppSelector((state) => state.transaction);
 
-  useEffect(() => {
-    const fetchTransactionDetails = async () => {
-      try {
-        // If we already have the transaction in Redux, use it
-        if (currentTransaction && currentTransaction.id === transactionId) {
-          setTransaction(currentTransaction);
+  async function fetchTransactionDetails() {
+    try {
+      if (currentTransaction) {
+        setTransaction(currentTransaction);
 
-          // Check if event property exists in currentTransaction
-          if (currentTransaction.event) {
-            setEvent(currentTransaction.event);
-          } else {
-            // Fetch event details if not included in the transaction
-            const eventResponse = await axios.get(
-              `${API_BASE_URL}/events/${currentTransaction.event_id}`
-            );
-            setEvent(eventResponse.data.data);
-          }
-
-          setLoading(false);
-          return;
+        // Check if event property exists in currentTransaction
+        if (currentTransaction.event) {
+          setEvent(currentTransaction.event);
+        } else {
+          // Fetch event details if not included in the transaction
+          const eventResponse = await axios.get(
+            `${API_BASE_URL}/events/${currentTransaction.event_id}`
+          );
+          setEvent(eventResponse.data.data);
         }
 
-        // Otherwise fetch from API
-        const token = localStorage.getItem("token");
-        if (!token) {
-          router.push("/login");
-          return;
-        }
-
-        const response = await axios.get(
-          `${API_BASE_URL}/transactions/${transactionId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        setTransaction(response.data.data);
-
-        // Fetch event details
-        const eventResponse = await axios.get(
-          `${API_BASE_URL}/events/${response.data.data.event_id}`
-        );
-        setEvent(eventResponse.data.data);
-      } catch (err) {
-        console.error("Error fetching transaction:", err);
-        setError("Failed to load transaction details");
-      } finally {
         setLoading(false);
+        return;
       }
-    };
 
-    fetchTransactionDetails();
-  }, [transactionId, router, currentTransaction]);
+      // If no transaction in Redux, navigate to login page
+      router.push("/login");
+    } catch (err) {
+      console.error("Error fetching transaction:", err);
+      setError("Failed to load transaction details");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchTickets() {
+    if (!transaction || transaction.status !== "confirmed") return;
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const response = await axios.get(`${API_BASE_URL}/transactions/tickets`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Filter tickets for this transaction if needed
+      const transactionTickets = response.data.data.filter(
+        (ticket: ITicket) => ticket.transaction_id === transaction.id
+      );
+
+      setTickets(transactionTickets);
+    } catch (err) {
+      console.error("Error fetching tickets:", err);
+    }
+  }
 
   useEffect(() => {
-    const fetchTickets = async () => {
-      if (!transaction || transaction.status !== "confirmed") return;
+    fetchTransactionDetails();
+  }, [currentTransaction]);
 
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        // Update to the correct endpoint
-        const response = await axios.get(
-          `${API_BASE_URL}/transactions/tickets`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        // Filter tickets for this transaction if needed
-        const transactionTickets = response.data.data.filter(
-          (ticket: ITicket) => ticket.transaction_id === transactionId
-        );
-
-        setTickets(transactionTickets);
-      } catch (err) {
-        console.error("Error fetching tickets:", err);
-      }
-    };
-
+  useEffect(() => {
     fetchTickets();
-  }, [transaction, transactionId]);
+  }, [transaction]);
 
   if (loading) return LoadingSpinnerScreen();
   if (error)
@@ -144,7 +121,7 @@ export default function PaymentSuccessPage({
 
               {transaction.voucher_code && (
                 <p className="text-green-600">
-                  Voucher Discount: -
+                  Voucher Discount: -{" "}
                   {formatNumberWithCommas(
                     discounts.voucherDiscount ||
                       transaction.voucher_discount ||
@@ -155,7 +132,7 @@ export default function PaymentSuccessPage({
 
               {transaction.coupon_code && (
                 <p className="text-green-600">
-                  Coupon Discount: -
+                  Coupon Discount: -{" "}
                   {formatNumberWithCommas(
                     discounts.couponDiscount || transaction.coupon_discount || 0
                   )}
@@ -164,7 +141,7 @@ export default function PaymentSuccessPage({
 
               {transaction.points_used > 0 && (
                 <p className="text-green-600">
-                  Points Used: -
+                  Points Used: -{" "}
                   {formatNumberWithCommas(
                     discounts.pointsUsed || transaction.points_used || 0
                   )}

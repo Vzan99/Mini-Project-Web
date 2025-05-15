@@ -1,82 +1,66 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, use } from "react";
 import Image from "next/image";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 import EventCard from "@/components/cards/eventCard";
-import { IOrganizerProfile, IEventSummary } from "./components/types";
-import { API_BASE_URL } from "@/components/config/api";
 import Link from "next/link";
 import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
+import { API_BASE_URL } from "@/components/config/api";
+import { IOrganizerProfile, IEventSummary } from "@/components/eoDetails/types";
+import { formatDate } from "@/utils/formatters";
 
-export default function EODetailsPage() {
+export default function EODetailsPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = use(params);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const organizerId = searchParams?.get("id") || "";
-
   const [profile, setProfile] = useState<IOrganizerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<IEventSummary[]>([]);
   const [pastEvents, setPastEvents] = useState<IEventSummary[]>([]);
 
-  useEffect(() => {
-    if (!organizerId) {
-      setError("No organizer ID provided");
-      setLoading(false);
-      return;
-    }
+  async function fetchUser() {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/admin/organizers/${slug}`
+      );
 
-    const fetchOrganizerProfile = async () => {
-      try {
-        const response = await axios.get(
-          `${API_BASE_URL}/admin/organizers/${organizerId}`
-        );
-        setProfile(response.data.profile);
+      console.log("API response:", response.data); // for debugging
 
-        // Separate upcoming and past events
-        const now = new Date();
-        const upcoming = response.data.profile.events.filter(
-          (event: IEventSummary) => new Date(event.end_date) >= now
-        );
-        const past = response.data.profile.events.filter(
-          (event: IEventSummary) => new Date(event.end_date) < now
-        );
-
-        setUpcomingEvents(upcoming);
-        setPastEvents(past);
-
-        console.log("Profile data:", response.data.profile);
-      } catch (err: any) {
-        console.error("Error fetching organizer profile:", err);
-        setError(
-          err.response?.data?.message || "Failed to load organizer profile"
-        );
-      } finally {
-        setLoading(false);
+      if (!response.data || !response.data.profile) {
+        throw new Error("Invalid response from server");
       }
-    };
 
-    fetchOrganizerProfile();
-  }, [organizerId]);
+      const prof: IOrganizerProfile = response.data.profile;
+      setProfile(prof);
 
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
+      const now = new Date();
+      setUpcomingEvents(prof.events.filter((e) => new Date(e.end_date) >= now));
+      setPastEvents(prof.events.filter((e) => new Date(e.end_date) < now));
+    } catch (err: any) {
+      console.error("Fetch user error:", err);
+      setError(
+        err.response?.data?.message ?? err.message ?? "Failed to load profile"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  if (loading) return LoadingSpinnerScreen();
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
+  if (loading) return <LoadingSpinnerScreen />;
   if (error)
-    return <div className="text-center py-10 text-red-500">{error}</div>;
-  if (!profile)
-    return <div className="text-center py-10">No profile data found</div>;
+    return <div className="text-red-500 py-10 text-center">{error}</div>;
+  if (!profile) return <div className="py-10 text-center">No profile data</div>;
 
   return (
     <div className="min-h-screen bg-[#FAF0D7]">
