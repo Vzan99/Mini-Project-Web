@@ -20,143 +20,101 @@ import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 
 export default function PaymentConfirmationPage() {
   const router = useRouter();
-  const [transaction, setTransaction] = useState<IAcceptedTransaction | null>(
-    null
-  );
+
   const [event, setEvent] = useState<IEventDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [paymentStatus, setPaymentStatus] = useState<
-    IAcceptedTransaction["status"] | "pending"
-  >("pending");
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dispatch = useAppDispatch();
+
   const { currentTransaction, subtotal, discounts, calculatedTotal } =
     useAppSelector((state) => state.transaction);
+  const [paymentStatus, setPaymentStatus] = useState<
+    IAcceptedTransaction["status"]
+  >(currentTransaction?.status || "waiting_for_payment");
+
   const [paymentDeadline, setPaymentDeadline] = useState<Date | null>(null);
   const [adminDeadline, setAdminDeadline] = useState<Date | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
 
-  // Add state to track if polling should be active
   const [isPolling, setIsPolling] = useState(false);
 
   const transactionId = currentTransaction?.id;
 
-  // Add this helper function
   const formatDeadline = (date: Date | null) => {
     if (!date) return "";
     return format(date, "MMM dd, yyyy 'at' h:mm a");
   };
 
+  const calledGenerateFreeTickets = useRef(false); // <--- guard ref
+
   async function fetchTransactionDetails() {
     try {
       if (!transactionId) {
-        // Optionally redirect or show error
         setError("Missing transaction ID");
         return;
       }
-      // If we already have the transaction in Redux, use it
-      if (currentTransaction && currentTransaction.id === transactionId) {
-        setTransaction(currentTransaction);
-        setPaymentStatus(currentTransaction.status);
 
-        // Still fetch the event details
-        const token = localStorage.getItem("token");
-        const eventResponse = await axios.get(
-          `${API_BASE_URL}/events/${currentTransaction.event_id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        setEvent(eventResponse.data.data);
-        setLoading(false);
-        return;
-      }
-
-      // Otherwise fetch from API as before
       const token = localStorage.getItem("token");
       if (!token) {
         router.push("/login");
         return;
       }
 
-      console.log(`Fetching transaction with ID: ${transactionId}`);
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
 
-      // Add error handling for invalid transaction ID
-      if (!transactionId || typeof transactionId !== "string") {
-        console.error("Invalid transaction ID:", transactionId);
-        setError("Invalid transaction ID");
-        setLoading(false);
-        return;
-      }
-
-      // Check the API endpoint format - make sure it matches what the backend expects
+      // Fetch transaction
       const response = await axios.get(
         `${API_BASE_URL}/transactions/${transactionId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            // Add Content-Type header
-            "Content-Type": "application/json",
-          },
-        }
+        { headers }
       );
+      const transactionData = response.data.data as IAcceptedTransaction;
 
-      console.log("Transaction response:", response.data);
+      if (
+        transactionData.status === "confirmed" &&
+        transactionData.total_pay_amount === 0 &&
+        transactionData.tickets.length === 0 &&
+        !calledGenerateFreeTickets.current // <-- only call once
+      ) {
+        console.log(
+          "Free confirmed transaction without tickets, calling generate-free-tickets endpoint..."
+        );
 
-      // Make sure we're getting the correct data structure
-      if (response.data && response.data.data) {
-        const transactionData = response.data.data as IAcceptedTransaction;
-        setTransaction(transactionData);
+        calledGenerateFreeTickets.current = true; // mark as called
 
-        // Set payment status directly from the transaction status
+        await axios.post(
+          `${API_BASE_URL}/transactions/${transactionData.id}/generate-free-tickets`,
+          undefined,
+          { headers }
+        );
+
+        // Re-fetch transaction again to get updated tickets
+        const updatedResponse = await axios.get(
+          `${API_BASE_URL}/transactions/${transactionData.id}`,
+          { headers }
+        );
+        const updatedTransaction = updatedResponse.data
+          .data as IAcceptedTransaction;
+        dispatch(setCurrentTransaction(updatedTransaction));
+        setPaymentStatus(updatedTransaction.status);
+      } else {
         setPaymentStatus(transactionData.status);
-
-        // Update Redux with transaction data if it's not already there
-        if (
-          !currentTransaction ||
-          currentTransaction.id !== transactionData.id
-        ) {
-          dispatch(setCurrentTransaction(transactionData));
-        }
-
-        console.log("Transaction status:", transactionData.status);
-        console.log("Transaction total price:", transactionData.total_price);
+        dispatch(setCurrentTransaction(transactionData));
       }
 
-      // Fetch event details
+      // Fetch event info
       const eventResponse = await axios.get(
-        `${API_BASE_URL}/events/${response.data.data.event_id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+        `${API_BASE_URL}/events/${transactionData.event_id}`,
+        { headers }
       );
       setEvent(eventResponse.data.data);
     } catch (err) {
       console.error("Error fetching transaction:", err);
-
-      // More detailed error logging
-      if (axios.isAxiosError(err)) {
-        console.error("Response status:", err.response?.status);
-        console.error("Response data:", err.response?.data);
-
-        // Check if there are validation details
-        if (
-          err.response?.data?.details &&
-          Array.isArray(err.response.data.details)
-        ) {
-          console.error("Validation details:", err.response.data.details);
-        }
-      }
-
       setError("Failed to load transaction details. Please try again later.");
     } finally {
       setLoading(false);
@@ -165,25 +123,26 @@ export default function PaymentConfirmationPage() {
 
   useEffect(() => {
     fetchTransactionDetails();
-  }, [transactionId, currentTransaction, router]);
+  }, [transactionId]);
 
+  // Replace local transaction with Redux currentTransaction
   useEffect(() => {
-    if (transaction) {
+    if (currentTransaction) {
       // For waiting_for_payment status, set 2-hour deadline from transaction creation
-      if (transaction.status === "waiting_for_payment") {
-        const createdAt = new Date(transaction.created_at);
+      if (currentTransaction.status === "waiting_for_payment") {
+        const createdAt = new Date(currentTransaction.created_at);
         const deadline = addHours(createdAt, 2);
         setPaymentDeadline(deadline);
       }
 
       // For waiting_for_admin_confirmation status, set 3-day deadline from last update
-      if (transaction.status === "waiting_for_admin_confirmation") {
-        const updatedAt = new Date(transaction.updated_at);
+      if (currentTransaction.status === "waiting_for_admin_confirmation") {
+        const updatedAt = new Date(currentTransaction.updated_at);
         const deadline = addDays(updatedAt, 3);
         setAdminDeadline(deadline);
       }
     }
-  }, [transaction]);
+  }, [currentTransaction]);
 
   const updateCountdown = () => {
     const now = new Date();
@@ -242,8 +201,12 @@ export default function PaymentConfirmationPage() {
 
   const handleCompletePayment = async () => {
     try {
-      // Require payment proof for ALL payment methods
-      if (!paymentProof) {
+      // Require payment proof for ALL payment methods except for free events
+      if (
+        ((event && event.price > 0) ||
+          (currentTransaction && currentTransaction.total_price > 0)) &&
+        !paymentProof
+      ) {
         setError("Please upload payment proof");
         return;
       }
@@ -305,14 +268,11 @@ export default function PaymentConfirmationPage() {
     }
   };
 
-  // Add polling mechanism after payment proof submission
+  // Polling effect - replace local transaction updates with Redux updates
   useEffect(() => {
-    // Only start polling if we're waiting for admin confirmation
-    // or if polling is explicitly enabled
     if (paymentStatus === "waiting_for_admin_confirmation" || isPolling) {
       console.log("Starting status polling after payment submission...");
 
-      // Poll every 20 seconds
       const intervalId = setInterval(async () => {
         try {
           const token = localStorage.getItem("token");
@@ -334,14 +294,13 @@ export default function PaymentConfirmationPage() {
               `Current status: ${paymentStatus}, New status: ${newStatus}`
             );
 
-            // Update transaction data and status if changed
-            if (
-              JSON.stringify(transaction) !== JSON.stringify(updatedTransaction)
-            ) {
-              setTransaction(updatedTransaction);
-            }
+            // Remove local setTransaction, update Redux instead
+            // if (JSON.stringify(transaction) !== JSON.stringify(updatedTransaction)) {
+            //   setTransaction(updatedTransaction);
+            // }
+            dispatch(setCurrentTransaction(updatedTransaction));
 
-            // If status changed, update UI
+            // If status changed, update UI and Redux
             if (newStatus !== paymentStatus) {
               console.log(
                 `Status changed from ${paymentStatus} to ${newStatus}`
@@ -357,7 +316,7 @@ export default function PaymentConfirmationPage() {
                 router.push(`/payment/success/${transactionId}`);
               }
 
-              // Stop polling if we reach a final state
+              // Stop polling if final state
               if (
                 ["confirmed", "rejected", "expired", "canceled"].includes(
                   newStatus
@@ -377,12 +336,12 @@ export default function PaymentConfirmationPage() {
         clearInterval(intervalId);
       };
     }
-  }, [paymentStatus, transactionId, transaction, isPolling, dispatch, router]);
+  }, [paymentStatus, transactionId, isPolling]);
 
-  if (loading) return LoadingSpinnerScreen();
+  if (loading) return <LoadingSpinnerScreen />;
   if (error)
     return <div className="container mx-auto p-4 text-red-500">{error}</div>;
-  if (!transaction || !event)
+  if (!currentTransaction || !event)
     return <div className="container mx-auto p-4">Transaction not found</div>;
 
   return (
@@ -399,65 +358,72 @@ export default function PaymentConfirmationPage() {
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-4">
                 <img
-                  src={`${cloudinaryBaseUrl}${event.event_image}`}
-                  alt={event.name}
+                  src={`${cloudinaryBaseUrl}${event?.event_image}`}
+                  alt={event?.name || ""}
                   className="w-24 h-24 object-cover rounded-md"
                 />
                 <div>
-                  <h3 className="font-semibold">{event.name}</h3>
-                  <p className="text-gray-600">{event.location}</p>
+                  <h3 className="font-semibold">{event?.name}</h3>
+                  <p className="text-gray-600">{event?.location}</p>
                   <p className="text-gray-600">
-                    Attend date: {formatDate(transaction.attend_date)}
+                    Attend date:{" "}
+                    {formatDate(currentTransaction?.attend_date || "")}
                   </p>
                 </div>
               </div>
 
               <div className="border-t border-gray-200 pt-4 mt-2">
                 <div className="flex justify-between mb-2">
-                  <span>Subtotal ({transaction.quantity} tickets)</span>
+                  <span>
+                    Subtotal ({currentTransaction?.quantity || 0} tickets)
+                  </span>
                   <span>
                     Rp{" "}
                     {formatNumberWithCommas(
-                      subtotal || event.price * transaction.quantity
+                      subtotal ||
+                        (event?.price || 0) *
+                          (currentTransaction?.quantity || 0)
                     )}
                   </span>
                 </div>
 
-                {transaction.voucher_code && (
+                {currentTransaction?.voucher_code && (
                   <div className="flex justify-between text-green-600 mb-2">
                     <span>Voucher Discount</span>
                     <span>
                       -
                       {formatNumberWithCommas(
                         discounts.voucherDiscount ||
-                          transaction.voucher_discount ||
+                          currentTransaction.voucher_discount ||
                           0
                       )}
                     </span>
                   </div>
                 )}
 
-                {transaction.coupon_code && (
+                {currentTransaction?.coupon_code && (
                   <div className="flex justify-between text-green-600 mb-2">
                     <span>Coupon Discount</span>
                     <span>
                       -
                       {formatNumberWithCommas(
                         discounts.couponDiscount ||
-                          transaction.coupon_discount ||
+                          currentTransaction.coupon_discount ||
                           0
                       )}
                     </span>
                   </div>
                 )}
 
-                {transaction.points_used > 0 && (
+                {currentTransaction?.points_used > 0 && (
                   <div className="flex justify-between text-green-600 mb-2">
                     <span>Points Used</span>
                     <span>
                       -
                       {formatNumberWithCommas(
-                        discounts.pointsUsed || transaction.points_used || 0
+                        discounts.pointsUsed ||
+                          currentTransaction.points_used ||
+                          0
                       )}
                     </span>
                   </div>
@@ -468,13 +434,10 @@ export default function PaymentConfirmationPage() {
                   <span>
                     Rp{" "}
                     {formatNumberWithCommas(
-                      // First try Redux calculated total
                       calculatedTotal ||
-                        // Then try transaction total from API
-                        (transaction && transaction.total_price) ||
-                        // Finally calculate from event price and quantity as fallback
-                        (event && transaction
-                          ? event.price * transaction.quantity
+                        currentTransaction?.total_price ||
+                        (event && currentTransaction
+                          ? event.price * currentTransaction.quantity
                           : 0)
                     )}
                   </span>
@@ -489,31 +452,32 @@ export default function PaymentConfirmationPage() {
 
           <div className="mb-4">
             <p className="font-medium">Payment Method:</p>
-            <p className="capitalize">{transaction?.payment_method}</p>
+            <p className="capitalize">{currentTransaction?.payment_method}</p>
           </div>
 
           <div className="mb-4">
             <p className="font-medium">Status:</p>
             <p
               className={`capitalize ${
-                paymentStatus === "confirmed"
+                currentTransaction?.status === "confirmed"
                   ? "text-green-600"
-                  : paymentStatus === "rejected" ||
-                    paymentStatus === "expired" ||
-                    paymentStatus === "canceled"
+                  : ["rejected", "expired", "canceled"].includes(
+                      currentTransaction?.status || ""
+                    )
                   ? "text-red-600"
                   : "text-yellow-600"
               }`}
             >
-              {paymentStatus === "waiting_for_payment"
+              {currentTransaction?.status === "waiting_for_payment"
                 ? "Waiting for Payment"
-                : paymentStatus === "waiting_for_admin_confirmation"
+                : currentTransaction?.status ===
+                  "waiting_for_admin_confirmation"
                 ? "Waiting for Admin Confirmation"
-                : paymentStatus}
+                : currentTransaction?.status}
             </p>
           </div>
 
-          {/* Add payment proof upload for bank transfer and e-wallet */}
+          {/* Upload payment proof */}
           <div className="mb-4">
             <p className="font-medium mb-2">Upload Payment Proof:</p>
             <input
@@ -522,10 +486,12 @@ export default function PaymentConfirmationPage() {
               onChange={handleFileChange}
               accept="image/*"
               disabled={
-                paymentStatus !== "waiting_for_payment" || uploading // Disable if not in correct state
+                currentTransaction?.status !== "waiting_for_payment" ||
+                uploading
               }
               className={`w-full p-2 border border-gray-300 rounded mb-2 ${
-                paymentStatus !== "waiting_for_payment" || uploading
+                currentTransaction?.status !== "waiting_for_payment" ||
+                uploading
                   ? "bg-gray-100 cursor-not-allowed"
                   : ""
               }`}
@@ -537,8 +503,8 @@ export default function PaymentConfirmationPage() {
             )}
           </div>
 
-          {/* Payment button logic based on status */}
-          {paymentStatus === "waiting_for_payment" && (
+          {/* Payment button */}
+          {currentTransaction?.status === "waiting_for_payment" && (
             <div className="mb-4">
               <div className="bg-yellow-50 p-3 rounded-md">
                 <p className="text-yellow-600 font-medium">
@@ -573,10 +539,10 @@ export default function PaymentConfirmationPage() {
             </div>
           )}
 
-          {paymentStatus === "waiting_for_admin_confirmation" && (
+          {currentTransaction?.status === "waiting_for_admin_confirmation" && (
             <div className="text-yellow-600 text-center p-3 bg-yellow-50 rounded-md">
               <p className="mb-2">
-                Your payment proof has been submitted and is awaiting admin
+                Your payment proof has been submitted and is waiting for admin
                 confirmation.
               </p>
               <p className="mb-2">Admin will review your payment within:</p>
@@ -596,7 +562,7 @@ export default function PaymentConfirmationPage() {
             </div>
           )}
 
-          {paymentStatus === "confirmed" && (
+          {currentTransaction?.status === "confirmed" && (
             <div className="text-green-600 p-3 bg-green-50 rounded-md mb-3">
               <p className="text-center mb-3">
                 Your payment has been confirmed. Enjoy the event!
@@ -613,20 +579,20 @@ export default function PaymentConfirmationPage() {
             </div>
           )}
 
-          {paymentStatus === "rejected" && (
+          {currentTransaction?.status === "rejected" && (
             <div className="text-red-600 text-center p-3 bg-red-50 rounded-md mb-3">
               Your payment has been rejected. Please try again with a valid
               payment proof.
             </div>
           )}
 
-          {paymentStatus === "expired" && (
+          {currentTransaction?.status === "expired" && (
             <div className="text-red-600 text-center p-3 bg-red-50 rounded-md mb-3">
               This transaction has expired. Please create a new booking.
             </div>
           )}
 
-          {paymentStatus === "canceled" && (
+          {currentTransaction?.status === "canceled" && (
             <div className="text-red-600 text-center p-3 bg-red-50 rounded-md mb-3">
               This transaction has been canceled due to no response from admin
               within 3 days.

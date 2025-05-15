@@ -26,7 +26,7 @@ import {
   applyCoupon,
   applyPoints,
   setCalculatedTotal,
-  setSubtotal, // Add this import
+  setSubtotal,
 } from "@/lib/redux/features/transactionSlice";
 import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 
@@ -399,9 +399,11 @@ export default function TransactionClient() {
       // Fetch and store points ID
       const id = await fetchPointsId(availablePoints);
       setPointsId(id);
+      dispatch(applyPoints(availablePoints)); // <-- ADD THIS
     } else {
       setFieldValue("points_to_use", 0); // Changed from "pointsToUse"
       setPointsId(null);
+      dispatch(applyPoints(0));
     }
   };
 
