@@ -104,11 +104,11 @@ export default function NavBar() {
         </div>
 
         <div className="nav-buttons-group hidden lg:flex">
-          <button className="buttonA" onClick={navigateToLogin}>
-            Sign In
-          </button>
           <button className="buttonB" onClick={navigateToRegister}>
             Get Started
+          </button>
+          <button className="buttonA" onClick={navigateToLogin}>
+            Sign In
           </button>
         </div>
 
@@ -163,18 +163,18 @@ export default function NavBar() {
           >
             Create Events
           </Link>
-          {/* <Link
+          <Link
             href="/about"
             className="text-[#222432] text-lg font-medium hover:text-[#6096B4]"
           >
             About
-          </Link> */}
+          </Link>
           <div className="flex flex-col space-y-3 pt-3">
-            <button className="buttonA w-full" onClick={navigateToLogin}>
-              Sign In
-            </button>
             <button className="buttonB w-full" onClick={navigateToRegister}>
               Get Started
+            </button>
+            <button className="buttonA w-full" onClick={navigateToLogin}>
+              Sign In
             </button>
           </div>
         </div>
