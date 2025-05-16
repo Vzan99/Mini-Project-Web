@@ -23,7 +23,7 @@ const formatDateForInput = (date: Date): string => {
 // Get tomorrow's date for min attribute
 const getTomorrowDateString = () => {
   const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setDate(tomorrow.getDate() + 2);
   return formatDateForInput(tomorrow);
 };
 
@@ -692,7 +692,7 @@ export default function EventCreatePage() {
                         type="date"
                         id="voucher_start_date"
                         name="voucher_start_date"
-                        min={getTodayDateString()}
+                        min={getTomorrowDateString()}
                         max={values.end_date} // Cannot be after event end date
                         className={`w-full px-3 py-2 border rounded-md bg-white h-[42px] ${
                           errors.voucher_start_date &&
