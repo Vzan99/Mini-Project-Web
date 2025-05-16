@@ -189,12 +189,30 @@ export const eventValidationSchema = Yup.object({
               !voucher_start_date ||
               !voucher_end_date
             ) {
-              return true; // Skip validation until all values are present
+              return true;
             }
 
-            // Only compare times if the dates are the same
+            // Compare voucher times if voucher dates are the same
             if (voucher_start_date === voucher_end_date) {
               return endTime > voucher_start_time;
+            }
+
+            return true;
+          }
+        )
+        .test(
+          "voucher-end-before-event-end",
+          "Voucher end time must be before event end time if dates match",
+          function (endTime) {
+            const { voucher_end_date, end_date, end_time } = this.parent;
+
+            if (!endTime || !voucher_end_date || !end_date || !end_time) {
+              return true; // Skip until all are present
+            }
+
+            // Only compare times if voucher end date matches event end date
+            if (voucher_end_date === end_date) {
+              return endTime <= end_time;
             }
 
             return true;
