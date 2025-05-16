@@ -225,10 +225,23 @@ export default function EventCreatePage() {
           );
         } catch (voucherErr: any) {
           console.error("Error creating voucher:", voucherErr);
-          alert(
-            voucherErr.response?.data?.message ||
-              "Failed to create voucher. Please try again."
-          );
+          // alert(
+          //   voucherErr.response?.data?.message ||
+          //     "Failed to create voucher. Please try again."
+          // );
+          const details = voucherErr.response?.data?.details;
+          if (details && Array.isArray(details)) {
+            // Combine all field error messages into one alert
+            const messages = details
+              .map((d) => `${d.path.join(".")} - ${d.message}`)
+              .join("\n");
+            alert(messages);
+          } else {
+            alert(
+              voucherErr.response?.data?.message ||
+                "Failed to create voucher. Please try again."
+            );
+          }
         }
       }
 
