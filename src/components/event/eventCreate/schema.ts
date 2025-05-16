@@ -127,15 +127,24 @@ export const eventValidationSchema = Yup.object({
         .required("Voucher start date is required")
         .test(
           "voucher-start-date-valid",
-          "Voucher start date cannot be in the past",
+          "Voucher start date cannot be more than 2 days in the past",
           function (value) {
             if (!value) return true;
+
+            const voucherDate = new Date(value);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            return new Date(value) >= today;
+
+            // Calculate the date 2 days ago (midnight)
+            const twoDaysAgo = new Date(today);
+            twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+            // Check if voucherDate is on or after twoDaysAgo
+            return voucherDate >= twoDaysAgo;
           }
         ),
   }),
+
   voucher_start_time: Yup.string().when("create_voucher", {
     is: true,
     then: (schema) => schema.required("Voucher start time is required"),
