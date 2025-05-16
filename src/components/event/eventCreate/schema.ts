@@ -35,7 +35,7 @@ const getTomorrowDateString = () => {
 export const eventValidationSchema = Yup.object({
   name: Yup.string()
     .required("Event name is required")
-    .max(100, "Name must be 100 characters or less"),
+    .max(50, "Name must be 50 characters or less"),
   start_date: Yup.string()
     .required("Start date is required")
     .test(
@@ -103,7 +103,8 @@ export const eventValidationSchema = Yup.object({
     then: (schema) =>
       schema
         .required("Voucher code is required")
-        .min(5, "Voucher code must be at least 5 characters"),
+        .min(5, "Voucher code must be at least 5 characters")
+        .max(25, "Voucher code must be 25 characters or less"),
   }),
   discount_amount: Yup.number().when("create_voucher", {
     is: true,
@@ -126,16 +127,12 @@ export const eventValidationSchema = Yup.object({
         .required("Voucher start date is required")
         .test(
           "voucher-start-date-valid",
-          "Voucher start date must be no earlier than yesterday",
+          "Voucher start date cannot be in the past",
           function (value) {
             if (!value) return true;
-
-            // Allow dates from yesterday onwards
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            yesterday.setHours(0, 0, 0, 0); // Start of yesterday
-
-            return new Date(value) >= yesterday;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return new Date(value) >= today;
           }
         ),
   }),
@@ -167,7 +164,33 @@ export const eventValidationSchema = Yup.object({
   }),
   voucher_end_time: Yup.string().when("create_voucher", {
     is: true,
-    then: (schema) => schema.required("Voucher end time is required"),
+    then: (schema) =>
+      schema
+        .required("Voucher end time is required")
+        .test(
+          "end-time-after-start",
+          "End time must be after start time if dates are the same",
+          function (endTime) {
+            const { voucher_start_time, voucher_start_date, voucher_end_date } =
+              this.parent;
+
+            if (
+              !endTime ||
+              !voucher_start_time ||
+              !voucher_start_date ||
+              !voucher_end_date
+            ) {
+              return true; // Skip validation until all values are present
+            }
+
+            // Only compare times if the dates are the same
+            if (voucher_start_date === voucher_end_date) {
+              return endTime > voucher_start_time;
+            }
+
+            return true;
+          }
+        ),
   }),
   max_usage: Yup.number().when("create_voucher", {
     is: true,
