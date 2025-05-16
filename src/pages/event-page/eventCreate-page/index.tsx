@@ -27,7 +27,7 @@ const getTomorrowDateString = () => {
   return formatDateForInput(tomorrow);
 };
 
-const getTwoDaysAgoDateString = () => {
+const getTodayDateString = () => {
   const date = new Date();
   date.setDate(date.getDate());
   return formatDateForInput(date);
@@ -196,6 +196,15 @@ export default function EventCreatePage() {
             `${values.voucher_end_date}T${values.voucher_end_time}`
           );
 
+          console.log("Voucher payload being sent:", {
+            event_id: eventId,
+            voucher_code: values.voucher_code,
+            discount_amount: values.discount_amount,
+            voucher_start_date: voucherStartDateTime.toISOString(),
+            voucher_end_date: voucherEndDateTime.toISOString(),
+            max_usage: values.max_usage,
+          });
+
           // Create voucher with snake_case field names to match backend
           await axios.post(
             `${API_BASE_URL}/vouchers`,
@@ -216,7 +225,6 @@ export default function EventCreatePage() {
           );
         } catch (voucherErr: any) {
           console.error("Error creating voucher:", voucherErr);
-          // Show error message but don't block navigation
           alert(
             voucherErr.response?.data?.message ||
               "Failed to create voucher. Please try again."
@@ -315,8 +323,8 @@ export default function EventCreatePage() {
                     type="date"
                     id="start_date"
                     name="start_date"
-                    min={getTomorrowDateString()} // Must be in the future
-                    className={`w-full px-3 py-2 border rounded-md bg-white ${
+                    min={getTomorrowDateString()}
+                    className={`w-full px-3 py-2 border rounded-md bg-white h-[42px] ${
                       errors.start_date && touched.start_date
                         ? "border-red-500"
                         : "border-gray-300"
@@ -340,7 +348,7 @@ export default function EventCreatePage() {
                     as="select"
                     id="start_time"
                     name="start_time"
-                    className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
+                    className={`w-full px-3 py-2 border rounded-md bg-white h-[42px] ${
                       errors.start_time && touched.start_time
                         ? "border-red-500"
                         : "border-gray-300"
@@ -374,7 +382,8 @@ export default function EventCreatePage() {
                     type="date"
                     id="end_date"
                     name="end_date"
-                    className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
+                    min={getTomorrowDateString()}
+                    className={`w-full px-3 py-2 border rounded-md bg-white h-[42px] ${
                       errors.end_date && touched.end_date
                         ? "border-red-500"
                         : "border-gray-300"
@@ -398,7 +407,7 @@ export default function EventCreatePage() {
                     as="select"
                     id="end_time"
                     name="end_time"
-                    className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
+                    className={`w-full px-3 py-2 border rounded-md bg-white h-[42px] ${
                       errors.end_time && touched.end_time
                         ? "border-red-500"
                         : "border-gray-300"
@@ -484,7 +493,7 @@ export default function EventCreatePage() {
                     id="price"
                     name="price"
                     min="0"
-                    className={`w-full px-3 py-2 border rounded-md bg-white ${
+                    className={`w-full px-3 py-2 border rounded-md bg-white h-[42px] ${
                       errors.price && touched.price
                         ? "border-red-500"
                         : "border-gray-300"
@@ -514,7 +523,7 @@ export default function EventCreatePage() {
                     id="total_seats"
                     name="total_seats"
                     min={1}
-                    className={`w-full px-3 py-2 border rounded-md bg-white ${
+                    className={`w-full px-3 py-2 border rounded-md bg-white h-[42px] ${
                       errors.total_seats && touched.total_seats
                         ? "border-red-500"
                         : "border-gray-300"
@@ -538,7 +547,7 @@ export default function EventCreatePage() {
                     as="select"
                     id="category"
                     name="category"
-                    className={`w-full px-3 py-2 border rounded-md bg-white ${
+                    className={`w-full px-3 py-2 border rounded-md bg-white h-[42px] ${
                       errors.category && touched.category
                         ? "border-red-500"
                         : "border-gray-300"
@@ -670,9 +679,9 @@ export default function EventCreatePage() {
                         type="date"
                         id="voucher_start_date"
                         name="voucher_start_date"
-                        min={getTwoDaysAgoDateString()} // Must be in the future
+                        min={getTodayDateString()}
                         max={values.end_date} // Cannot be after event end date
-                        className={`w-full px-3 py-2 border rounded-md bg-white ${
+                        className={`w-full px-3 py-2 border rounded-md bg-white h-[42px] ${
                           errors.voucher_start_date &&
                           touched.voucher_start_date
                             ? "border-red-500"
@@ -697,7 +706,7 @@ export default function EventCreatePage() {
                         as="select"
                         id="voucher_start_time"
                         name="voucher_start_time"
-                        className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
+                        className={`w-full px-3 py-2 border rounded-md bg-white h-[42px] ${
                           errors.voucher_start_time &&
                           touched.voucher_start_time
                             ? "border-red-500"
@@ -733,7 +742,7 @@ export default function EventCreatePage() {
                         name="voucher_end_date"
                         min={values.voucher_start_date || values.start_date} // Must be after voucher start date
                         max={values.end_date} // Cannot be after event end date
-                        className={`w-full px-3 py-2 border rounded-md bg-white ${
+                        className={`w-full px-3 py-2 border rounded-md bg-white h-[42px] ${
                           errors.voucher_end_date && touched.voucher_end_date
                             ? "border-red-500"
                             : "border-gray-300"
@@ -757,7 +766,7 @@ export default function EventCreatePage() {
                         as="select"
                         id="voucher_end_time"
                         name="voucher_end_time"
-                        className={`w-full px-3 py-2 border rounded-md bg-white h-[38px] ${
+                        className={`w-full px-3 py-2 border rounded-md bg-white h-[42px] ${
                           errors.voucher_end_time && touched.voucher_end_time
                             ? "border-red-500"
                             : "border-gray-300"
