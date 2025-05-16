@@ -15,7 +15,7 @@ export interface ReduxTransaction {
   coupon_code?: string;
   points_used: number;
   payment_method: string;
-  total_price: number;
+  total_pay_amount: number;
   voucher_discount?: number;
   coupon_discount?: number;
   status:

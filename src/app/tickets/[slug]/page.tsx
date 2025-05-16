@@ -9,8 +9,8 @@ export const metadata: Metadata = {
 export default async function TicketsPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { id } = await params;
-  return <TicketDetailsPage transactionId={id} />;
+  const { slug } = await params;
+  return <TicketDetailsPage transactionId={slug} />;
 }

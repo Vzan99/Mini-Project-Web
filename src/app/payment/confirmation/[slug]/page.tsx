@@ -48,7 +48,7 @@ export default function PaymentConfirmationPage() {
     return format(date, "MMM dd, yyyy 'at' h:mm a");
   };
 
-  const calledGenerateFreeTickets = useRef(false); // <--- guard ref
+  const calledGenerateFreeTickets = useRef(false);
 
   async function fetchTransactionDetails() {
     try {
@@ -204,7 +204,7 @@ export default function PaymentConfirmationPage() {
       // Require payment proof for ALL payment methods except for free events
       if (
         ((event && event.price > 0) ||
-          (currentTransaction && currentTransaction.total_price > 0)) &&
+          (currentTransaction && currentTransaction.total_pay_amount > 0)) &&
         !paymentProof
       ) {
         setError("Please upload payment proof");
@@ -372,76 +372,18 @@ export default function PaymentConfirmationPage() {
                 </div>
               </div>
 
-              <div className="border-t border-gray-200 pt-4 mt-2">
-                <div className="flex justify-between mb-2">
-                  <span>
-                    Subtotal ({currentTransaction?.quantity || 0} tickets)
-                  </span>
-                  <span>
-                    Rp{" "}
-                    {formatNumberWithCommas(
-                      subtotal ||
-                        (event?.price || 0) *
-                          (currentTransaction?.quantity || 0)
-                    )}
-                  </span>
-                </div>
-
-                {currentTransaction?.voucher_code && (
-                  <div className="flex justify-between text-green-600 mb-2">
-                    <span>Voucher Discount</span>
-                    <span>
-                      -
-                      {formatNumberWithCommas(
-                        discounts.voucherDiscount ||
-                          currentTransaction.voucher_discount ||
-                          0
-                      )}
-                    </span>
-                  </div>
-                )}
-
-                {currentTransaction?.coupon_code && (
-                  <div className="flex justify-between text-green-600 mb-2">
-                    <span>Coupon Discount</span>
-                    <span>
-                      -
-                      {formatNumberWithCommas(
-                        discounts.couponDiscount ||
-                          currentTransaction.coupon_discount ||
-                          0
-                      )}
-                    </span>
-                  </div>
-                )}
-
-                {currentTransaction?.points_used > 0 && (
-                  <div className="flex justify-between text-green-600 mb-2">
-                    <span>Points Used</span>
-                    <span>
-                      -
-                      {formatNumberWithCommas(
-                        discounts.pointsUsed ||
-                          currentTransaction.points_used ||
-                          0
-                      )}
-                    </span>
-                  </div>
-                )}
-
-                <div className="flex justify-between font-bold mt-2 pt-2 border-t">
-                  <span>Total</span>
-                  <span>
-                    Rp{" "}
-                    {formatNumberWithCommas(
-                      calculatedTotal ||
-                        currentTransaction?.total_price ||
-                        (event && currentTransaction
-                          ? event.price * currentTransaction.quantity
-                          : 0)
-                    )}
-                  </span>
-                </div>
+              <div className="flex justify-between font-bold mt-2 pt-2 border-t">
+                <span>Total ({currentTransaction?.quantity || 0} tickets)</span>
+                <span>
+                  Rp{" "}
+                  {formatNumberWithCommas(
+                    calculatedTotal ||
+                      currentTransaction?.total_pay_amount ||
+                      (event && currentTransaction
+                        ? event.price * currentTransaction.quantity
+                        : 0)
+                  )}
+                </span>
               </div>
             </div>
           </div>
