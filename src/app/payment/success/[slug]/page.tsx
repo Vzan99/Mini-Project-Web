@@ -110,51 +110,13 @@ export default function PaymentSuccessPage() {
             <p>Transaction ID: {transaction.id}</p>
 
             {/* Add price details */}
-            <div className="mt-3 pt-3 border-t border-gray-200">
-              <p className="font-semibold">Price Details:</p>
-              <p>
-                Subtotal: Rp{" "}
-                {formatNumberWithCommas(
-                  subtotal || event.price * transaction.quantity
-                )}
-              </p>
 
-              {transaction.voucher_code && (
-                <p className="text-green-600">
-                  Voucher Discount: -{" "}
-                  {formatNumberWithCommas(
-                    discounts.voucherDiscount ||
-                      transaction.voucher_discount ||
-                      0
-                  )}
-                </p>
+            <p className="font-bold mt-2 pt-2 border-t">
+              Total Paid: Rp{" "}
+              {formatNumberWithCommas(
+                calculatedTotal || transaction.total_pay_amount
               )}
-
-              {transaction.coupon_code && (
-                <p className="text-green-600">
-                  Coupon Discount: -{" "}
-                  {formatNumberWithCommas(
-                    discounts.couponDiscount || transaction.coupon_discount || 0
-                  )}
-                </p>
-              )}
-
-              {transaction.points_used > 0 && (
-                <p className="text-green-600">
-                  Points Used: -{" "}
-                  {formatNumberWithCommas(
-                    discounts.pointsUsed || transaction.points_used || 0
-                  )}
-                </p>
-              )}
-
-              <p className="font-bold mt-2 pt-2 border-t">
-                Total: Rp{" "}
-                {formatNumberWithCommas(
-                  calculatedTotal || transaction.total_price
-                )}
-              </p>
-            </div>
+            </p>
 
             {/* After the existing ticket details section */}
             <div className="mt-3 pt-3 border-t border-gray-200">

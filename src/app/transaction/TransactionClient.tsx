@@ -477,7 +477,7 @@ export default function TransactionClient() {
           : {}),
         // Include calculated values
         subtotal: subtotal,
-        total_price: total,
+        total_pay_amount: total,
       };
 
       console.log("Submitting transaction with payload:", payload);
@@ -1065,7 +1065,7 @@ export default function TransactionClient() {
                             <div className="mt-2 text-sm text-green-600">
                               Using{" "}
                               {formatNumberWithCommas(values.points_to_use)}{" "}
-                              points for a discount of{" "}
+                              points for a discount of Rp{" "}
                               {formatNumberWithCommas(values.points_to_use)}
                             </div>
                           )}
@@ -1073,6 +1073,13 @@ export default function TransactionClient() {
                           {availablePoints <= 0 && (
                             <div className="mt-2 text-xs text-gray-500">
                               You don't have any reward points available
+                            </div>
+                          )}
+
+                          {!values.use_points && availablePoints > 0 && (
+                            <div className="mt-2 text-sm text-gray-500">
+                              Your Points Balance :{" "}
+                              {formatNumberWithCommas(availablePoints)}
                             </div>
                           )}
                         </div>
@@ -1133,6 +1140,7 @@ export default function TransactionClient() {
                         <div className="flex justify-between">
                           <span>Subtotal ({values.quantity} tickets)</span>
                           <span>
+                            Rp{" "}
                             {formatNumberWithCommas(
                               event.price * values.quantity
                             )}
@@ -1143,7 +1151,7 @@ export default function TransactionClient() {
                           <div className="flex justify-between text-green-600">
                             <span>Voucher Discount</span>
                             <span>
-                              -{formatNumberWithCommas(voucherDiscount)}
+                              - Rp {formatNumberWithCommas(voucherDiscount)}
                             </span>
                           </div>
                         )}
@@ -1152,7 +1160,7 @@ export default function TransactionClient() {
                           <div className="flex justify-between text-green-600">
                             <span>Coupon Discount</span>
                             <span>
-                              -{formatNumberWithCommas(couponDiscount)}
+                              -Rp {formatNumberWithCommas(couponDiscount)}
                             </span>
                           </div>
                         )}
@@ -1161,7 +1169,8 @@ export default function TransactionClient() {
                           <div className="flex justify-between text-green-600">
                             <span>Points Used</span>
                             <span>
-                              -{formatNumberWithCommas(values.points_to_use)}
+                              - Rp{" "}
+                              {formatNumberWithCommas(values.points_to_use)}
                             </span>
                           </div>
                         )}
@@ -1169,7 +1178,7 @@ export default function TransactionClient() {
                         <div className="flex justify-between font-bold text-lg pt-2 border-t">
                           <span>Total</span>
                           <span>
-                            {formatNumberWithCommas(calculateTotal(values))}
+                            Rp {formatNumberWithCommas(calculateTotal(values))}
                           </span>
                         </div>
                       </div>
