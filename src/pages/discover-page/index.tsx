@@ -12,6 +12,7 @@ import { IEventDiscover, IEventSuggestion } from "@/components/discover/types";
 import { API_BASE_URL } from "@/components/config/api";
 import { formatEventDates } from "@/utils/formatters";
 import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
+import SearchBar from "@/components/discover/searchBar";
 
 const categories = [
   "All Events",
@@ -433,16 +434,19 @@ export default function DiscoverPage() {
     return buttons;
   };
 
-  // Add this near the top of your component, after your state declarations
-  // This will read the URL parameters when the component mounts
   useEffect(() => {
-    // Get URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const categoryParam = urlParams.get("category");
+    const queryParam = urlParams.get("query");
 
-    // If a category is specified in the URL, set it as the active filter
     if (categoryParam && categories.includes(categoryParam)) {
       setActiveFilter(categoryParam);
+    }
+
+    if (queryParam) {
+      setSearchQuery(queryParam);
+      setShowSuggestions(false); // Optional: don't show dropdown
+      fetchEvents(queryParam);
     }
   }, []);
 
@@ -495,92 +499,16 @@ export default function DiscoverPage() {
           Discover Events
         </h1>
 
-        {/* Search Section */}
-        <div className="mb-8 max-w-xl mx-auto relative">
-          <div className="relative">
-            <input
-              type="text"
-              ref={searchInputRef}
-              value={searchQuery}
-              onChange={handleSearchChange}
-              placeholder="Search for events..."
-              className="w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-black bg-white"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => {
-                  setSearchQuery("");
-                  setSuggestions([]);
-                  setShowSuggestions(false);
-                  if (searchInputRef.current) {
-                    searchInputRef.current.focus();
-                  }
-                }}
-                className="absolute right-[100px] top-1/2 transform -translate-y-1/2 bg-gray-200 hover:bg-gray-300 rounded-full p-1"
-                aria-label="Clear search"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-gray-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            )}
-            <button
-              onClick={() => fetchEvents()}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-[#222432] text-white px-4 py-1 rounded-full transition-transform duration-200 ease-in-out hover:scale-110 cursor-pointer"
-            >
-              Search
-            </button>
-          </div>
-
-          {/* Search Suggestions */}
-          {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute z-10 w-full bg-white mt-1 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-              <ul>
-                {suggestions.map((suggestion) => (
-                  <li
-                    key={suggestion.id}
-                    onClick={() => handleSuggestionClick(suggestion)}
-                    className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
-                  >
-                    <div className="flex items-center">
-                      {suggestion.event_image && (
-                        <img
-                          src={`https://res.cloudinary.com/dnb5cxo2m/image/upload/${suggestion.event_image}`}
-                          alt={suggestion.name}
-                          className="w-10 h-10 object-cover rounded mr-3"
-                        />
-                      )}
-                      <div className="text-left w-full">
-                        <div className="font-medium">{suggestion.name}</div>
-                        <div className="text-sm text-gray-500 text-left">
-                          {suggestion.location}
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-                <li
-                  className="p-3 text-center text-blue-600 hover:bg-gray-100 cursor-pointer font-medium"
-                  onClick={() => fetchEvents()}
-                >
-                  See all results for "{searchQuery}"
-                </li>
-              </ul>
-            </div>
-          )}
-        </div>
-
+        <SearchBar
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          suggestions={suggestions}
+          showSuggestions={showSuggestions}
+          setShowSuggestions={setShowSuggestions}
+          handleSearchChange={handleSearchChange}
+          handleSuggestionClick={handleSuggestionClick}
+          fetchEvents={() => fetchEvents()}
+        />
         {/* Filter Section */}
         <div className="mb-8">
           {/* Category Filters */}

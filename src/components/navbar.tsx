@@ -153,18 +153,21 @@ export default function NavBar() {
           </a>
           <Link
             href="/discover"
+            onClick={() => setIsMenuOpen(false)}
             className="text-[#222432] text-lg font-medium hover:text-[#6096B4]"
           >
             Discover
           </Link>
           <Link
             href="/events/create"
+            onClick={() => setIsMenuOpen(false)}
             className="text-[#222432] text-lg font-medium hover:text-[#6096B4]"
           >
             Create Events
           </Link>
           <Link
             href="/about"
+            onClick={() => setIsMenuOpen(false)}
             className="text-[#222432] text-lg font-medium hover:text-[#6096B4]"
           >
             About
