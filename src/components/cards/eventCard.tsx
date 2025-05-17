@@ -60,13 +60,17 @@ function EventCard({
       key={id}
       className="rounded-xl overflow-hidden shadow hover:shadow-lg bg-white transition"
     >
-      <img
-        src={getFullImageUrl(event_image)} // Use full URL
-        alt={name}
-        className="w-full h-40 object-cover"
-      />
+      <Link href={`/events/${id}`}>
+        <img
+          src={getFullImageUrl(event_image)} // Use full URL
+          alt={name}
+          className="w-full h-40 object-cover"
+        />
+      </Link>
       <div className="p-4">
-        <h4 className="text-lg font-semibold">{name}</h4>
+        <Link href={`/events/${id}`}>
+          <h4 className="text-lg font-semibold">{name}</h4>
+        </Link>
         <p className="text-sm text-gray-500">{location}</p>
         <p className="text-sm text-gray-600 mt-1">
           {formatEventDates(start_date, end_date)}

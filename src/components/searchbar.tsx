@@ -25,6 +25,8 @@ export default function SearchBar() {
 
   // Fetch suggestions when debounced query changes
   useEffect(() => {
+    let didCancel = false;
+
     const fetchSuggestions = async () => {
       if (debouncedQuery.length < 2) {
         setSuggestions([]);
@@ -42,20 +44,23 @@ export default function SearchBar() {
         if (!response.ok) throw new Error("Failed to fetch suggestions");
 
         const data = await response.json();
-        setSuggestions(data.data || []);
+        if (!didCancel) setSuggestions(data.data || []);
       } catch (error) {
         console.error("Error fetching suggestions:", error);
-        setSuggestions([]);
+        if (!didCancel) setSuggestions([]);
       } finally {
-        setLoading(false);
+        if (!didCancel) setLoading(false);
       }
     };
 
-    if (debouncedQuery) {
+    // Prevent fetch if component already navigated away
+    if (debouncedQuery && !didCancel) {
       fetchSuggestions();
-    } else {
-      setSuggestions([]);
     }
+
+    return () => {
+      didCancel = true;
+    };
   }, [debouncedQuery]);
 
   // Close suggestions when clicking outside
@@ -78,17 +83,20 @@ export default function SearchBar() {
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
-    if (query.trim()) {
-      router.push(`/search?query=${encodeURIComponent(query)}`);
+    const finalQuery = query.trim();
+    if (finalQuery) {
       setShowSuggestions(false);
       setSuggestions([]);
       setQuery(""); // Clear input
-      setDebouncedQuery(""); // Clear debounced value to stop fetching
+      setDebouncedQuery(""); // Prevent debounce from firing
+      router.push(`/discover?query=${encodeURIComponent(finalQuery)}`);
     }
   };
 
   const handleSuggestionClick = (suggestion: any) => {
     setShowSuggestions(false);
+    setQuery("");
+    setDebouncedQuery(""); // prevent further fetch calls
     router.push(`/events/${suggestion.id}`);
   };
 
@@ -124,7 +132,7 @@ export default function SearchBar() {
             }}
             onFocus={() => setShowSuggestions(true)}
             placeholder="Search events..."
-            className="p-2 text-black rounded-4xl text-base md:text-xl lg:text-xl focus:outline-none focus:ring-2 focus:ring-[#8CC0DE] w-full border bg-white pl-10 md:pl-12 pr-5 md:pr-10 py-2"
+            className="p-2 text-black rounded-4xl text-base md:text-xl lg:text-xl focus:outline-none focus:ring-2 focus:ring-black w-full border bg-white pl-10 md:pl-12 pr-5 md:pr-10 py-2"
           />
           {query && (
             <button
@@ -180,7 +188,7 @@ export default function SearchBar() {
                     </li>
                   ))}
                   <li
-                    className="p-3 text-center text-blue-600 hover:bg-gray-100 cursor-pointer font-medium"
+                    className="p-3 text-center text-black hover:bg-gray-100 cursor-pointer font-medium"
                     onClick={() => handleSubmit()}
                   >
                     See all results for "{query}"
