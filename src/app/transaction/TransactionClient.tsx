@@ -679,7 +679,11 @@ export default function TransactionClient() {
                                 setFieldValue("quantity", values.quantity - 1);
                               }
                             }}
-                            className="bg-[#222432] px-3 py-1 rounded text-lg text-white cursor-pointer"
+                            className={`px-3 py-1 rounded text-lg ${
+                              values.quantity <= 1
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-[#222432] text-white cursor-pointer"
+                            }`}
                             disabled={values.quantity <= 1}
                           >
                             −
@@ -697,7 +701,12 @@ export default function TransactionClient() {
                                 setFieldValue("quantity", values.quantity + 1);
                               }
                             }}
-                            className="bg-[#222432] px-3 py-1 rounded text-lg text-white cursor-pointer"
+                            className={`px-3 py-1 rounded text-lg ${
+                              values.quantity >= 3 ||
+                              values.quantity >= event.remaining_seats
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-[#222432] text-white cursor-pointer"
+                            }`}
                             disabled={
                               values.quantity >= 3 ||
                               values.quantity >= event.remaining_seats
@@ -843,292 +852,306 @@ export default function TransactionClient() {
                     </div>
 
                     {/* Discount options */}
-                    <div className="space-y-4 border-t border-gray-200 pt-4">
-                      <h3 className="text-lg font-semibold mb-3">Discounts</h3>
+                    {event.price > 0 && (
+                      <div className="space-y-4 border-t border-gray-200 pt-4">
+                        <h3 className="text-lg font-semibold mb-3">
+                          Discounts
+                        </h3>
 
-                      {/* Combined voucher/coupon selector with responsive layout */}
-                      <div className="flex flex-col space-y-3">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                          <div className="mb-3 sm:mb-0">
-                            <select
-                              className={`px-4 py-2 border rounded-md ${
-                                (values.use_voucher && voucherDiscount > 0) ||
-                                (values.use_coupon && couponDiscount > 0)
-                                  ? "bg-gray-100 text-gray-500 cursor-not-allowed opacity-60"
-                                  : "bg-white"
-                              }`}
-                              value={
-                                values.use_voucher
-                                  ? "voucher"
-                                  : values.use_coupon
-                                  ? "coupon"
-                                  : "voucher" // Default to voucher
-                              }
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                setFieldValue(
-                                  "use_voucher",
-                                  value === "voucher"
-                                );
-                                setFieldValue("use_coupon", value === "coupon");
-                                // Clear any previously entered codes
-                                setFieldValue("voucher_code", "");
-                                setFieldValue("coupon_code", "");
-                                setVoucherDiscount(0);
-                                setCouponDiscount(0);
-                              }}
-                              disabled={
-                                (values.use_voucher && voucherDiscount > 0) ||
-                                (values.use_coupon && couponDiscount > 0)
-                              }
-                            >
-                              <option value="voucher">Event Voucher</option>
-                              <option value="coupon">User Coupon</option>
-                            </select>
-                          </div>
-
-                          <div className="w-full sm:w-1/2">
-                            <div className="flex gap-2">
-                              <Field
-                                type="text"
-                                name={
-                                  values.use_voucher
-                                    ? "voucher_code" // Changed from "voucherCode"
-                                    : values.use_coupon
-                                    ? "coupon_code" // Changed from "couponCode"
-                                    : "voucher_code" // Changed from "voucherCode"
-                                }
-                                value={
-                                  values.use_voucher
-                                    ? values.voucher_code || ""
-                                    : values.use_coupon
-                                    ? values.coupon_code || ""
-                                    : values.voucher_code || ""
-                                }
-                                placeholder={
-                                  values.use_voucher
-                                    ? "Enter voucher code (optional)"
-                                    : values.use_coupon
-                                    ? "Enter coupon code (optional)"
-                                    : "Enter voucher code (optional)"
-                                }
-                                disabled={
-                                  (values.use_voucher && voucherDiscount > 0) ||
-                                  (values.use_coupon && couponDiscount > 0)
-                                }
-                                className={`w-full px-3 py-2 border rounded-md ${
+                        {/* Combined voucher/coupon selector with responsive layout */}
+                        <div className="flex flex-col space-y-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                            <div className="mb-3 sm:mb-0">
+                              <select
+                                className={`px-4 py-2 border rounded-md ${
                                   (values.use_voucher && voucherDiscount > 0) ||
                                   (values.use_coupon && couponDiscount > 0)
                                     ? "bg-gray-100 text-gray-500 cursor-not-allowed opacity-60"
                                     : "bg-white"
                                 }`}
-                              />
-                              <button
-                                type="button"
-                                onClick={() =>
+                                value={
                                   values.use_voucher
-                                    ? checkVoucher(values.voucher_code)
-                                    : checkCoupon(values.coupon_code)
+                                    ? "voucher"
+                                    : values.use_coupon
+                                    ? "coupon"
+                                    : "voucher" // Default to voucher
                                 }
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  setFieldValue(
+                                    "use_voucher",
+                                    value === "voucher"
+                                  );
+                                  setFieldValue(
+                                    "use_coupon",
+                                    value === "coupon"
+                                  );
+                                  // Clear any previously entered codes
+                                  setFieldValue("voucher_code", "");
+                                  setFieldValue("coupon_code", "");
+                                  setVoucherDiscount(0);
+                                  setCouponDiscount(0);
+                                }}
                                 disabled={
-                                  (values.use_voucher &&
-                                    (!values.voucher_code ||
-                                      values.voucher_code.trim() === "") &&
-                                    voucherDiscount === 0) ||
-                                  (values.use_coupon &&
-                                    (!values.coupon_code ||
-                                      values.coupon_code.trim() === "") &&
-                                    couponDiscount === 0) ||
                                   (values.use_voucher && voucherDiscount > 0) ||
                                   (values.use_coupon && couponDiscount > 0)
                                 }
-                                className={`px-3 py-2 rounded-md ${
-                                  (values.use_voucher &&
-                                    (!values.voucher_code ||
-                                      values.voucher_code.trim() === "") &&
-                                    voucherDiscount === 0) ||
-                                  (values.use_coupon &&
-                                    (!values.coupon_code ||
-                                      values.coupon_code.trim() === "") &&
-                                    couponDiscount === 0) ||
-                                  (values.use_voucher && voucherDiscount > 0) ||
-                                  (values.use_coupon && couponDiscount > 0)
-                                    ? "bg-gray-100 text-gray-400 cursor-not-allowed opacity-60"
-                                    : "bg-[#222432] text-white hover:bg-gray-800 cursor-pointer"
-                                }`}
                               >
-                                {(values.use_voucher && voucherDiscount > 0) ||
-                                (values.use_coupon && couponDiscount > 0)
-                                  ? "Applied"
-                                  : "Apply"}
-                              </button>
+                                <option value="voucher">Event Voucher</option>
+                                <option value="coupon">User Coupon</option>
+                              </select>
                             </div>
-                          </div>
-                        </div>
 
-                        {/* Success message in its own row */}
-                        <div>
-                          {values.use_voucher && voucherDiscount > 0 && (
-                            <div className="text-sm text-green-600 flex items-center">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-4 w-4 mr-1"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                              Voucher applied successfully!
-                            </div>
-                          )}
-
-                          {values.use_coupon && couponDiscount > 0 && (
-                            <div className="text-sm text-green-600 flex items-center">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-4 w-4 mr-1"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                              Coupon applied successfully!
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Error messages */}
-                        <div>
-                          {values.use_voucher && (
-                            <ErrorMessage
-                              name="voucher_code"
-                              component="div"
-                              className="text-red-500 text-sm"
-                            />
-                          )}
-                          {values.use_coupon && (
-                            <ErrorMessage
-                              name="coupon_code"
-                              component="div"
-                              className="text-red-500 text-sm"
-                            />
-                          )}
-                        </div>
-
-                        {/* Points usage section */}
-                        <div className="mt-4">
-                          <div className="flex items-center">
-                            <label className="inline-flex items-center cursor-pointer">
-                              <Field
-                                type="checkbox"
-                                id="use_points"
-                                name="use_points"
-                                className="sr-only"
-                                disabled={availablePoints <= 0}
-                                checked={values.use_points}
-                                onChange={(
-                                  e: React.ChangeEvent<HTMLInputElement>
-                                ) => handlePointsToggle(e, setFieldValue)}
-                              />
-                              <div
-                                className={`relative w-11 h-6 bg-gray-200 rounded-full peer ${
-                                  availablePoints <= 0 ? "opacity-50" : ""
-                                }`}
-                              >
-                                <div
-                                  className={`absolute top-0.5 left-0.5 bg-white border border-gray-300 rounded-full h-5 w-5 transition-all ${
-                                    values.use_points
-                                      ? "translate-x-5 border-blue-600"
-                                      : ""
+                            <div className="w-full sm:w-1/2">
+                              <div className="flex gap-2">
+                                <Field
+                                  type="text"
+                                  name={
+                                    values.use_voucher
+                                      ? "voucher_code" // Changed from "voucherCode"
+                                      : values.use_coupon
+                                      ? "coupon_code" // Changed from "couponCode"
+                                      : "voucher_code" // Changed from "voucherCode"
+                                  }
+                                  value={
+                                    values.use_voucher
+                                      ? values.voucher_code || ""
+                                      : values.use_coupon
+                                      ? values.coupon_code || ""
+                                      : values.voucher_code || ""
+                                  }
+                                  placeholder={
+                                    values.use_voucher
+                                      ? "Enter voucher code (optional)"
+                                      : values.use_coupon
+                                      ? "Enter coupon code (optional)"
+                                      : "Enter voucher code (optional)"
+                                  }
+                                  disabled={
+                                    (values.use_voucher &&
+                                      voucherDiscount > 0) ||
+                                    (values.use_coupon && couponDiscount > 0)
+                                  }
+                                  className={`w-full px-3 py-2 border rounded-md ${
+                                    (values.use_voucher &&
+                                      voucherDiscount > 0) ||
+                                    (values.use_coupon && couponDiscount > 0)
+                                      ? "bg-gray-100 text-gray-500 cursor-not-allowed opacity-60"
+                                      : "bg-white"
                                   }`}
-                                ></div>
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    values.use_voucher
+                                      ? checkVoucher(values.voucher_code)
+                                      : checkCoupon(values.coupon_code)
+                                  }
+                                  disabled={
+                                    (values.use_voucher &&
+                                      (!values.voucher_code ||
+                                        values.voucher_code.trim() === "") &&
+                                      voucherDiscount === 0) ||
+                                    (values.use_coupon &&
+                                      (!values.coupon_code ||
+                                        values.coupon_code.trim() === "") &&
+                                      couponDiscount === 0) ||
+                                    (values.use_voucher &&
+                                      voucherDiscount > 0) ||
+                                    (values.use_coupon && couponDiscount > 0)
+                                  }
+                                  className={`px-3 py-2 rounded-md ${
+                                    (values.use_voucher &&
+                                      (!values.voucher_code ||
+                                        values.voucher_code.trim() === "") &&
+                                      voucherDiscount === 0) ||
+                                    (values.use_coupon &&
+                                      (!values.coupon_code ||
+                                        values.coupon_code.trim() === "") &&
+                                      couponDiscount === 0) ||
+                                    (values.use_voucher &&
+                                      voucherDiscount > 0) ||
+                                    (values.use_coupon && couponDiscount > 0)
+                                      ? "bg-gray-100 text-gray-400 cursor-not-allowed opacity-60"
+                                      : "bg-[#222432] text-white hover:bg-gray-800 cursor-pointer"
+                                  }`}
+                                >
+                                  {(values.use_voucher &&
+                                    voucherDiscount > 0) ||
+                                  (values.use_coupon && couponDiscount > 0)
+                                    ? "Applied"
+                                    : "Apply"}
+                                </button>
                               </div>
-                              <span className="ml-3 text-sm font-medium text-gray-700">
-                                Use Reward Points
-                              </span>
-                            </label>
+                            </div>
                           </div>
 
-                          {values.use_points && availablePoints > 0 && (
-                            <div className="mt-2 text-sm text-green-600">
-                              Using{" "}
-                              {formatNumberWithCommas(values.points_to_use)}{" "}
-                              points for a discount of Rp{" "}
-                              {formatNumberWithCommas(values.points_to_use)}
-                            </div>
-                          )}
+                          {/* Success message in its own row */}
+                          <div>
+                            {values.use_voucher && voucherDiscount > 0 && (
+                              <div className="text-sm text-green-600 flex items-center">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-4 w-4 mr-1"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                                Voucher applied successfully!
+                              </div>
+                            )}
 
-                          {availablePoints <= 0 && (
-                            <div className="mt-2 text-xs text-gray-500">
-                              You don't have any reward points available
-                            </div>
-                          )}
+                            {values.use_coupon && couponDiscount > 0 && (
+                              <div className="text-sm text-green-600 flex items-center">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-4 w-4 mr-1"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                                Coupon applied successfully!
+                              </div>
+                            )}
+                          </div>
 
-                          {!values.use_points && availablePoints > 0 && (
-                            <div className="mt-2 text-sm text-gray-500">
-                              Your Points Balance :{" "}
-                              {formatNumberWithCommas(availablePoints)}
+                          {/* Error messages */}
+                          <div>
+                            {values.use_voucher && (
+                              <ErrorMessage
+                                name="voucher_code"
+                                component="div"
+                                className="text-red-500 text-sm"
+                              />
+                            )}
+                            {values.use_coupon && (
+                              <ErrorMessage
+                                name="coupon_code"
+                                component="div"
+                                className="text-red-500 text-sm"
+                              />
+                            )}
+                          </div>
+
+                          {/* Points usage section */}
+                          <div className="mt-4">
+                            <div className="flex items-center">
+                              <label className="inline-flex items-center cursor-pointer">
+                                <Field
+                                  type="checkbox"
+                                  id="use_points"
+                                  name="use_points"
+                                  className="sr-only"
+                                  disabled={availablePoints <= 0}
+                                  checked={values.use_points}
+                                  onChange={(
+                                    e: React.ChangeEvent<HTMLInputElement>
+                                  ) => handlePointsToggle(e, setFieldValue)}
+                                />
+                                <div
+                                  className={`relative w-11 h-6 bg-gray-200 rounded-full peer ${
+                                    availablePoints <= 0 ? "opacity-50" : ""
+                                  }`}
+                                >
+                                  <div
+                                    className={`absolute top-0.5 left-0.5 bg-white border border-gray-300 rounded-full h-5 w-5 transition-all ${
+                                      values.use_points
+                                        ? "translate-x-5 border-blue-600"
+                                        : ""
+                                    }`}
+                                  ></div>
+                                </div>
+                                <span className="ml-3 text-sm font-medium text-gray-700">
+                                  Use Reward Points
+                                </span>
+                              </label>
                             </div>
-                          )}
+
+                            {values.use_points && availablePoints > 0 && (
+                              <div className="mt-2 text-sm text-green-600">
+                                Using{" "}
+                                {formatNumberWithCommas(values.points_to_use)}{" "}
+                                points for a discount of Rp{" "}
+                                {formatNumberWithCommas(values.points_to_use)}
+                              </div>
+                            )}
+
+                            {availablePoints <= 0 && (
+                              <div className="mt-2 text-xs text-gray-500">
+                                You don't have any reward points available
+                              </div>
+                            )}
+
+                            {!values.use_points && availablePoints > 0 && (
+                              <div className="mt-2 text-sm text-gray-500">
+                                Your Points Balance :{" "}
+                                {formatNumberWithCommas(availablePoints)}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Payment method */}
-                    <div className="border-t border-gray-200 pt-4">
-                      <h3 className="text-lg font-semibold mb-2">
-                        Payment Method
-                      </h3>
+                    {event.price > 0 && (
+                      <div className="border-t border-gray-200 pt-4">
+                        <h3 className="text-lg font-semibold mb-2">
+                          Payment Method
+                        </h3>
 
-                      <div className="space-y-2">
-                        <label className="flex items-center">
-                          <Field
-                            type="radio"
-                            name="payment_method"
-                            value="creditCard"
-                            className="mr-2"
-                          />
-                          <span>Credit Card</span>
-                        </label>
+                        <div className="space-y-2">
+                          <label className="flex items-center">
+                            <Field
+                              type="radio"
+                              name="payment_method"
+                              value="creditCard"
+                              className="mr-2"
+                            />
+                            <span>Credit Card</span>
+                          </label>
 
-                        <label className="flex items-center">
-                          <Field
-                            type="radio"
-                            name="payment_method"
-                            value="bankTransfer"
-                            className="mr-2"
-                          />
-                          <span>Bank Transfer</span>
-                        </label>
+                          <label className="flex items-center">
+                            <Field
+                              type="radio"
+                              name="payment_method"
+                              value="bankTransfer"
+                              className="mr-2"
+                            />
+                            <span>Bank Transfer</span>
+                          </label>
 
-                        <label className="flex items-center">
-                          <Field
-                            type="radio"
-                            name="payment_method"
-                            value="eWallet"
-                            className="mr-2"
-                          />
-                          <span>E-Wallet</span>
-                        </label>
+                          <label className="flex items-center">
+                            <Field
+                              type="radio"
+                              name="payment_method"
+                              value="eWallet"
+                              className="mr-2"
+                            />
+                            <span>E-Wallet</span>
+                          </label>
+                        </div>
+                        <ErrorMessage
+                          name="payment_method"
+                          component="div"
+                          className="text-red-500 text-sm mt-1"
+                        />
                       </div>
-                      <ErrorMessage
-                        name="payment_method"
-                        component="div"
-                        className="text-red-500 text-sm mt-1"
-                      />
-                    </div>
+                    )}
 
                     {/* Order summary */}
                     <div className="border-t border-gray-200 pt-4">
@@ -1160,7 +1183,7 @@ export default function TransactionClient() {
                           <div className="flex justify-between text-green-600">
                             <span>Coupon Discount</span>
                             <span>
-                              -Rp {formatNumberWithCommas(couponDiscount)}
+                              - Rp {formatNumberWithCommas(couponDiscount)}
                             </span>
                           </div>
                         )}

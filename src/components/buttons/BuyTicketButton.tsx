@@ -6,37 +6,36 @@ import { useRouter } from "next/navigation";
 type BuyTicketButtonProps = {
   eventId: string;
   eventName: string;
-  quantity?: number; // Make it optional for backward compatibility
+  quantity?: number;
+  isDisabled?: boolean;
+  disabledReason?: string;
 };
 
 export default function BuyTicketButton({
   eventId,
   eventName,
-  quantity = 1, // Default to 1 if not provided
+  quantity = 1,
+  isDisabled = false,
+  disabledReason = "",
 }: BuyTicketButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleBuyTicket = async () => {
+    if (isDisabled) return;
+
     setIsLoading(true);
-
     try {
-      // Log the eventId to verify it's correct
-      console.log("Event ID being passed to transaction:", eventId);
-
-      // Make sure the eventId is properly formatted
       if (
         !eventId ||
         !eventId.match(
           /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
         )
       ) {
-        console.error("Invalid event ID format:", eventId);
         alert("Invalid event ID. Please try again or contact support.");
         return;
       }
 
-      // Include quantity in the URL parameters
       router.push(`/transaction?eventId=${eventId}`);
     } catch (error) {
       console.error("Error processing ticket purchase:", error);
@@ -51,10 +50,14 @@ export default function BuyTicketButton({
   return (
     <button
       onClick={handleBuyTicket}
-      disabled={isLoading}
-      className="buttonC disabled:bg-blue-400 disabled:cursor-not-allowed"
+      disabled={isLoading || isDisabled}
+      className={`w-full py-3 px-6 rounded-lg font-semibold transition 
+        ${isDisabled ? "bg-gray-400 cursor-not-allowed" : "buttonC"}
+      `}
     >
-      {isLoading ? (
+      {isDisabled ? (
+        disabledReason
+      ) : isLoading ? (
         <span className="flex items-center justify-center">
           <svg
             className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"

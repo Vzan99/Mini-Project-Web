@@ -10,8 +10,23 @@ import { formatDateDetails, formatTime } from "@/utils/formatters";
 
 export default function EventDetailsPage({ event }: { event: IEventDetails }) {
   if (!event) {
-    return <div>Loading event details...</div>;
+    return (
+      <div className="h-screen bg-[#FFD9C0] text-black">
+        Loading event details...
+      </div>
+    );
   }
+
+  const now = new Date();
+  const hasEventEnded = new Date(event?.end_date) < now;
+  const isSoldOut = event?.remaining_seats <= 0;
+
+  const isDisabled = hasEventEnded || isSoldOut;
+  const disabledReason = hasEventEnded
+    ? "Event Ended"
+    : isSoldOut
+    ? "Tickets Sold Out"
+    : "";
 
   const getImageUrl = () => {
     if (!event.event_image) {
@@ -107,7 +122,8 @@ export default function EventDetailsPage({ event }: { event: IEventDetails }) {
                   <div>
                     <p className="text-sm text-gray-500">Time</p>
                     <p className="font-medium">
-                      {formatTime(event.start_date)}
+                      {formatTime(event.start_date)} -{" "}
+                      {formatTime(event?.end_date)}
                     </p>
                   </div>
                 </div>
@@ -169,13 +185,15 @@ export default function EventDetailsPage({ event }: { event: IEventDetails }) {
           {/* Right column - Ticket information */}
           <div className="lg:w-1/3">
             <div className="bg-gray-50 p-6 rounded-lg sticky top-24">
-              {event.remaining_seats > 0 ? (
+              {event?.remaining_seats > 0 ? (
                 <>
                   {/* Simplified ticket section - only showing the button */}
                   <BuyTicketButton
                     eventId={event.id}
                     eventName={event.name}
-                    quantity={1} // Fixed quantity of 1
+                    quantity={1}
+                    isDisabled={isDisabled}
+                    disabledReason={disabledReason}
                   />
 
                   {/* Social media sharing section */}
