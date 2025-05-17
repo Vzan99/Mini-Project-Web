@@ -619,7 +619,7 @@ export default function DiscoverPage() {
               </button>
 
               {showPriceFilter && (
-                <div className="absolute z-10 mt-2 bg-white rounded-lg shadow-lg p-4 w-64">
+                <div className="absolute left-1/2 top-full mt-2 -translate-x-[53%] w-[90vw] max-w-sm bg-white p-4 rounded-lg shadow-lg z-50">
                   <div className="mb-3">
                     <label className="flex items-center text-sm font-medium text-gray-700 mb-3">
                       <input
@@ -740,12 +740,12 @@ export default function DiscoverPage() {
               </button>
 
               {showDateFilter && (
-                <div className="absolute z-10 mt-2 bg-white rounded-lg shadow-lg p-4">
+                <div className="absolute left-1/2 top-full mt-2 -translate-x-[72%] w-[90vw] max-w-sm bg-white p-4 rounded-lg shadow-lg z-50">
                   <Calendar
                     onChange={(date) => setTempSelectedDate(date as Date)}
                     value={tempSelectedDate}
                     minDate={new Date()}
-                    className="border-0"
+                    className="border-0  w-full sm:w-auto"
                   />
 
                   {/* Sort options */}

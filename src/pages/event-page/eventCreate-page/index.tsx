@@ -23,15 +23,15 @@ const formatDateForInput = (date: Date): string => {
 // Get tomorrow's date for min attribute
 const getTomorrowDateString = () => {
   const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 2);
+  tomorrow.setDate(tomorrow.getDate() + 1);
   return formatDateForInput(tomorrow);
 };
 
-const getTodayDateString = () => {
-  const date = new Date();
-  date.setDate(date.getDate());
-  return formatDateForInput(date);
-};
+// const getTodayDateString = () => {
+//   const date = new Date();
+//   date.setDate(date.getDate());
+//   return formatDateForInput(date);
+// };
 
 export default function EventCreatePage() {
   const router = useRouter();
