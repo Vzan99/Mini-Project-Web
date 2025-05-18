@@ -11,6 +11,7 @@ import { login } from "@/lib/redux/features/authSlice";
 import { loginValidationSchema } from "@/components/login/schema";
 import ILogin, { ILoginResponse } from "@/components/login/types";
 import { API_BASE_URL } from "@/components/config/api";
+import { toast } from "react-toastify";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -42,7 +43,7 @@ export default function LoginForm() {
 
       if (!response.data || !response.data.user || !response.data.user.token) {
         console.error("Unexpected response format:", response.data);
-        alert("Login failed: Unexpected server response");
+        toast.error("Login failed: Unexpected server response");
         return false;
       }
 
@@ -64,7 +65,7 @@ export default function LoginForm() {
       );
 
       // Show success message
-      alert("Login Successful! Redirecting to home page...");
+      toast.success("Login Successful! Redirecting to home page...");
 
       // Redirect to home page
       router.push("/");
@@ -77,15 +78,15 @@ export default function LoginForm() {
       const errorMessage =
         error.response?.data?.message ||
         "Login failed. Please check your credentials.";
-      alert(errorMessage);
+      toast.error(errorMessage);
 
       return false;
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-[calc(100vh-160px)] py-12 px-4">
-      <div className="max-w-md w-full mx-auto p-4 sm:p-6 bg-[#FAF0D7] rounded-xl shadow-lg border border-[#FFD9C0]">
+    <div className="flex justify-center items-center min-h-[calc(100vh-160px)] py-12 px-4 bg-[#FAF0D7]">
+      <div className="max-w-md w-full mx-auto p-4 sm:p-6 bg-white rounded-xl shadow-lg border border-[#FFD9C0]">
         <h2 className="title text-xl sm:text-2xl mb-6 text-center text-[#222432] font-bold">
           Login to Your Account
         </h2>

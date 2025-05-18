@@ -8,7 +8,7 @@ export default function Footer() {
       <div className="container mx-auto px-6 md:px-10">
         <div className="flex flex-col lg:flex-row lg:justify-between">
           {/* Logo and Tagline Section */}
-          <div className="flex flex-col items-center md:items-start mb-8 lg:mb-0 lg:max-w-[40%]">
+          <div className="flex flex-col items-center md:items-start mb-8 lg:mb-0 lg:max-w-[60%]">
             <div className="flex flex-col md:flex-row items-center gap-4 md:gap-10 mb-6">
               <Image
                 className="h-[80px] w-[100px] md:h-[100px] md:w-[120px]"
@@ -18,10 +18,10 @@ export default function Footer() {
                 height={100}
               />
               <div className="flex flex-col gap-2 text-center md:text-left">
-                <p className="text-2xl md:text-3xl lg:text-4xl">
+                <p className="text-2xl md:text-3xl lg:text-4xl font-fraunces font-bold">
                   Ticketing made simple.
                 </p>
-                <p className="text-2xl md:text-3xl lg:text-4xl">
+                <p className="text-2xl md:text-3xl lg:text-4xl font-fraunces font-bold">
                   Events make epic.
                 </p>
               </div>

@@ -47,7 +47,7 @@ export default function FestivalSection() {
       <div className="mb-8">
         {/* Tablet and desktop layout */}
         <div className="hidden md:flex justify-between items-center">
-          <h2 className="text-2xl font-bold">{sectionTitle}</h2>
+          <h2 className="font-fraunces text-4xl font-bold">{sectionTitle}</h2>
           <Link href="/discover?category=Festival">
             <button className="buttonA">View More</button>
           </Link>
@@ -55,7 +55,7 @@ export default function FestivalSection() {
 
         {/* Mobile layout: title only */}
         <div className="md:hidden mb-4 text-center">
-          <h2 className="text-2xl font-bold">{sectionTitle}</h2>
+          <h2 className="font-fraunces text-2xl font-bold">{sectionTitle}</h2>
         </div>
       </div>
 

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:wght@400;700&family=Varela+Round&display=swap");
 
 :root {
   --background: #ffffff;
@@ -22,7 +23,8 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* font-family: var(--font-varela); */
+  /* font-family: Arial, Helvetica, sans-serif; */
   padding-top: 80px; /*Add padding equal to navbar height */
   overflow-x: hidden; /* Prevent horizontal scrolling */
 }
@@ -68,13 +70,25 @@ body {
 /* Components */
 @layer components {
   .title {
-    @apply text-6xl text-[#222432] font-semibold;
+    @apply text-6xl text-[#222432] font-bold;
     font-family: "fraunces", sans-serif;
   }
 
   .sub-title {
-    @apply text-2xl text-[#222432] font-semibold;
-    font-family: "Varela Round", sans-serif;
+    @apply text-3xl text-[#222432] font-semibold;
+    font-family: "Raleway", sans-serif;
+  }
+
+  .font-fraunces {
+    font-family: "fraunces";
+  }
+
+  .font-varela {
+    font-family: "varela";
+  }
+  .Toastify__toast-container--top-right {
+    top: 300rem;
+    right: 1rem;
   }
 }
 

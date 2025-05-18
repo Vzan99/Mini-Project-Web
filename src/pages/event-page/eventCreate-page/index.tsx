@@ -12,6 +12,8 @@ import { IEventFormValues } from "@/components/event/eventCreate/types";
 import { API_BASE_URL } from "@/components/config/api";
 import { formatNumberWithCommas } from "@/utils/formatters";
 import { generateTimeOptions } from "@/utils/formatters";
+import ConfirmationModal from "@/components/confirmation/confirmationModal";
+import { toast } from "react-toastify";
 
 const timeOptions = generateTimeOptions();
 
@@ -38,6 +40,11 @@ export default function EventCreatePage() {
   const [error, setError] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [pendingSubmitValues, setPendingSubmitValues] =
+    useState<IEventFormValues | null>(null);
+  const [pendingSubmitHelpers, setPendingSubmitHelpers] =
+    useState<FormikHelpers<IEventFormValues> | null>(null);
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -125,6 +132,15 @@ export default function EventCreatePage() {
     }
   };
 
+  const handleConfirmedSubmit = async () => {
+    if (pendingSubmitValues && pendingSubmitHelpers) {
+      await handleSubmit(pendingSubmitValues, pendingSubmitHelpers);
+      setShowConfirmation(false);
+      setPendingSubmitValues(null);
+      setPendingSubmitHelpers(null);
+    }
+  };
+
   const handleSubmit = async (
     values: IEventFormValues,
     { setSubmitting }: FormikHelpers<IEventFormValues>
@@ -182,7 +198,7 @@ export default function EventCreatePage() {
       });
 
       console.log("Event creation successful:", response.data);
-
+      toast.success("Event created successfully!");
       // If voucher creation is enabled and event is paid, create voucher
       if (values.create_voucher && values.price > 0) {
         try {
@@ -223,21 +239,17 @@ export default function EventCreatePage() {
               },
             }
           );
+          toast.success("Voucher created successfully!");
         } catch (voucherErr: any) {
           console.error("Error creating voucher:", voucherErr);
-          // alert(
-          //   voucherErr.response?.data?.message ||
-          //     "Failed to create voucher. Please try again."
-          // );
           const details = voucherErr.response?.data?.details;
           if (details && Array.isArray(details)) {
-            // Combine all field error messages into one alert
             const messages = details
               .map((d) => `${d.path.join(".")} - ${d.message}`)
               .join("\n");
-            alert(messages);
+            toast.error(messages);
           } else {
-            alert(
+            toast.error(
               voucherErr.response?.data?.message ||
                 "Failed to create voucher. Please try again."
             );
@@ -294,7 +306,11 @@ export default function EventCreatePage() {
         <Formik
           initialValues={eventInitialValues}
           validationSchema={eventValidationSchema}
-          onSubmit={handleSubmit}
+          onSubmit={(values, helpers) => {
+            setPendingSubmitValues(values);
+            setPendingSubmitHelpers(helpers);
+            setShowConfirmation(true);
+          }}
         >
           {({ isSubmitting, errors, touched, values }) => (
             <Form className="space-y-6 bg-white p-6 rounded-lg shadow-md">
@@ -847,6 +863,22 @@ export default function EventCreatePage() {
           )}
         </Formik>
       </div>
+      <ConfirmationModal
+        show={showConfirmation}
+        title="Confirm Event Creation"
+        message="Are you sure you want to create this event?"
+        onConfirm={handleConfirmedSubmit}
+        onCancel={() => {
+          if (pendingSubmitHelpers) {
+            pendingSubmitHelpers.setSubmitting(false);
+          }
+          setShowConfirmation(false);
+          setPendingSubmitValues(null);
+          setPendingSubmitHelpers(null);
+        }}
+        confirmText="Yes, Create"
+        cancelText="No"
+      />
     </div>
   );
 }

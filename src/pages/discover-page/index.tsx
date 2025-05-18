@@ -126,14 +126,6 @@ export default function DiscoverPage() {
     fetchLocations();
   }, []);
 
-  // Add this useEffect to focus the search input when the component mounts
-  useEffect(() => {
-    // Focus the search input when the component mounts
-    if (searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, []);
-
   // Debounced search function
   const debouncedSearch = useRef(
     debounce(async (query) => {
@@ -495,7 +487,7 @@ export default function DiscoverPage() {
   return (
     <div className="bg-[#FAF0D7]">
       <div className="w-full px-6 py-10 max-w-screen-xl mx-auto">
-        <h1 className="text-4xl font-semibold text-center mb-8">
+        <h1 className="text-4xl font-semibold text-center mb-8 font-fraunces ">
           Discover Events
         </h1>
 

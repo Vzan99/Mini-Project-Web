@@ -26,12 +26,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, []);
-
-  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
       const input = searchInputRef.current;
