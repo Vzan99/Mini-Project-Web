@@ -4,6 +4,8 @@ import "./globals.css";
 import NavBar from "@/components/navbar";
 import Footer from "@/components/footer";
 import StoreProvider from "@/components/storeProvider";
+import { Fraunces, Raleway, Varela_Round } from "next/font/google";
+import CustomToastContainer from "@/components/notification/notification";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,6 +15,25 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+  display: "swap",
+});
+
+const raleway = Raleway({
+  subsets: ["latin"],
+  variable: "--font-raleway",
+  display: "swap",
+});
+
+const varela = Varela_Round({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-varela",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -26,12 +47,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${raleway.variable} ${varela.variable}`}
+    >
+      <body className="antialiased">
         <StoreProvider>
           <NavBar />
+          <CustomToastContainer />
           {children}
           <Footer />
         </StoreProvider>

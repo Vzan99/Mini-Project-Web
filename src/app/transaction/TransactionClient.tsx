@@ -29,12 +29,16 @@ import {
   setSubtotal,
 } from "@/lib/redux/features/transactionSlice";
 import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
-
+import ConfirmationModal from "@/components/confirmation/confirmationModal";
+import { toast } from "react-toastify";
 export default function TransactionClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   // Add Redux dispatch
   const dispatch = useAppDispatch();
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [pendingValues, setPendingValues] =
+    useState<TransactionFormValues | null>(null);
 
   // Get current transaction from Redux
   const {
@@ -56,7 +60,9 @@ export default function TransactionClient() {
   const [voucherId, setVoucherId] = useState<string | null>(null);
   const [couponId, setCouponId] = useState<string | null>(null);
   const [pointsId, setPointsId] = useState<string | null>(null);
-
+  const [pendingSubmitHelpers, setPendingSubmitHelpers] = useState<{
+    setSubmitting: (isSubmitting: boolean) => void;
+  } | null>(null);
   // Enhanced validation for query parameters
   const validateAndGetParams = () => {
     if (!searchParams) {
@@ -203,7 +209,7 @@ export default function TransactionClient() {
   // Check voucher validity
   const checkVoucher = async (code: string) => {
     if (!code || code.trim() === "") {
-      alert("Please enter a voucher code");
+      toast.error("Please enter a voucher code");
       return false;
     }
 
@@ -212,7 +218,7 @@ export default function TransactionClient() {
       console.log(`Checking voucher code: ${code} for event: ${eventId}`);
 
       if (!eventId) {
-        alert("Invalid event ID");
+        toast.error("Invalid event ID");
         return false;
       }
 
@@ -232,7 +238,7 @@ export default function TransactionClient() {
       ) {
         setVoucherDiscount(response.data.data.discount_amount); // Changed from discountAmount to discount_amount
         setVoucherId(response.data.data.voucher_id); // Changed from voucherId to voucher_id
-        alert(
+        toast.success(
           `Voucher applied successfully! Discount: ${formatNumberWithCommas(
             response.data.data.discount_amount
           )}`
@@ -241,7 +247,7 @@ export default function TransactionClient() {
       } else {
         setVoucherDiscount(0);
         setVoucherId(null);
-        alert(response.data.data.message || "Voucher is not valid");
+        toast.error(response.data.data.message || "Voucher is not valid");
         return false;
       }
     } catch (err: any) {
@@ -256,21 +262,21 @@ export default function TransactionClient() {
           errorMessage = err.response.data.message;
         }
       }
-      alert(errorMessage);
+      toast.error(errorMessage);
       return false;
     }
   };
 
   const checkCoupon = async (code: string) => {
     if (!code || code.trim() === "") {
-      alert("Please enter a coupon code");
+      toast.error("Please enter a coupon code");
       return false;
     }
 
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        alert("You must be logged in to use coupons");
+        toast.error("You must be logged in to use coupons");
         return false;
       }
 
@@ -288,7 +294,7 @@ export default function TransactionClient() {
       ) {
         setCouponDiscount(response.data.data.discount_amount);
         setCouponId(response.data.data.coupon_id); // Store the coupon ID
-        alert(
+        toast.success(
           `Coupon applied successfully! Discount: ${formatNumberWithCommas(
             response.data.data.discount_amount
           )}`
@@ -301,13 +307,13 @@ export default function TransactionClient() {
       ) {
         setCouponDiscount(0);
         setCouponId(null);
-        alert(response.data.data.message || "Coupon is not valid");
+        toast.error(response.data.data.message || "Coupon is not valid");
         return false;
       } else {
         console.warn("Unexpected response format:", response.data);
         setCouponDiscount(0);
         setCouponId(null);
-        alert("Unable to apply coupon. Invalid response format.");
+        toast.error("Unable to apply coupon. Invalid response format.");
         return false;
       }
     } catch (err: any) {
@@ -332,7 +338,7 @@ export default function TransactionClient() {
             .join(", ")}`;
         }
       }
-      alert(errorMessage);
+      toast.error(errorMessage);
       return false;
     }
   };
@@ -423,14 +429,15 @@ export default function TransactionClient() {
     event,
   ]);
 
-  // Handle form submission
-  const handleSubmit = async (values: TransactionFormValues) => {
-    // Save form values to Redux first
-    dispatch(setTransactionForm(values));
+  const handleConfirmedSubmit = async () => {
+    if (!pendingValues) return;
 
-    // Calculate final values before submission
+    const values = pendingValues;
+    setShowConfirmation(false);
+
+    dispatch(setTransactionForm(values));
     const subtotal = event?.price ? event.price * values.quantity : 0;
-    dispatch(setSubtotal(subtotal)); // Store subtotal in Redux for consistent order summary
+    dispatch(setSubtotal(subtotal));
     const total = calculateTotal(values);
 
     try {
@@ -502,7 +509,9 @@ export default function TransactionClient() {
       dispatch(setCurrentTransaction(transactionData));
 
       // Show success alert
-      alert("Transaction created successfully! Redirecting to payment page...");
+      toast.success(
+        "Transaction created successfully! Redirecting to payment page..."
+      );
 
       // Add a small delay to ensure the transaction is committed and alert is seen
       setTimeout(() => {
@@ -527,7 +536,7 @@ export default function TransactionClient() {
       }
 
       setError(errorMessage);
-      alert(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -640,7 +649,11 @@ export default function TransactionClient() {
             <Formik
               initialValues={initialValues}
               validationSchema={validationSchema}
-              onSubmit={handleSubmit}
+              onSubmit={(values, formikHelpers) => {
+                setPendingValues(values);
+                setPendingSubmitHelpers(formikHelpers);
+                setShowConfirmation(true);
+              }}
             >
               {({
                 values,
@@ -1241,6 +1254,22 @@ export default function TransactionClient() {
           </div>
         </div>
       </div>
+      <ConfirmationModal
+        show={showConfirmation}
+        title="Confirm Transaction"
+        message="Are you sure you want to complete this transaction?"
+        onConfirm={handleConfirmedSubmit}
+        onCancel={() => {
+          if (pendingSubmitHelpers) {
+            pendingSubmitHelpers.setSubmitting(false);
+          }
+          setShowConfirmation(false);
+          setPendingValues(null);
+          setPendingSubmitHelpers(null);
+        }}
+        confirmText="Yes, Proceed"
+        cancelText="Cancel"
+      />
     </div>
   );
 }

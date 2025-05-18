@@ -9,6 +9,25 @@ export default function NavBar() {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  const [visible, setVisible] = useState(true);
+  let lastScrollY = 0;
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > lastScrollY) {
+        // Scrolling down
+        setVisible(false);
+      } else {
+        // Scrolling up
+        setVisible(true);
+      }
+      lastScrollY = window.scrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const scrollToEvents = (e: React.MouseEvent) => {
     e.preventDefault();
 
@@ -44,30 +63,34 @@ export default function NavBar() {
 
   // Close menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const mobileMenu = document.getElementById("mobile-menu");
-      const hamburgerButton = document.getElementById("hamburger-button");
+    let lastScrollY = window.scrollY;
 
-      if (
-        isMenuOpen &&
-        mobileMenu &&
-        hamburgerButton &&
-        !mobileMenu.contains(event.target as Node) &&
-        !hamburgerButton.contains(event.target as Node)
-      ) {
-        setIsMenuOpen(false);
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY > lastScrollY) {
+        // Scrolling down
+        setVisible(false);
+        if (isMenuOpen) setIsMenuOpen(false); // Close dropdown on scroll
+      } else {
+        // Scrolling up
+        setVisible(true);
       }
+
+      lastScrollY = currentScrollY;
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [isMenuOpen]);
 
   return (
     <div>
-      <div className="navbar px-4 sm:px-[50px]">
+      <div
+        className={`navbar px-4 sm:px-[50px] fixed top-0 left-0 w-full z-50 transition-transform duration-300 ${
+          visible ? "translate-y-0" : "-translate-y-full"
+        }`}
+      >
         <div className="nav-buttons-group items-center">
           <Image
             className="small-logo"
@@ -139,7 +162,9 @@ export default function NavBar() {
       {/* Mobile & Tablet Menu */}
       <div
         id="mobile-menu"
-        className={`fixed top-[80px] left-0 w-full bg-[#F4BFBF] z-40 shadow-lg transition-transform duration-300 ease-in-out ${
+        className={`fixed ${
+          visible ? "top-[80px]" : "top-0"
+        } left-0 w-full bg-[#F4BFBF] z-40 shadow-lg transition-all duration-300 ease-in-out ${
           isMenuOpen ? "translate-y-0" : "-translate-y-full"
         } lg:hidden`}
       >

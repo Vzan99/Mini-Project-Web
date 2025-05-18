@@ -7,14 +7,11 @@ import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 import { IEventDetails } from "@/components/event/eventDetails/types";
 import SocialMedia from "@/components/socialMedia";
 import { formatDateDetails, formatTime } from "@/utils/formatters";
+import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 
 export default function EventDetailsPage({ event }: { event: IEventDetails }) {
   if (!event) {
-    return (
-      <div className="h-screen bg-[#FFD9C0] text-black">
-        Loading event details...
-      </div>
-    );
+    return <LoadingSpinnerScreen />;
   }
 
   const now = new Date();
@@ -60,7 +57,7 @@ export default function EventDetailsPage({ event }: { event: IEventDetails }) {
         {/* Lighter overlay with gradient for better image visibility */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex items-end">
           <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 drop-shadow-lg px-2 md:px-10 lg:px-40">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 drop-shadow-lg px-2 md:px-10 lg:px-40 font-fraunces">
               {event.name}
             </h1>
           </div>
@@ -73,7 +70,9 @@ export default function EventDetailsPage({ event }: { event: IEventDetails }) {
           {/* Left column - Event details */}
           <div className="lg:w-2/3">
             <div className="bg-gray-50 p-6 rounded-lg mb-8">
-              <h2 className="text-2xl font-semibold mb-4">Event Details</h2>
+              <h2 className="text-2xl font-semibold mb-4 font-fraunces">
+                Event Details
+              </h2>
 
               <div className="flex flex-col md:flex-row md:items-center gap-8 mb-6">
                 <div className="flex items-center">
@@ -162,7 +161,9 @@ export default function EventDetailsPage({ event }: { event: IEventDetails }) {
             </div>
 
             <div className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4">About This Event</h2>
+              <h2 className="text-2xl font-semibold mb-4 font-fraunces">
+                About This Event
+              </h2>
               <div className="prose max-w-none">
                 {event.description ? (
                   <div
@@ -177,7 +178,9 @@ export default function EventDetailsPage({ event }: { event: IEventDetails }) {
             </div>
 
             <div className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4">Location</h2>
+              <h2 className="text-2xl font-semibold mb-4 font-fraunces">
+                Location
+              </h2>
               <p className="mb-4">{event.location}</p>
             </div>
           </div>
