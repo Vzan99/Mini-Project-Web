@@ -609,7 +609,7 @@ export default function TransactionClient() {
   return (
     <div className="bg-[#FAF0D7] min-h-screen py-4 md:py-6 lg:py-8">
       <div className="container mx-auto px-4 md:px-6 lg:px-100">
-        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold mb-4 md:mb-6">
+        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold font-fraunces mb-4 md:mb-6">
           Complete Your Purchase
         </h1>
 
@@ -619,7 +619,7 @@ export default function TransactionClient() {
             {/* Event summary header */}
             <div className="mb-4 pb-4 border-b border-gray-200">
               <div>
-                <h1 className="text-lg md:text-xl lg:text-2xl font-bold">
+                <h1 className="text-lg md:text-xl lg:text-2xl font-bold font-fraunces">
                   {event.name}
                 </h1>
                 <p className="text-sm md:text-base text-gray-600">

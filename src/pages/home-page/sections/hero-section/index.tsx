@@ -6,12 +6,11 @@ export default function HeroSection() {
     <section className="relative flex flex-col min-h-screen bg-[#FAF0D7] gap-[20px] items-center justify-center text-center px-4 md:px-10 lg:px-40 overflow-hidden">
       {/* Background: desktop-only left image */}
       <div
-        className="absolute w-[500px] h-[500px] bg-cover bg-no-repeat opacity-40 pointer-events-none hidden lg:block"
+        className="absolute w-[650px] h-[500px] bg-cover bg-no-repeat opacity-40 pointer-events-none hidden lg:block"
         style={{
           backgroundImage: `url('/home-bg-festivals.png')`,
-          top: "32%",
-          left: "18%",
-          transform: "translateX(-50%)",
+          bottom: "0",
+          left: "0",
         }}
       />
 

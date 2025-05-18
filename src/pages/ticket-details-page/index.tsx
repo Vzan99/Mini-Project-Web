@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import Image from "next/image";
 import { API_BASE_URL } from "@/components/config/api";
-import { formatDate, formatNumberWithCommas } from "@/utils/formatters";
+import { formatDateDetails, formatNumberWithCommas } from "@/utils/formatters";
 import QRCode from "react-qr-code";
 import html2canvas from "html2canvas";
 import { saveAs } from "file-saver";
@@ -119,7 +119,7 @@ export default function TicketDetailsPage({
         <TicketDownloadTemplate
           ticketCode={ticket.ticket_code}
           eventName={ticket.event?.name || "Event"}
-          eventDate={formatDate(transaction.attend_date)}
+          eventDate={formatDateDetails(transaction.attend_date)}
           eventLocation={ticket.event?.location || "Location"}
           eventImageUrl={getImageUrl(ticket.event?.event_image)}
         />
@@ -183,7 +183,7 @@ export default function TicketDetailsPage({
       <div className="container mx-auto px-4 max-w-4xl">
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">My Tickets</h1>
+            <h1 className="text-2xl font-bold font-fraunces">My Tickets</h1>
             <button
               onClick={() => router.push("/")}
               className="text-gray-600 hover:text-gray-900"
@@ -197,7 +197,7 @@ export default function TicketDetailsPage({
               {transaction.event?.name}
             </h2>
             <p className="text-gray-600">
-              Date: {formatDate(transaction.attend_date)}
+              Date: {formatDateDetails(transaction.attend_date)}
             </p>
             <p className="text-gray-600">
               Location: {transaction.event?.location}
@@ -246,7 +246,7 @@ export default function TicketDetailsPage({
                         {ticket.event?.name}
                       </h3>
                       <p className="text-gray-600">
-                        Date: {formatDate(transaction.attend_date)}
+                        Date: {formatDateDetails(transaction.attend_date)}
                       </p>
                       <p className="text-gray-600">
                         Location: {ticket.event?.location}

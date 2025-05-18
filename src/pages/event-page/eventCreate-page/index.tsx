@@ -293,7 +293,7 @@ export default function EventCreatePage() {
   return (
     <div className="bg-[#FAF0D7] min-h-screen">
       <div className="container mx-auto px-4 py-8 max-w-3xl">
-        <h1 className="text-3xl font-bold mb-6 text-[#222432]">
+        <h1 className="text-3xl font-bold mb-6 text-[#222432] font-fraunces">
           Create New Event
         </h1>
 

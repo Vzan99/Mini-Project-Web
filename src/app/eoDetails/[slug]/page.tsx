@@ -91,7 +91,7 @@ export default function EODetailsPage({
             </div>
 
             <div className="flex-1 text-center md:text-left">
-              <h1 className="text-2xl font-bold mb-2">
+              <h1 className="text-2xl font-bold mb-2 font-fraunces">
                 {profile.organizer.first_name} {profile.organizer.last_name}
               </h1>
               <p className="text-gray-600 mb-2">
@@ -110,7 +110,9 @@ export default function EODetailsPage({
 
         {/* Upcoming Events Section */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <h2 className="text-xl font-bold mb-4">Upcoming Events</h2>
+          <h2 className="text-xl font-bold mb-4 font-fraunces">
+            Upcoming Events
+          </h2>
 
           {upcomingEvents.length === 0 ? (
             <p className="text-gray-500">No upcoming events</p>
@@ -156,7 +158,7 @@ export default function EODetailsPage({
 
         {/* Past Events Section */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <h2 className="text-xl font-bold mb-4">Past Events</h2>
+          <h2 className="text-xl font-bold mb-4 font-fraunces">Past Events</h2>
 
           {pastEvents.length === 0 ? (
             <p className="text-gray-500">No past events</p>
@@ -202,7 +204,7 @@ export default function EODetailsPage({
 
         {/* Reviews Section */}
         <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-bold mb-4">Reviews</h2>
+          <h2 className="text-xl font-bold mb-4 font-fraunces">Reviews</h2>
 
           {profile.reviews.length === 0 ? (
             <p className="text-gray-500">No reviews yet</p>

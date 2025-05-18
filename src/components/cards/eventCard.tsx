@@ -69,7 +69,7 @@ function EventCard({
       </Link>
       <div className="p-4">
         <Link href={`/events/${id}`}>
-          <h4 className="text-lg font-semibold">{name}</h4>
+          <h4 className="text-lg font-bold font-fraunces">{name}</h4>
         </Link>
         <p className="text-sm text-gray-500">{location}</p>
         <p className="text-sm text-gray-600 mt-1">
