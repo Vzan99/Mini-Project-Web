@@ -9,7 +9,7 @@ import {
   ITicket,
   IEventDetails,
 } from "@/components/payment/paymentSuccess/types";
-import { formatDate, formatNumberWithCommas } from "@/utils/formatters";
+import { formatDateDetails, formatNumberWithCommas } from "@/utils/formatters";
 import { useAppSelector } from "@/lib/redux/hooks";
 import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 
@@ -104,7 +104,7 @@ export default function PaymentSuccessPage() {
           <div className="bg-gray-50 p-4 rounded-md mb-6 text-left">
             <h2 className="font-semibold mb-2">Ticket Details:</h2>
             <p>Event: {event.name}</p>
-            <p>Date: {formatDate(transaction.attend_date)}</p>
+            <p>Date: {formatDateDetails(transaction.attend_date)}</p>
             <p>Location: {event.location}</p>
             <p>Tickets: {transaction.quantity}</p>
             <p>Transaction ID: {transaction.id}</p>

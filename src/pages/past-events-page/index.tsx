@@ -7,7 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { API_BASE_URL } from "@/components/config/api";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
-import { formatDate } from "@/utils/formatters";
+import { formatDateDetails } from "@/utils/formatters";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import { IPastEvent, IPagination } from "@/components/past-events/types";
 import { reviewValidationSchema } from "@/components/past-events/schemas";
@@ -120,7 +120,7 @@ export default function PastEventsPage() {
     return (
       <div className="bg-[#FAF0D7] min-h-screen py-8">
         <div className="container mx-auto px-4">
-          <h1 className="text-3xl font-bold mb-6">Past Events</h1>
+          <h1 className="text-3xl font-bold mb-6 font-fraunces">Past Events</h1>
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error}
           </div>
@@ -132,7 +132,7 @@ export default function PastEventsPage() {
   return (
     <div className="bg-[#FAF0D7] min-h-screen py-8">
       <div className="container mx-auto px-5 md:px-10 lg:px-40">
-        <h1 className="text-3xl font-bold mb-6">Past Events</h1>
+        <h1 className="text-3xl font-bold mb-6 font-fraunces">Past Events</h1>
 
         {pastEvents.length === 0 ? (
           <div className="text-center py-8">
@@ -185,7 +185,7 @@ export default function PastEventsPage() {
                     </h3>
                   </Link>
                   <p className="text-gray-600 mt-1">
-                    Date: {formatDate(event.end_date)}
+                    Date: {formatDateDetails(event.end_date)}
                   </p>
                   <p className="text-gray-600">Location: {event.location}</p>
 

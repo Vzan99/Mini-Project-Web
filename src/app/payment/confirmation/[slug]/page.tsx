@@ -9,7 +9,7 @@ import {
   IAcceptedTransaction,
   IEventDetails,
 } from "@/components/payment/paymentConfirmation/types";
-import { formatNumberWithCommas, formatDate } from "@/utils/formatters";
+import { formatNumberWithCommas, formatDateDetails } from "@/utils/formatters";
 import { useAppSelector, useAppDispatch } from "@/lib/redux/hooks";
 import {
   updateTransactionStatus,
@@ -347,7 +347,7 @@ export default function PaymentConfirmationPage() {
   return (
     <div className="bg-[#FAF0D7] min-h-screen py-8">
       <div className="container mx-auto px-4 max-w-2xl">
-        <h1 className="text-3xl font-bold mb-6 text-[#222432]">
+        <h1 className="text-3xl font-bold font-fraunces mb-6 text-[#222432]">
           Payment Confirmation
         </h1>
 
@@ -367,7 +367,7 @@ export default function PaymentConfirmationPage() {
                   <p className="text-gray-600">{event?.location}</p>
                   <p className="text-gray-600">
                     Attend date:{" "}
-                    {formatDate(currentTransaction?.attend_date || "")}
+                    {formatDateDetails(currentTransaction?.attend_date || "")}
                   </p>
                 </div>
               </div>

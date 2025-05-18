@@ -862,7 +862,7 @@ export default function DiscoverPage() {
 
               <div className="p-4 flex flex-col gap-2">
                 <Link href={`/events/${event.id}`}>
-                  <h2 className="text-lg font-semibold hover:text-blue-600">
+                  <h2 className="text-lg font-bold font-fraunces">
                     {event.name}
                   </h2>
                 </Link>
