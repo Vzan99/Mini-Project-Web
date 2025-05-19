@@ -9,7 +9,7 @@ import LoadingSpinner from "@/components/loadings/loadingSpinner";
 
 export default function ComedySection() {
   const [events, setEvents] = useState<IEventCard[]>([]);
-  const [loading, setLoading] = useState(true); // 👈 add loading state
+  const [loading, setLoading] = useState(true);
 
   const sectionTitle = "Comedies";
 
@@ -31,7 +31,7 @@ export default function ComedySection() {
       console.error("Error fetching comedy events:", err);
       setEvents([]);
     } finally {
-      setLoading(false); // 👈 stop loading no matter what
+      setLoading(false);
     }
   };
 

@@ -5,11 +5,11 @@ import axios from "axios";
 import Link from "next/link";
 import { cloudinaryBaseUrl } from "@/components/config/cloudinary";
 import { API_BASE_URL } from "@/components/config/api";
-import LoadingSpinner from "@/components/loadings/loadingSpinner"; // Import the spinner component
+import LoadingSpinner from "@/components/loadings/loadingSpinner";
 
 export default function MuseumSection() {
   const [events, setEvents] = useState<IEventCard[]>([]);
-  const [loading, setLoading] = useState(true); // Track loading state
+  const [loading, setLoading] = useState(true);
   const sectionTitle = "Museums";
 
   const fetchEvents = async () => {
@@ -30,7 +30,7 @@ export default function MuseumSection() {
       console.error("Error fetching museum events:", err);
       setEvents([]);
     } finally {
-      setLoading(false); // Hide spinner after fetch completes
+      setLoading(false);
     }
   };
 

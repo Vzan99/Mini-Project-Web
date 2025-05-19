@@ -103,7 +103,7 @@ export default function DiscoverPage() {
   // Add a ref for the search input
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Function to fetch locations (moved inside the component)
+  // Fetch locations
   const fetchLocations = async () => {
     try {
       console.log("Fetching locations...");
@@ -121,7 +121,6 @@ export default function DiscoverPage() {
     }
   };
 
-  // Call fetchLocations when component mounts (moved inside the component)
   useEffect(() => {
     fetchLocations();
   }, []);
@@ -179,10 +178,7 @@ export default function DiscoverPage() {
     fetchEvents(suggestion.name);
   };
 
-  // Handle location checkbox change
   const handleLocationChange = (location: string) => {
-    // If the location is already selected, clear the selection
-    // Otherwise, set only this location as selected
     setSelectedLocations(
       selectedLocations.includes(location) ? [] : [location]
     );
@@ -246,7 +242,6 @@ export default function DiscoverPage() {
   useEffect(() => {
     debouncedPriceUpdate(minPrice, maxPrice);
 
-    // Cleanup function
     return () => {
       debouncedPriceUpdate.cancel();
     };
@@ -289,21 +284,20 @@ export default function DiscoverPage() {
         console.log(`Filtering by date: ${formattedDate}`);
       }
 
-      // Add price filters - use debounced values
+      // Add price filters
       if (freeOnly) {
-        // For free events, set both minPrice and maxPrice to 0
-        url += "&min_price=0&max_price=0"; // Changed from minPrice/maxPrice to min_price/max_price
+        url += "&min_price=0&max_price=0";
       } else if (debouncedMinPrice || debouncedMaxPrice) {
         if (debouncedMinPrice) {
-          url += `&min_price=${debouncedMinPrice}`; // Changed from minPrice to min_price
+          url += `&min_price=${debouncedMinPrice}`;
         }
         if (debouncedMaxPrice) {
-          url += `&max_price=${debouncedMaxPrice}`; // Changed from maxPrice to max_price
+          url += `&max_price=${debouncedMaxPrice}`;
         }
       }
 
       // Add sort order
-      url += `&sort_order=${sortOrder}`; // Changed from sortOrder to sort_order
+      url += `&sort_order=${sortOrder}`;
 
       console.log("Fetching events with URL:", url);
 
@@ -312,7 +306,6 @@ export default function DiscoverPage() {
       console.log("API Response:", res.data);
 
       if (res.data && res.data.events) {
-        // Update to use the new response structure
         setEvents(
           Array.isArray(res.data.events.events) ? res.data.events.events : []
         );
@@ -573,7 +566,6 @@ export default function DiscoverPage() {
                       onClick={() => {
                         // Clear temp state
                         setTempSelectedLocations([]);
-                        // Also clear actual state and close dropdown
                         setSelectedLocations([]);
                         setShowLocationFilter(false);
                         setCurrentPage(1);
@@ -763,7 +755,6 @@ export default function DiscoverPage() {
                       onClick={() => {
                         // Clear temp state
                         setTempSelectedDate(null);
-                        // Also clear actual state and close dropdown
                         setSelectedDate(null);
                         setShowDateFilter(false);
                         setCurrentPage(1);

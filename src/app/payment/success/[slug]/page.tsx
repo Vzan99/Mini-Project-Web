@@ -45,7 +45,6 @@ export default function PaymentSuccessPage() {
         return;
       }
 
-      // If no transaction in Redux, navigate to login page
       router.push("/login");
     } catch (err) {
       console.error("Error fetching transaction:", err);

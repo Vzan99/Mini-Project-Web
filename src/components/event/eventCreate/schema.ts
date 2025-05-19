@@ -1,7 +1,6 @@
 import * as Yup from "yup";
 import { IEventFormValues } from "./types";
 
-// Initial form values with correct case for category
 export const eventInitialValues: IEventFormValues = {
   name: "",
   start_date: "",
@@ -12,8 +11,7 @@ export const eventInitialValues: IEventFormValues = {
   location: "",
   price: 0,
   total_seats: 1,
-  category: "Concert", // Default category with correct case
-  // Add voucher initial values
+  category: "Concert",
   create_voucher: false,
   voucher_code: "",
   discount_amount: 0,
@@ -22,13 +20,6 @@ export const eventInitialValues: IEventFormValues = {
   voucher_end_date: "",
   voucher_end_time: "",
   max_usage: 1,
-};
-
-// Get tomorrow's date for min attribute
-const getTomorrowDateString = () => {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  return tomorrow.toISOString().split("T")[0]; // Returns YYYY-MM-DD
 };
 
 // Validation schema
@@ -44,7 +35,7 @@ export const eventValidationSchema = Yup.object({
       function (value) {
         if (!value) return false;
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // Start of today
+        today.setHours(0, 0, 0, 0);
         return new Date(value) > today;
       }
     ),
@@ -69,7 +60,6 @@ export const eventValidationSchema = Yup.object({
         const { start_date, end_date, start_time } = this.parent;
         if (!value || !start_time || !start_date || !end_date) return true;
 
-        // Only validate time if dates are the same
         if (start_date === end_date) {
           return value > start_time;
         }
@@ -96,7 +86,6 @@ export const eventValidationSchema = Yup.object({
       ["Concert", "Festival", "Comedy", "Museum", "Others"],
       "Invalid category"
     ),
-  // Add voucher validation
   create_voucher: Yup.boolean(),
   voucher_code: Yup.string().when("create_voucher", {
     is: true,
@@ -135,11 +124,9 @@ export const eventValidationSchema = Yup.object({
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            // Calculate the date 2 days ago (midnight)
             const twoDaysAgo = new Date(today);
             twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
-            // Check if voucherDate is on or after twoDaysAgo
             return voucherDate >= twoDaysAgo;
           }
         ),
@@ -192,7 +179,6 @@ export const eventValidationSchema = Yup.object({
               return true;
             }
 
-            // Compare voucher times if voucher dates are the same
             if (voucher_start_date === voucher_end_date) {
               return endTime > voucher_start_time;
             }
@@ -207,10 +193,9 @@ export const eventValidationSchema = Yup.object({
             const { voucher_end_date, end_date, end_time } = this.parent;
 
             if (!endTime || !voucher_end_date || !end_date || !end_time) {
-              return true; // Skip until all are present
+              return true;
             }
 
-            // Only compare times if voucher end date matches event end date
             if (voucher_end_date === end_date) {
               return endTime <= end_time;
             }

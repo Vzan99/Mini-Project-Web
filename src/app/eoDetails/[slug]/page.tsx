@@ -31,7 +31,7 @@ export default function EODetailsPage({
         `${API_BASE_URL}/admin/organizers/${slug}`
       );
 
-      console.log("API response:", response.data); // for debugging
+      console.log("API response:", response.data);
 
       if (!response.data || !response.data.profile) {
         throw new Error("Invalid response from server");
@@ -81,7 +81,6 @@ export default function EODetailsPage({
                       "Image failed to load:",
                       `${cloudinaryBaseUrl}${profile.organizer.profile_picture}`
                     );
-                    // Remove the image on error and show the div background
                     e.currentTarget.style.display = "none";
                   }}
                 />

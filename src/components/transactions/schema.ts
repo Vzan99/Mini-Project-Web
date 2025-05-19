@@ -1,7 +1,6 @@
 import * as Yup from "yup";
 import { TransactionFormValues } from "./types";
 
-// Initial values for the transaction form
 export const transactionInitialValues = (
   event_id: string = "",
   quantity: number = 1,
@@ -9,17 +8,16 @@ export const transactionInitialValues = (
 ): TransactionFormValues => ({
   event_id,
   quantity,
-  attend_date: start_date, // Use the provided start date
-  use_voucher: true, // Default to voucher
+  attend_date: start_date,
+  use_voucher: true,
   voucher_code: "",
   use_coupon: false,
   coupon_code: "",
   use_points: false,
   points_to_use: 0,
-  payment_method: "creditCard", // This is correct but make sure your form has this value
+  payment_method: "creditCard",
 });
 
-// Validation schema for the transaction form
 export const transactionValidationSchema = (availablePoints: number) =>
   Yup.object({
     quantity: Yup.number()
@@ -27,8 +25,8 @@ export const transactionValidationSchema = (availablePoints: number) =>
       .min(1, "Minimum 1 ticket")
       .max(3, "Maximum 3 tickets"),
     attend_date: Yup.string().required("Please select a date to attend"),
-    voucher_code: Yup.string(), // Make voucher code optional
-    coupon_code: Yup.string(), // Make coupon code optional
+    voucher_code: Yup.string(),
+    coupon_code: Yup.string(),
     points_to_use: Yup.number().when("usePoints", {
       is: true,
       then: (schema) =>

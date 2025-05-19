@@ -1,6 +1,5 @@
 import * as Yup from "yup";
 
-// Review validation schema
 export const reviewValidationSchema = Yup.object({
   rating: Yup.number()
     .min(1, "Please select a rating")

@@ -90,8 +90,8 @@ export default function TicketDetailsPage({
       iframe.style.position = "fixed";
       iframe.style.top = "-9999px";
       iframe.style.left = "-9999px";
-      iframe.style.width = "850px"; // Slightly larger than our template
-      iframe.style.height = "400px"; // Enough height for the template
+      iframe.style.width = "850px";
+      iframe.style.height = "400px";
       iframe.style.border = "none";
       document.body.appendChild(iframe);
 

@@ -1,4 +1,3 @@
-// Define the form values interface
 export interface IEventFormValues {
   name: string;
   start_date: string;
@@ -10,7 +9,6 @@ export interface IEventFormValues {
   price: number;
   total_seats: number;
   category: string;
-  // Add voucher fields
   create_voucher: boolean;
   voucher_code: string;
   discount_amount: number;

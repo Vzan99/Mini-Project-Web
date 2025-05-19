@@ -4,7 +4,6 @@ import { IEventDetails } from "@/components/transactions/types";
 import { setCookie, getCookie, deleteCookie } from "cookies-next";
 import { ITicket } from "@/components/payment/paymentSuccess/types";
 
-// Define a comprehensive transaction interface for Redux
 export interface ReduxTransaction {
   id: string;
   event_id: string;
@@ -27,7 +26,6 @@ export interface ReduxTransaction {
     | "canceled";
   created_at: string;
   updated_at: string;
-  // Update event to match IEventDetails interface
   event?: IEventDetails;
 }
 
@@ -170,7 +168,7 @@ export const transactionSlice = createSlice({
 const saveStateToCookies = (state: TransactionState) => {
   try {
     setCookie("transactionState", JSON.stringify(state), {
-      maxAge: 60 * 60 * 24, // 24 hours
+      maxAge: 60 * 60 * 24,
       path: "/",
     });
   } catch (e) {

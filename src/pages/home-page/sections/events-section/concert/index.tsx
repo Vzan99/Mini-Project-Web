@@ -31,7 +31,7 @@ export default function ConcertSection() {
       console.error("Error fetching concert events:", err);
       setEvents([]);
     } finally {
-      setLoading(false); // Always hide the spinner after fetch
+      setLoading(false);
     }
   };
 

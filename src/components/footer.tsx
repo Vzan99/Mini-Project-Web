@@ -12,7 +12,7 @@ export default function Footer() {
             <div className="flex flex-col md:flex-row items-center gap-4 md:gap-10 mb-6">
               <Image
                 className="h-[80px] w-[100px] md:h-[100px] md:w-[120px]"
-                src="/logo-quick-ticket.png" // Path relative to the public folder
+                src="/logo-quick-ticket.png" 
                 alt="Quick Ticket Logo"
                 width={120}
                 height={100}
@@ -101,13 +101,6 @@ export default function Footer() {
       {/* Test Review Link - Bottom Right Corner */}
       <div className="absolute bottom-4 right-4">
         <div className="flex flex-row gap-2">
-          {/* <Link
-            href="/reviews/new?eventId=YOUR_EVENT_ID&transactionId=YOUR_TRANSACTION_ID"
-            className="bg-[#222432] text-white px-4 py-2 rounded-full hover:bg-opacity-90 text-sm flex items-center shadow-lg"
-          >
-            <span className="mr-1">✏️</span> Test Review
-          </Link> */}
-
           <Link
             href="/past-events"
             className="bg-[#222432] text-white px-4 py-2 rounded-full hover:bg-opacity-90 text-sm flex items-center shadow-lg"
