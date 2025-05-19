@@ -79,13 +79,13 @@ export default function PaymentConfirmationPage() {
         transactionData.status === "confirmed" &&
         transactionData.total_pay_amount === 0 &&
         transactionData.tickets.length === 0 &&
-        !calledGenerateFreeTickets.current // <-- only call once
+        !calledGenerateFreeTickets.current
       ) {
         console.log(
           "Free confirmed transaction without tickets, calling generate-free-tickets endpoint..."
         );
 
-        calledGenerateFreeTickets.current = true; // mark as called
+        calledGenerateFreeTickets.current = true;
 
         await axios.post(
           `${API_BASE_URL}/transactions/${transactionData.id}/generate-free-tickets`,
@@ -186,7 +186,6 @@ export default function PaymentConfirmationPage() {
   };
 
   useEffect(() => {
-    // Update immediately and then every second
     updateCountdown();
     const intervalId = setInterval(updateCountdown, 1000);
 
@@ -212,7 +211,6 @@ export default function PaymentConfirmationPage() {
       }
 
       setUploading(true);
-      // Update status in Redux
       dispatch(updateTransactionStatus("processing"));
       setPaymentStatus("processing" as any);
 
@@ -228,7 +226,6 @@ export default function PaymentConfirmationPage() {
         formData.append("payment_proof", paymentProof);
       }
 
-      // Make sure to include the Authorization header with the token
       const response = await axios.post(
         `${API_BASE_URL}/transactions/${transactionId}/payment`,
         formData,
@@ -247,16 +244,12 @@ export default function PaymentConfirmationPage() {
 
         // Only redirect to success page if admin has confirmed the payment
         if (response.data.data.status === "confirmed") {
-          // Redirect to success page after 1 second
           setTimeout(() => {
             router.push(`/payment/success/${transactionId}`);
-          }, 1000);
+          }, 10000);
         }
-        // Otherwise, stay on this page and show waiting message
       } else {
-        // Fallback if response doesn't contain expected data
         setPaymentStatus("waiting_for_admin_confirmation" as any);
-        // Do not redirect automatically
       }
     } catch (err) {
       console.error("Payment error:", err);
@@ -268,7 +261,7 @@ export default function PaymentConfirmationPage() {
     }
   };
 
-  // Polling effect - replace local transaction updates with Redux updates
+  // Polling effect
   useEffect(() => {
     if (paymentStatus === "waiting_for_admin_confirmation" || isPolling) {
       console.log("Starting status polling after payment submission...");
@@ -294,10 +287,6 @@ export default function PaymentConfirmationPage() {
               `Current status: ${paymentStatus}, New status: ${newStatus}`
             );
 
-            // Remove local setTransaction, update Redux instead
-            // if (JSON.stringify(transaction) !== JSON.stringify(updatedTransaction)) {
-            //   setTransaction(updatedTransaction);
-            // }
             dispatch(setCurrentTransaction(updatedTransaction));
 
             // If status changed, update UI and Redux

@@ -16,7 +16,6 @@ const TicketDownloadTemplate: React.FC<TicketDownloadTemplateProps> = ({
   eventLocation,
   eventImageUrl,
 }) => {
-  // Use only inline styles to avoid any CSS inheritance issues
   const containerStyle: React.CSSProperties = {
     width: "800px",
     padding: "24px",

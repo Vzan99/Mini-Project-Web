@@ -9,7 +9,7 @@ import LoadingSpinner from "@/components/loadings/loadingSpinner";
 
 export default function FestivalSection() {
   const [events, setEvents] = useState<IEventCard[]>([]);
-  const [loading, setLoading] = useState(true); // Track loading state
+  const [loading, setLoading] = useState(true);
   const sectionTitle = "Festivals";
 
   const fetchEvents = async () => {
@@ -30,7 +30,7 @@ export default function FestivalSection() {
       console.error("Error fetching festival events:", err);
       setEvents([]);
     } finally {
-      setLoading(false); // Hide spinner after fetching is complete
+      setLoading(false);
     }
   };
 

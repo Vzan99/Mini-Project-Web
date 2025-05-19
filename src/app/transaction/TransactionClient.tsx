@@ -16,7 +16,6 @@ import {
   transactionInitialValues,
   transactionValidationSchema,
 } from "@/components/transactions/schema";
-// Add Redux imports - only what we need
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   setCurrentTransaction,
@@ -31,10 +30,11 @@ import {
 import LoadingSpinnerScreen from "@/components/loadings/loadingSpinnerScreen";
 import ConfirmationModal from "@/components/confirmation/confirmationModal";
 import { toast } from "react-toastify";
+import { formatEventDates } from "@/utils/formatters";
+
 export default function TransactionClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Add Redux dispatch
   const dispatch = useAppDispatch();
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [pendingValues, setPendingValues] =
@@ -52,7 +52,6 @@ export default function TransactionClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [availablePoints, setAvailablePoints] = useState(0);
-  const [vouchers, setVouchers] = useState([]);
   const [voucherDiscount, setVoucherDiscount] = useState(0);
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -63,6 +62,7 @@ export default function TransactionClient() {
   const [pendingSubmitHelpers, setPendingSubmitHelpers] = useState<{
     setSubmitting: (isSubmitting: boolean) => void;
   } | null>(null);
+
   // Enhanced validation for query parameters
   const validateAndGetParams = () => {
     if (!searchParams) {
@@ -72,7 +72,6 @@ export default function TransactionClient() {
 
     const eventId = searchParams.get("eventId");
 
-    // Validate eventId format (UUID)
     const isValidEventId =
       eventId &&
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
@@ -92,11 +91,6 @@ export default function TransactionClient() {
     dispatch(clearCurrentTransaction());
   }, [dispatch]);
 
-  // Toggle description function
-  const toggleDescription = () => {
-    setShowFullDescription(!showFullDescription);
-  };
-
   // Redirect if parameters are invalid
   useEffect(() => {
     if (!areParamsValid) {
@@ -112,17 +106,12 @@ export default function TransactionClient() {
     }
   }, [areParamsValid, router]);
 
-  // Format the start date if event exists
-  const formattedStartDate = event ? event.start_date : "";
-
   // Initial form values with start date
   const initialValues = useMemo(() => {
-    // Make sure we have a valid start date
     let startDate = "";
     if (event && event.start_date) {
       startDate = event.start_date;
     }
-    // Always use quantity 1 as default
     return transactionInitialValues(eventId || "", 1, startDate);
   }, [event, eventId]);
 
@@ -140,25 +129,21 @@ export default function TransactionClient() {
         const response = await axios.get(`${API_BASE_URL}/events/${eventId}`);
         setEvent(response.data.data);
 
-        // Fetch user points with the correct endpoint
         try {
           const token = localStorage.getItem("token");
           if (token) {
-            // Update the endpoint to match your backend
             const userResponse = await axios.get(
               `${API_BASE_URL}/profile/with-points`,
               {
                 headers: { Authorization: `Bearer ${token}` },
               }
             );
-            // Adjust this based on your actual response structure
             const profileData = userResponse.data.data;
             setAvailablePoints(profileData.points.totalActivePoints || 0);
             setPointsId(profileData.points.id || null);
           }
         } catch (profileErr) {
           console.log("Could not fetch user profile:", profileErr);
-          // Set default points to 0 and continue - don't let this error block the checkout
           setAvailablePoints(0);
         }
 
@@ -187,25 +172,6 @@ export default function TransactionClient() {
     fetchEventDetails();
   }, [eventId]);
 
-  // Generate available dates between event start and end
-  const getAvailableDates = () => {
-    if (!event) return [];
-
-    const dates = [];
-    const startDate = new Date(event.start_date);
-    const endDate = new Date(event.end_date);
-
-    for (
-      let date = new Date(startDate);
-      date <= endDate;
-      date.setDate(date.getDate() + 1)
-    ) {
-      dates.push(new Date(date));
-    }
-
-    return dates;
-  };
-
   // Check voucher validity
   const checkVoucher = async (code: string) => {
     if (!code || code.trim() === "") {
@@ -224,7 +190,7 @@ export default function TransactionClient() {
 
       const response = await axios.get(`${API_BASE_URL}/vouchers/check`, {
         params: {
-          event_id: eventId, // Changed from eventId to event_id to match backend expectation
+          event_id: eventId,
           voucher_code: code,
         },
       });
@@ -234,10 +200,10 @@ export default function TransactionClient() {
       if (
         response.data &&
         response.data.data &&
-        response.data.data.is_valid === true // Changed from isValid to is_valid to match backend
+        response.data.data.is_valid === true
       ) {
-        setVoucherDiscount(response.data.data.discount_amount); // Changed from discountAmount to discount_amount
-        setVoucherId(response.data.data.voucher_id); // Changed from voucherId to voucher_id
+        setVoucherDiscount(response.data.data.discount_amount);
+        setVoucherId(response.data.data.voucher_id);
         toast.success(
           `Voucher applied successfully! Discount: ${formatNumberWithCommas(
             response.data.data.discount_amount
@@ -267,6 +233,7 @@ export default function TransactionClient() {
     }
   };
 
+  // Check Coupon
   const checkCoupon = async (code: string) => {
     if (!code || code.trim() === "") {
       toast.error("Please enter a coupon code");
@@ -293,7 +260,7 @@ export default function TransactionClient() {
         response.data.data.is_valid === true
       ) {
         setCouponDiscount(response.data.data.discount_amount);
-        setCouponId(response.data.data.coupon_id); // Store the coupon ID
+        setCouponId(response.data.data.coupon_id);
         toast.success(
           `Coupon applied successfully! Discount: ${formatNumberWithCommas(
             response.data.data.discount_amount
@@ -373,11 +340,10 @@ export default function TransactionClient() {
 
     const total = Math.max(0, subtotal - discount);
 
-    // Don't dispatch during render - just return the calculated value
     return total;
   };
 
-  // Add this useEffect to update the Redux state when relevant values change
+  // Update the Redux state when relevant values change
   useEffect(() => {
     if (event && transactionForm) {
       const subtotal = event.price * transactionForm.quantity;
@@ -405,7 +371,6 @@ export default function TransactionClient() {
   // Update the Redux state when discounts change
   useEffect(() => {
     if (event) {
-      // Update Redux with the current discount values
       if (voucherId && voucherDiscount > 0) {
         dispatch(applyVoucher({ id: voucherId, amount: voucherDiscount }));
       }
@@ -453,26 +418,22 @@ export default function TransactionClient() {
         return;
       }
 
-      // Use the selected date or fall back to event start date
-      const attendDate = values.attend_date || event.start_date;
-
       // Create payload
       const payload = {
         event_id: values.event_id,
         quantity: values.quantity,
         attend_date: values.attend_date,
         payment_method: values.payment_method,
-        // Include voucher data properly
         ...(values.use_voucher && voucherId
           ? {
-              voucher_id: voucherId, // Changed from voucherId to voucher_id
+              voucher_id: voucherId,
               voucher_code: values.voucher_code,
               voucher_discount: voucherDiscount,
             }
           : {}),
         ...(values.use_coupon && couponId
           ? {
-              coupon_id: couponId, // Use snake_case for backend consistency
+              coupon_id: couponId,
               coupon_code: values.coupon_code,
               coupon_discount: couponDiscount,
             }
@@ -482,7 +443,6 @@ export default function TransactionClient() {
               points_used: availablePoints,
             }
           : {}),
-        // Include calculated values
         subtotal: subtotal,
         total_pay_amount: total,
       };
@@ -504,18 +464,16 @@ export default function TransactionClient() {
       console.log("Transaction created successfully:", response.data);
       const transactionData = response.data.data;
 
-      // Store transaction in Redux - make sure this is working
+      // Store transaction in Redux
       console.log("Storing transaction in Redux:", transactionData);
       dispatch(setCurrentTransaction(transactionData));
 
-      // Show success alert
       toast.success(
         "Transaction created successfully! Redirecting to payment page..."
       );
 
       // Add a small delay to ensure the transaction is committed and alert is seen
       setTimeout(() => {
-        // Log the transaction ID before redirecting
         console.log(
           "Redirecting to payment confirmation with ID:",
           transactionData.id
@@ -525,7 +483,6 @@ export default function TransactionClient() {
     } catch (err: any) {
       console.error("Transaction error:", err);
 
-      // Show detailed error message
       let errorMessage = "Failed to process transaction";
 
       if (err.response) {
@@ -537,32 +494,6 @@ export default function TransactionClient() {
 
       setError(errorMessage);
       toast.error(errorMessage);
-    }
-  };
-
-  // Add this function to format dates like "24 - 25 May 2025"
-  const formatEventDates = (start_date: string, end_date: string) => {
-    const startDate = new Date(start_date);
-    const endDate = new Date(end_date);
-
-    // Check if the event spans within the same month
-    if (
-      startDate.getMonth() === endDate.getMonth() &&
-      startDate.getFullYear() === endDate.getFullYear()
-    ) {
-      // Only show day range without repeating the month
-      return `${startDate.getDate()} - ${endDate.getDate()} ${startDate.toLocaleString(
-        "en-GB",
-        { month: "long" }
-      )} ${startDate.getFullYear()}`;
-    } else {
-      // Different months or years
-      const formatDate = (date: Date) => {
-        return `${date.getDate()} ${date.toLocaleString("en-GB", {
-          month: "long",
-        })} ${date.getFullYear()}`;
-      };
-      return `${formatDate(startDate)} - ${formatDate(endDate)}`;
     }
   };
 
@@ -581,22 +512,19 @@ export default function TransactionClient() {
       </div>
     );
 
-  // Add this function to check if there's an unapplied discount code
   const hasUnappliedDiscountCode = (values: TransactionFormValues) => {
-    // Check if there's text in voucher field but no voucher discount applied
     if (
-      values.use_voucher && // Changed from values.useVoucher
-      values.voucher_code && // Changed from values.voucherCode
+      values.use_voucher && 
+      values.voucher_code && 
       values.voucher_code.trim() !== "" &&
       voucherDiscount === 0
     ) {
       return true;
     }
 
-    // Check if there's text in coupon field but no coupon discount applied
     if (
-      values.use_coupon && // Changed from values.useCoupon
-      values.coupon_code && // Changed from values.couponCode
+      values.use_coupon && 
+      values.coupon_code && 
       values.coupon_code.trim() !== "" &&
       couponDiscount === 0
     ) {
@@ -812,7 +740,6 @@ export default function TransactionClient() {
                               <Calendar
                                 onChange={(date) => {
                                   if (date instanceof Date) {
-                                    // Format date as YYYY-MM-DD
                                     const year = date.getFullYear();
                                     const month = String(
                                       date.getMonth() + 1
@@ -822,11 +749,10 @@ export default function TransactionClient() {
                                       "0"
                                     );
 
-                                    // Simple ISO date string
                                     const dateString = `${year}-${month}-${day}`;
 
-                                    setFieldValue("attend_date", dateString); // Changed from "attendDate"
-                                    setShowCalendar(false); // Close calendar after selection
+                                    setFieldValue("attend_date", dateString); 
+                                    setShowCalendar(false); 
                                   }
                                 }}
                                 value={
@@ -842,7 +768,6 @@ export default function TransactionClient() {
                                   )
                                     return true;
 
-                                  // Only enable dates between event start and end dates
                                   const eventStart = new Date(event.start_date);
                                   const eventEnd = new Date(event.end_date);
 
@@ -858,7 +783,7 @@ export default function TransactionClient() {
                       </div>
 
                       <ErrorMessage
-                        name="attend_date" // Changed from "attendDate"
+                        name="attend_date" 
                         component="div"
                         className="text-red-500 text-sm mt-1"
                       />
@@ -887,7 +812,7 @@ export default function TransactionClient() {
                                     ? "voucher"
                                     : values.use_coupon
                                     ? "coupon"
-                                    : "voucher" // Default to voucher
+                                    : "voucher" 
                                 }
                                 onChange={(e) => {
                                   const value = e.target.value;
@@ -899,7 +824,6 @@ export default function TransactionClient() {
                                     "use_coupon",
                                     value === "coupon"
                                   );
-                                  // Clear any previously entered codes
                                   setFieldValue("voucher_code", "");
                                   setFieldValue("coupon_code", "");
                                   setVoucherDiscount(0);
@@ -921,10 +845,10 @@ export default function TransactionClient() {
                                   type="text"
                                   name={
                                     values.use_voucher
-                                      ? "voucher_code" // Changed from "voucherCode"
+                                      ? "voucher_code" 
                                       : values.use_coupon
-                                      ? "coupon_code" // Changed from "couponCode"
-                                      : "voucher_code" // Changed from "voucherCode"
+                                      ? "coupon_code" 
+                                      : "voucher_code" 
                                   }
                                   value={
                                     values.use_voucher

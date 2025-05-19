@@ -33,28 +33,21 @@ interface IOrganizer {
 
 interface ITransaction {
   id: string;
-  // Add other transaction fields as needed
 }
 
 interface IVoucher {
   id: string;
-  code: string; // From API response
-  voucherCode?: string; // From backend schema
-  discount_amount: number; // From API response
-  discountAmount?: number; // From backend schema
-  start_date?: string; // From API response
-  voucherStartDate?: Date; // From backend schema
-  end_date?: string; // From API response
-  voucherEndDate?: Date; // From backend schema
-  max_usage?: number; // From API response
-  maxUsage?: number; // From backend schema
-  current_usage?: number; // From API response
-  eventId?: string; // From backend schema
+  code: string;
+  discount_amount: number;
+  start_date?: string;
+  end_date?: string;
+  max_usage?: number;
+  current_usage?: number;
+  event_id?: string;
 }
 
 interface IReview {
   id: string;
-  // Add other review fields as needed
 }
 
 export interface IEventDetails {

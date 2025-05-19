@@ -14,16 +14,14 @@ export default function SearchBar() {
   const router = useRouter();
   const suggestionRef = useRef<HTMLDivElement>(null);
 
-  // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(query);
-    }, 300); // 300ms delay
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [query]);
 
-  // Fetch suggestions when debounced query changes
   useEffect(() => {
     let didCancel = false;
 
@@ -53,7 +51,6 @@ export default function SearchBar() {
       }
     };
 
-    // Prevent fetch if component already navigated away
     if (debouncedQuery && !didCancel) {
       fetchSuggestions();
     }
@@ -63,7 +60,6 @@ export default function SearchBar() {
     };
   }, [debouncedQuery]);
 
-  // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -87,8 +83,8 @@ export default function SearchBar() {
     if (finalQuery) {
       setShowSuggestions(false);
       setSuggestions([]);
-      setQuery(""); // Clear input
-      setDebouncedQuery(""); // Prevent debounce from firing
+      setQuery("");
+      setDebouncedQuery("");
       router.push(`/discover?query=${encodeURIComponent(finalQuery)}`);
     }
   };
@@ -96,7 +92,7 @@ export default function SearchBar() {
   const handleSuggestionClick = (suggestion: any) => {
     setShowSuggestions(false);
     setQuery("");
-    setDebouncedQuery(""); // prevent further fetch calls
+    setDebouncedQuery("");
     router.push(`/events/${suggestion.id}`);
   };
 

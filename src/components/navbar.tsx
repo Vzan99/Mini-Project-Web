@@ -15,10 +15,8 @@ export default function NavBar() {
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > lastScrollY) {
-        // Scrolling down
         setVisible(false);
       } else {
-        // Scrolling up
         setVisible(true);
       }
       lastScrollY = window.scrollY;
@@ -31,18 +29,15 @@ export default function NavBar() {
   const scrollToEvents = (e: React.MouseEvent) => {
     e.preventDefault();
 
-    // If on homepage, scroll to concert section
     if (window.location.pathname === "/") {
       const concertSection = document.querySelector('[data-section="concert"]');
       if (concertSection) {
         concertSection.scrollIntoView({ behavior: "smooth" });
       }
     } else {
-      // If on another page, navigate to homepage and then scroll
       router.push("/#concert");
     }
 
-    // Close mobile menu if open
     setIsMenuOpen(false);
   };
 
@@ -61,7 +56,6 @@ export default function NavBar() {
     setIsMenuOpen(false);
   };
 
-  // Close menu when clicking outside
   useEffect(() => {
     let lastScrollY = window.scrollY;
 
@@ -69,11 +63,9 @@ export default function NavBar() {
       const currentScrollY = window.scrollY;
 
       if (currentScrollY > lastScrollY) {
-        // Scrolling down
         setVisible(false);
-        if (isMenuOpen) setIsMenuOpen(false); // Close dropdown on scroll
+        if (isMenuOpen) setIsMenuOpen(false); 
       } else {
-        // Scrolling up
         setVisible(true);
       }
 
@@ -94,7 +86,7 @@ export default function NavBar() {
         <div className="nav-buttons-group items-center">
           <Image
             className="small-logo"
-            src="/logo-quick-ticket.png" // Path relative to the public folder
+            src="/logo-quick-ticket.png" 
             alt="logo-quick-ticket"
             onClick={navigateToHome}
             style={{ cursor: "pointer", width: "50px", height: "50px" }}

@@ -14,7 +14,7 @@ export interface IReview {
   id: string;
   rating: number;
   comment?: string;
-  review?: string; // Some backends might use 'review' instead of 'comment'
+  review?: string;
 }
 
 export interface IPastEvent {

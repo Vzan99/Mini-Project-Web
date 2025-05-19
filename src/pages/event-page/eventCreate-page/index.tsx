@@ -14,26 +14,15 @@ import { formatNumberWithCommas } from "@/utils/formatters";
 import { generateTimeOptions } from "@/utils/formatters";
 import ConfirmationModal from "@/components/confirmation/confirmationModal";
 import { toast } from "react-toastify";
-
+import { formatDateForInput } from "@/utils/formatters";
 const timeOptions = generateTimeOptions();
 
-// Add this function to properly format dates for HTML date inputs
-const formatDateForInput = (date: Date): string => {
-  return date.toISOString().split("T")[0]; // Returns YYYY-MM-DD
-};
-
-// Get tomorrow's date for min attribute
+// Get tomorrow's date
 const getTomorrowDateString = () => {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   return formatDateForInput(tomorrow);
 };
-
-// const getTodayDateString = () => {
-//   const date = new Date();
-//   date.setDate(date.getDate());
-//   return formatDateForInput(date);
-// };
 
 export default function EventCreatePage() {
   const router = useRouter();
@@ -51,34 +40,6 @@ export default function EventCreatePage() {
       const file = event.target.files[0];
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
-  // Combine date and time fields when submitting
-  const getCombinedDateTimeValues = (values: IEventFormValues) => {
-    const combinedData = { ...values };
-
-    try {
-      // Combine start date and time with proper ISO format
-      if (values.start_date && values.start_time) {
-        const startDateTime = new Date(
-          `${values.start_date}T${values.start_time}`
-        ).toISOString();
-        combinedData.start_date = startDateTime;
-      }
-
-      // Combine end date and time with proper ISO format
-      if (values.end_date && values.end_time) {
-        const endDateTime = new Date(
-          `${values.end_date}T${values.end_time}`
-        ).toISOString();
-        combinedData.end_date = endDateTime;
-      }
-
-      return combinedData;
-    } catch (error) {
-      console.error("Error combining date and time values:", error);
-      throw new Error("Invalid date or time format. Please check your inputs.");
     }
   };
 
@@ -156,7 +117,7 @@ export default function EventCreatePage() {
     }
 
     try {
-      // Create FormData object for multipart/form-data submission
+      // Create FormData
       const submitData = new FormData();
 
       // Parse dates correctly
@@ -199,12 +160,12 @@ export default function EventCreatePage() {
 
       console.log("Event creation successful:", response.data);
       toast.success("Event created successfully!");
+
       // If voucher creation is enabled and event is paid, create voucher
       if (values.create_voucher && values.price > 0) {
         try {
           const eventId = response.data.data.id;
 
-          // Combine voucher dates and times with proper ISO format
           const voucherStartDateTime = new Date(
             `${values.voucher_start_date}T${values.voucher_start_time}`
           );
@@ -221,7 +182,6 @@ export default function EventCreatePage() {
             max_usage: values.max_usage,
           });
 
-          // Create voucher with snake_case field names to match backend
           await axios.post(
             `${API_BASE_URL}/vouchers`,
             {
@@ -257,17 +217,13 @@ export default function EventCreatePage() {
         }
       }
 
-      // Redirect to the event page on success
       router.push(`/events/${response.data.data.id}`);
     } catch (err: any) {
       console.error("Error creating event:", err);
 
-      // More detailed error logging
       if (axios.isAxiosError(err)) {
         console.error("Response status:", err.response?.status);
         console.error("Response data:", err.response?.data);
-
-        // Check if there are validation details
         if (
           err.response?.data?.details &&
           Array.isArray(err.response.data.details)
@@ -285,7 +241,7 @@ export default function EventCreatePage() {
     }
   };
 
-  // Add this function to format price with commas
+  // Format price number
   const formatPrice = (price: number) => {
     return formatNumberWithCommas(price);
   };
@@ -709,7 +665,7 @@ export default function EventCreatePage() {
                         id="voucher_start_date"
                         name="voucher_start_date"
                         min={getTomorrowDateString()}
-                        max={values.end_date} // Cannot be after event end date
+                        max={values.end_date}
                         className={`w-full px-3 py-2 border rounded-md bg-white h-[42px] ${
                           errors.voucher_start_date &&
                           touched.voucher_start_date
@@ -769,8 +725,8 @@ export default function EventCreatePage() {
                         type="date"
                         id="voucher_end_date"
                         name="voucher_end_date"
-                        min={values.voucher_start_date || values.start_date} // Must be after voucher start date
-                        max={values.end_date} // Cannot be after event end date
+                        min={values.voucher_start_date || values.start_date}
+                        max={values.end_date}
                         className={`w-full px-3 py-2 border rounded-md bg-white h-[42px] ${
                           errors.voucher_end_date && touched.voucher_end_date
                             ? "border-red-500"

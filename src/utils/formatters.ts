@@ -1,7 +1,7 @@
 // Format number with commas (e.g., 1000 -> 1,000)
 export function formatNumberWithCommas(num?: number | null): string {
   if (typeof num !== "number" || isNaN(num)) return "0";
-  return num.toLocaleString(); // cleaner and handles locales
+  return num.toLocaleString();
 }
 
 // Format date to locale string
@@ -10,7 +10,7 @@ export const formatDate = (dateString: string): string => {
   return date.toLocaleDateString();
 };
 
-// Format date to locale string with details week
+// Format date with day
 export const formatDateDetails = (date: string) => {
   const options: Intl.DateTimeFormatOptions = {
     weekday: "long",
@@ -21,6 +21,7 @@ export const formatDateDetails = (date: string) => {
   return new Date(date).toLocaleDateString("en-GB", options);
 };
 
+// Format date without day
 export const formatEventDates = (start_date: string, end_date: string) => {
   const startDate = new Date(start_date);
   const endDate = new Date(end_date);
@@ -52,6 +53,11 @@ export const formatEventDates = (start_date: string, end_date: string) => {
   } else {
     return `${formatDate(start_date)} - ${formatDate(end_date)}`;
   }
+};
+
+// Format Date for input (YYYY-MM-DD)
+export const formatDateForInput = (date: Date): string => {
+  return date.toISOString().split("T")[0];
 };
 
 // Format time to locale string
